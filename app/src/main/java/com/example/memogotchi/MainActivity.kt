@@ -153,6 +153,6 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun ScreenTimeScreenPage(modifier: Modifier = Modifier) {
-    ScreenTimeScreen()
+    PetScreen()
 }
 

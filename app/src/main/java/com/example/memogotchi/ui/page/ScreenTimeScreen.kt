@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Process
 import android.provider.Settings
 import androidx.annotation.RequiresApi
+import android.app.usage.UsageEvents
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -137,15 +138,49 @@ suspend fun loadWeekData(context: Context): List<DayData> = withContext(Dispatch
         cal.add(Calendar.DAY_OF_YEAR, 1)
 
         val end = cal.timeInMillis
+        val dow = cal.get(Calendar.DAY_OF_WEEK) - 1
 
-        val dow   = cal.get(Calendar.DAY_OF_WEEK) - 1
-        val apps  = usm.queryAndAggregateUsageStats(start, end).values
-            .filter { it.totalTimeInForeground > 0 }
-            .mapNotNull { s ->
+        val foregroundMs = mutableMapOf<String, Long>()
+        val resumeTime = mutableMapOf<String, Long>()
+
+        val events = usm.queryEvents(start, end)
+        val event = android.app.usage.UsageEvents.Event()
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            when(event.eventType) {
+                android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED -> {
+                    resumeTime[event.packageName] = event.timeStamp
+                }
+                android.app.usage.UsageEvents.Event.ACTIVITY_PAUSED -> {
+                    val resume  = resumeTime.remove(event.packageName)
+                    if (resume != null) {
+                        val delta = event.timeStamp - resume
+                        if (delta > 0) {
+                            foregroundMs[event.packageName] =
+                                (foregroundMs[event.packageName] ?: 0L) + delta
+                        }
+                    }
+                }
+            }
+        }
+        resumeTime.forEach { (pkg, resume) ->
+            val delta = end.coerceAtMost(System.currentTimeMillis()) - resume
+            if (delta > 0) {
+                foregroundMs[pkg] = (foregroundMs[pkg] ?: 0L) + delta
+            }
+        }
+
+        val apps  = foregroundMs
+            .filter { it.value > 0 }
+            .mapNotNull { (pkg, ms) ->
                 try {
-                    val info = pm.getApplicationInfo(s.packageName, 0)
-                    AppUsageInfo(s.packageName, pm.getApplicationLabel(info).toString(),
-                        pm.getApplicationIcon(s.packageName), s.totalTimeInForeground)
+                    val info = pm.getApplicationInfo(pkg, 0)
+                    AppUsageInfo(
+                        packageName  = pkg,
+                        appName      = pm.getApplicationLabel(info).toString(),
+                        icon         = pm.getApplicationIcon(pkg),
+                        totalTimeMs  = ms,
+                    )
                 } catch (e: PackageManager.NameNotFoundException) { null }
             }.sortedByDescending { it.totalTimeMs }
         DayData(short[dow], full[dow], apps.sumOf { it.totalTimeMs }, apps)
