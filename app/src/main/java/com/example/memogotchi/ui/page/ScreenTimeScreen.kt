@@ -43,6 +43,8 @@ import com.example.memogotchi.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Calendar
+import java.util.TimeZone
+
 
 // ════════════════════════════════════════════════════════════════════════════
 //  PET STATE  — hook your Rive / animation engine here later
@@ -124,13 +126,18 @@ suspend fun loadWeekData(context: Context): List<DayData> = withContext(Dispatch
     val pm  = context.packageManager
     val full  = listOf("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday")
     val short = listOf("Sun","Mon","Tue","Wed","Thu","Fri","Sat")
+
     (6 downTo 0).map { ago ->
-        val cal = Calendar.getInstance().apply {
+        val cal = Calendar.getInstance(TimeZone.getDefault()).apply {
             add(Calendar.DAY_OF_YEAR, -ago)
             set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0);      set(Calendar.MILLISECOND, 0)
         }
-        val start = cal.timeInMillis; val end = start + 86_400_000L
+        val start = cal.timeInMillis
+        cal.add(Calendar.DAY_OF_YEAR, 1)
+
+        val end = cal.timeInMillis
+
         val dow   = cal.get(Calendar.DAY_OF_WEEK) - 1
         val apps  = usm.queryAndAggregateUsageStats(start, end).values
             .filter { it.totalTimeInForeground > 0 }
