@@ -6,33 +6,118 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.memogotchi.ui.theme.MemogotchiTheme
 import com.example.memogotchi.ui.page.ScreenTimeScreen
+import com.example.memogotchi.ui.page.TasksScreen
+import com.example.memogotchi.ui.page.SettingsScreen
+
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+           val windowSizeClass = calculateWindowSizeClass(this)
             MemogotchiTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ScreenTimeScreenPage(modifier = Modifier.padding(innerPadding))
+                MainShell(windowSizeClass)
+            }
+        }
+    }
+}
+
+private val BgColor      = Color(0xFF16171C)
+private val SurfaceColor = Color(0xFF1F2125)
+private val AccentGreen  = Color(0xFF77C59D)
+private val TextSecondary = Color(0xFF888888)
+
+enum class NavTab(val label: String, val icon: String) {
+    SCREEN_TIME("Screen Time", "📊"),
+    TASKS("Tasks", "📝"),
+    SETTINGS("Settings", "⚙️")
+}
+
+@RequiresApi(Build.VERSION_CODES.Q)
+@Composable
+fun MainShell(windowSizeClass: androidx.compose.material3.windowsizeclass.WindowSizeClass) {
+    var currentTab by remember { mutableStateOf(NavTab.SCREEN_TIME) }
+
+    Box(modifier = Modifier.fillMaxSize().background(BgColor)) {
+        // Page content — leaves room for nav bar
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 72.dp)
+        ) {
+            when (currentTab) {
+                NavTab.SCREEN_TIME -> ScreenTimeScreen(windowSizeClass)
+                NavTab.TASKS       -> TasksScreen()
+                NavTab.SETTINGS    -> SettingsScreen()
+            }
+        }
+
+        // Bottom nav bar
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(SurfaceColor)
+                .navigationBarsPadding()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                NavTab.entries.forEach { tab ->
+                    val isSelected = tab == currentTab
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { currentTab = tab }
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Text(tab.icon, fontSize = 20.sp)
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = tab.label,
+                            fontSize = 10.sp,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (isSelected) AccentGreen else TextSecondary
+                        )
+                    }
                 }
             }
         }
     }
 }
+
 @Preview
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun ScreenTimeScreenPage(modifier: Modifier = Modifier) {
     ScreenTimeScreen()
 }
+
