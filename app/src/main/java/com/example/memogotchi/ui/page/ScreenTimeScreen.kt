@@ -135,10 +135,10 @@ suspend fun loadWeekData(context: Context): List<DayData> = withContext(Dispatch
             set(Calendar.SECOND, 0);      set(Calendar.MILLISECOND, 0)
         }
         val start = cal.timeInMillis
-        cal.add(Calendar.DAY_OF_YEAR, 1)
-
-        val end = cal.timeInMillis
         val dow = cal.get(Calendar.DAY_OF_WEEK) - 1
+        cal.add(Calendar.DAY_OF_YEAR, 1)
+        val end = cal.timeInMillis
+
 
         val foregroundMs = mutableMapOf<String, Long>()
         val resumeTime = mutableMapOf<String, Long>()

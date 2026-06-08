@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
@@ -20,7 +21,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,11 +63,11 @@ private val SurfaceColor = Color(0xFF1F2125)
 private val AccentGreen  = Color(0xFF77C59D)
 private val TextSecondary = Color(0xFF888888)
 
-enum class NavTab(val label: String, val icon: String) {
-    PET("Pet", "🐾"),
-    SCREEN_TIME("Screen Time", "📊"),
-    TASKS("Tasks", "📝"),
-    SETTINGS("Settings", "⚙️")
+enum class NavTab(val label: String, val iconRes: Int) {
+    PET("Pet", R.drawable.ic_nav_pet),
+    SCREEN_TIME("Screen Time", R.drawable.ic_nav_screentime),
+    TASKS("Tasks", R.drawable.ic_nav_tasks),
+    SETTINGS("Settings", R.drawable.ic_nav_settings)
 }
 
 @SuppressLint("RememberReturnType")
@@ -134,7 +139,12 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             .clickable { currentTab = tab }
                             .padding(vertical = 8.dp)
                     ) {
-                        Text(tab.icon, fontSize = 20.sp)
+                        Image(
+                            painter = rememberVectorPainter(ImageVector.vectorResource(tab.iconRes)),
+                            contentDescription = tab.label,
+                            modifier = Modifier.size(22.dp),
+                            colorFilter = if (isSelected) ColorFilter.tint(AccentGreen) else null
+                        )
                         Spacer(Modifier.height(2.dp))
                         Text(
                             text = tab.label,
