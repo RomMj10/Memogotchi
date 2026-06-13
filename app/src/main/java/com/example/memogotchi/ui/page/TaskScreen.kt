@@ -24,6 +24,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
+import com.example.memogotchi.ui.theme.Comfortaa
+import com.example.memogotchi.ui.theme.GildaDisplay
 
 // ── Palette (matches ScreenTimeScreen) ───────────────────────────────────────
 private val BgColor        = Color(0xFF16171C)
@@ -111,6 +113,7 @@ fun TasksScreen(today: DayData? = null) {
                     Text(
                         "No tasks yet — use your phone a bit more to trigger suggestions 🌱",
                         color    = TextSecondary,
+                        fontFamily = GildaDisplay,
                         fontSize = 13.sp,
                         lineHeight = 20.sp,
                     )
@@ -163,11 +166,12 @@ fun HeaderCard(taskCount: Int, totalFocusLabel: String, batteryLevel: Int) {
                 Column {
                     Text(
                         text       = taskCount.toString(),
+                        fontFamily = GildaDisplay,
                         fontSize   = 36.sp,
                         fontWeight = FontWeight.Bold,
                         color      = TextPrimary,
                     )
-                    Text("Tasks Found", fontSize = 11.sp, color = TextSecondary)
+                    Text("Tasks Found", fontFamily = GildaDisplay, fontSize = 11.sp, color = TextSecondary)
                 }
 
                 // Divider
@@ -182,11 +186,12 @@ fun HeaderCard(taskCount: Int, totalFocusLabel: String, batteryLevel: Int) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text       = totalFocusLabel,
+                        fontFamily = GildaDisplay,
                         fontSize   = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color      = AccentGreen,
                     )
-                    Text("Total Focus", fontSize = 11.sp, color = TextSecondary)
+                    Text("Total Focus",fontFamily = GildaDisplay, fontSize = 11.sp, color = TextSecondary)
                 }
             }
 
@@ -217,7 +222,7 @@ fun HeaderCard(taskCount: Int, totalFocusLabel: String, batteryLevel: Int) {
                     )
                 }
                 Spacer(Modifier.width(8.dp))
-                Text("$batteryLevel%", fontSize = 11.sp, color = TextSecondary)
+                Text("$batteryLevel%", fontSize = 11.sp, fontFamily = Comfortaa, color = TextSecondary)
             }
         }
     }
@@ -231,6 +236,7 @@ fun HeaderCard(taskCount: Int, totalFocusLabel: String, batteryLevel: Int) {
 fun SectionHeader(title: String) {
     Text(
         text       = title,
+        fontFamily = GildaDisplay,
         fontSize   = 16.sp,
         fontWeight = FontWeight.Bold,
         color      = TextPrimary,
@@ -364,19 +370,20 @@ fun MilestoneRow(milestone: Milestone) {
             }
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(milestone.title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = titleColor)
-                Text(milestone.description, fontSize = 11.sp, color = descColor, lineHeight = 16.sp)
+                Text(milestone.title, fontFamily = Comfortaa, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = titleColor)
+                Text(milestone.description,fontFamily = Comfortaa, fontSize = 11.sp, color = descColor, lineHeight = 16.sp)
             }
 
             // Hours badge
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text       = "${milestone.requiredHours.toInt()}",
+                    fontFamily = GildaDisplay,
                     fontSize   = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color      = if (isUnlocked) AccentGreen else Color(0xFF444444),
                 )
-                Text("HOURS", fontSize = 9.sp, color = descColor, fontWeight = FontWeight.Medium)
+                Text("HOURS",fontFamily = Comfortaa, fontSize = 9.sp, color = descColor, fontWeight = FontWeight.Medium)
             }
         }
     }

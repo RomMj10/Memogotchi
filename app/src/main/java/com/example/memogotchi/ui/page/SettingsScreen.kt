@@ -6,10 +6,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,11 +22,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.memogotchi.R
+import com.example.memogotchi.ui.theme.Comfortaa
+import com.example.memogotchi.ui.theme.GildaDisplay
 
 //Palette
 private val BgColor       = Color(0xFF16171C)
@@ -33,15 +41,30 @@ private val TextSecondary = Color(0xFF888888)
 
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(today: DayData? = null) {
+    val context = LocalContext.current
+
     var strictMode by remember { mutableStateOf(false) }
 
     var monochromeUI by remember { mutableStateOf(false) }
     var healthAlerts by remember { mutableStateOf(true) }
+    var textSize by remember { mutableStateOf(AppSettings.textSize) }
+    var dailyLimitMinutes by remember { mutableStateOf(AppSettings.dailyLimitMinutes) }
 
     var largeText by remember { mutableStateOf(false) }
     var reduceMotion by remember { mutableStateOf(false) }
-    var screenReaderHints by remember { mutableStateOf(false) }
+
+    var showDailyLimitDialog by remember { mutableStateOf(false) }
+
+    val totalMs   = today?.totalMs ?: 0L
+    val limitMs   = dailyLimitMinutes * 60_000L
+    val remainingMs = (limitMs - totalMs).coerceAtLeast(0L)
+    val limitSubtitle = if (totalMs >= limitMs) {
+        "Limit reached (${formatMs(limitMs)} limit)"
+    } else {
+        "${formatMs(remainingMs)} remaining of ${formatMs(limitMs)}"
+    }
+
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(BgColor).padding(top = 48.dp),
@@ -50,7 +73,8 @@ fun SettingsScreen() {
         item {
             Text(
                 text       = "SETTINGS",
-                fontSize   = 18.sp,
+                fontSize   = 24.sp,
+                fontFamily = GildaDisplay,
                 fontWeight = FontWeight.Bold,
                 color      = TextPrimary,
                 letterSpacing = 3.sp,
@@ -66,9 +90,9 @@ fun SettingsScreen() {
                 SettingsRow(
                     icon        = R.drawable.outline_av_timer_icon,
                     title       = "Daily Limit",
-                    subtitle    = "2h 30m remaining",
+                    subtitle    = limitSubtitle,
                     showChevron = true,
-                    onClick     = { /* TODO: navigate to daily limit picker */ }
+                    onClick     = { showDailyLimitDialog = true }
                 )
                 RowDivider()
                 SettingsRow(
@@ -106,9 +130,13 @@ fun SettingsScreen() {
                 SettingsRow(
                     icon     = R.drawable.outline_notification_important_icon,
                     title    = "Health Alerts",
-                    subtitle = "When pet is hungry",
+                    subtitle = "Notifies your health from Memogotchi",
                     trailing = {
-                        SettingsSwitch(checked = healthAlerts, onCheckedChange = { healthAlerts = it })
+                        SettingsSwitch(checked = healthAlerts,
+                            onCheckedChange = {
+                                healthAlerts = it
+                                AppSettings.setHealthAlertsEnabled(context, it)
+                            })
                     }
                 )
             }
@@ -120,10 +148,16 @@ fun SettingsScreen() {
             SettingsGroup {
                 SettingsRow(
                     icon     = R.drawable.outline_format_size_icon,
-                    title    = "Large Text",
-                    subtitle = "Increase font size app-wide",
+                    title    = "Text Size",
+                    subtitle = "",
                     trailing = {
-                        SettingsSwitch(checked = largeText, onCheckedChange = { largeText = it })
+                        TextSizeSelector(
+                            currentSize = textSize,
+                            onSelect = {
+                                textSize = it
+                                AppSettings.setTextSize(context, it)
+                            }
+                        )
                     }
                 )
                 RowDivider()
@@ -164,6 +198,94 @@ fun SettingsScreen() {
 
         item { Spacer(Modifier.height(24.dp)) }
     }
+    if (showDailyLimitDialog) {
+        DailyLimitDialog(
+            currentMinutes = dailyLimitMinutes,
+            onDismiss = {showDailyLimitDialog = false},
+            onConfirm = {
+                minutes ->
+                dailyLimitMinutes = minutes
+                AppSettings.setDailyLimitMinutes(context, minutes)
+                showDailyLimitDialog = false
+            }
+        )
+    }
+}
+//daily limit dialog
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DailyLimitDialog(
+    currentMinutes: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit,
+) {
+    var sliderValue by remember { mutableStateOf(currentMinutes.toFloat()) }
+    val snappedMinutes = (sliderValue / 15).toInt() * 15
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceColor,
+        title = {
+            Text("Daily Limit", color = TextPrimary, fontFamily = GildaDisplay, fontWeight = FontWeight.Bold)
+                },
+        text = {
+            Column {
+                Text(
+                    text = formatMs(snappedMinutes * 60_000L),
+                    fontFamily = Comfortaa,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AccentGreen,
+                )
+                Spacer(Modifier.height(12.dp))
+                Slider(
+                    value = sliderValue,
+                    onValueChange = { sliderValue = it },
+                    valueRange = 30f..480f,
+                    steps = ((480 - 30) / 15) - 1,
+                    colors = SliderDefaults.colors(
+                        thumbColor = AccentGreen,
+                        activeTrackColor = AccentGreen,
+                        inactiveTrackColor = Color(0xFF2C2E34),
+                    )
+                )
+                Text("30 min - 8 hrs, in 15-min steps", fontFamily = Comfortaa, fontSize = 11.sp, color = TextSecondary)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(snappedMinutes) }) {
+                Text("Save",fontFamily = Comfortaa, color = AccentGreen, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel",fontFamily = Comfortaa, color = TextSecondary)
+            }
+        }
+    )
+}
+//text size selector
+@Composable
+fun TextSizeSelector(currentSize: TextSizeOption, onSelect: (TextSizeOption) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        TextSizeOption.entries.forEach{ option ->
+            val selected = option == currentSize
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if(selected) AccentGreen else Color(0xFF2C2E34))
+                    .clickable { onSelect(option) }
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+            ) {
+                Text(
+                    text = option.label,
+                    fontSize = 11.sp,
+                    color = if (selected) Color.White else TextSecondary,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
 }
 
 //label sections
@@ -172,11 +294,12 @@ fun SettingsScreen() {
 fun SectionLabel(text: String) {
     Text(
         text       = text,
+        fontFamily = GildaDisplay,
         fontSize   = 11.sp,
         fontWeight = FontWeight.SemiBold,
         color      = TextSecondary,
-        letterSpacing = 1.5.sp,
-        modifier   = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 8.dp)
+        letterSpacing = 1.8.sp,
+        modifier   = Modifier.padding(start = 20.dp, top = 32.dp, bottom = 10.dp)
     )
 }
 
@@ -233,10 +356,10 @@ fun SettingsRow(
         )
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = titleColor)
+            Text(title, fontSize = 14.sp, fontFamily = Comfortaa, fontWeight = FontWeight.Medium, color = titleColor)
             if (subtitle != null) {
                 Spacer(Modifier.height(2.dp))
-                Text(subtitle, fontSize = 11.sp, color = TextSecondary)
+                Text(subtitle, fontSize = 11.sp, fontFamily = Comfortaa, color = TextSecondary)
             }
         }
 

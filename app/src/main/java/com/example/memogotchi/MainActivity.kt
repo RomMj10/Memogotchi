@@ -1,11 +1,14 @@
 package com.example.memogotchi
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,34 +28,55 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.ui.page.AppSettings
 import com.example.memogotchi.ui.page.DayData
 import com.example.memogotchi.ui.page.PetScreen
 import com.example.memogotchi.ui.theme.MemogotchiTheme
 import com.example.memogotchi.ui.page.ScreenTimeScreen
 import com.example.memogotchi.ui.page.TasksScreen
 import com.example.memogotchi.ui.page.SettingsScreen
+import com.example.memogotchi.ui.page.createNotificationChannel
 import com.example.memogotchi.ui.page.getBatteryLevel
 import com.example.memogotchi.ui.page.hasUsageStatsPermission
 import com.example.memogotchi.ui.page.loadWeekData
+import com.example.memogotchi.ui.page.maybeSendHealthAlert
 import com.example.memogotchi.ui.page.petStateFromScreenTime
+import com.example.memogotchi.ui.theme.GildaDisplay
 import java.util.Calendar
 
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+    @androidx.annotation.RequiresPermission(android.Manifest.permission.POST_NOTIFICATIONS)
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        AppSettings.init(this)
+        createNotificationChannel(this)
+
         setContent {
            val windowSizeClass = calculateWindowSizeClass(this)
+
+            val baseDensity = LocalDensity.current
+            val scaledDensity = remember(AppSettings.textSize, baseDensity) {
+                Density(
+                    density = baseDensity.density,
+                    fontScale = baseDensity.fontScale* AppSettings.textSize.scale
+                )
+            }
             MemogotchiTheme {
-                MainShell(windowSizeClass)
+                CompositionLocalProvider(LocalDensity provides scaledDensity) {
+                    MainShell(windowSizeClass)
+                }
             }
         }
     }
@@ -71,6 +95,7 @@ enum class NavTab(val label: String, val iconRes: Int) {
 }
 
 @SuppressLint("RememberReturnType")
+@androidx.annotation.RequiresPermission(android.Manifest.permission.POST_NOTIFICATIONS)
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun MainShell(windowSizeClass: WindowSizeClass) {
@@ -86,9 +111,22 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     val today = weekData.lastOrNull()
     val petState = remember(today) { petStateFromScreenTime(today?.totalMs ?: 0L, hourNow) }
 
+    val notifPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* no-op: alerts simply won't show if denied */ }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
     LaunchedEffect(hasPermission) {
         if (hasPermission) {
             weekData = loadWeekData(context)
+            weekData.lastOrNull()?.let  { day ->
+                maybeSendHealthAlert(context, day.totalMs, AppSettings.dailyLimitMinutes)
+            }
         }
     }
 
@@ -148,6 +186,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         Spacer(Modifier.height(2.dp))
                         Text(
                             text = tab.label,
+                            fontFamily = GildaDisplay,
                             fontSize = 10.sp,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             color = if (isSelected) AccentGreen else TextSecondary

@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.airbnb.lottie.compose.*
 import com.example.memogotchi.R
+import com.example.memogotchi.ui.theme.Comfortaa
+import com.example.memogotchi.ui.theme.GildaDisplay
 import kotlinx.coroutines.delay
 import java.util.Calendar
 
@@ -151,6 +153,7 @@ fun TopBar(onClose: () -> Unit, onSettings: () -> Unit) {
         ) {
             Text(
                 text       = "DEEP FOCUS",
+                fontFamily = GildaDisplay,
                 fontSize   = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color      = AccentDark,
@@ -230,16 +233,17 @@ fun SpeechBubbleRow(petState: PetState, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(50.dp))
-            .border(1.5.dp, AccentDark, RoundedCornerShape(50.dp))
-            .background(BgColor)
+            .border(1.5.dp, Color(0xFFFFFFFF), RoundedCornerShape(50.dp))
+            .background(Color(0xFFFFFFFF))
             .padding(horizontal = 24.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text       = message,
             fontSize   = 14.sp,
+            fontFamily = Comfortaa,
             fontWeight = FontWeight.Medium,
-            color      = AccentDark,
+            color      = BgColor,
         )
     }
 }
@@ -270,6 +274,7 @@ fun TimerDisplay(
         Text(
             text       = timeStr,
             fontSize   = 56.sp,
+            fontFamily = GildaDisplay,
             fontWeight = FontWeight.Black,
             color      = TimerColor,
             letterSpacing = (-2).sp,
@@ -282,6 +287,7 @@ fun TimerDisplay(
 
         Text(
             text          = "STAY OFF YOUR PHONE",
+            fontFamily = GildaDisplay,
             fontSize      = 11.sp,
             fontWeight    = FontWeight.SemiBold,
             color         = TextLight,
@@ -342,6 +348,7 @@ fun StatItem(label: String, value: String, accent: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text       = value,
+            fontFamily = GildaDisplay,
             fontSize   = 18.sp,
             fontWeight = FontWeight.Bold,
             color      = if (accent) Accent else AccentDark,
@@ -349,6 +356,7 @@ fun StatItem(label: String, value: String, accent: Boolean) {
         Spacer(Modifier.height(2.dp))
         Text(
             text          = label,
+            fontFamily = Comfortaa,
             fontSize      = 9.sp,
             fontWeight    = FontWeight.Medium,
             color         = TextLight,
