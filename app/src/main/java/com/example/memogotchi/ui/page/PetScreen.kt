@@ -43,27 +43,18 @@ private val TimerColor    = Color(0xFFE6FCFF)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PetScreen(
-    today: DayData?     = null,
-    petState: PetState  = PetState(),
-    xpEarned: Int       = 0,
-    batteryLevel: Int   = 0,
-    onClose: () -> Unit = {},
-    onSettings: () -> Unit = {},
+today: DayData?          = null,
+petState: PetState       = PetState(),
+xpEarned: Int            = 0,
+batteryLevel: Int        = 0,
+elapsedSeconds: Long     = 0L,
+timerRunning: Boolean    = true,
+onTimerToggle: () -> Unit = {},
+onClose: () -> Unit      = {},
+onSettings: () -> Unit   = {},
 ) {
-    val totalHours  = remember(today) { (today?.totalMs ?: 0L) / 3_600_000.0 }
-    val dailyLabel  = remember(totalHours) { formatDailyTotal(totalHours) }
-    val hourNow     = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
-
-    // Timer state — counts up seconds while screen is open
-    var elapsedSeconds by remember { mutableLongStateOf(0L) }
-    var timerRunning   by remember { mutableStateOf(true) }
-
-    LaunchedEffect(timerRunning) {
-        while (timerRunning) {
-            delay(1000L)
-            elapsedSeconds++
-        }
-    }
+    val totalHours = remember(today) { (today?.totalMs ?: 0L) / 3_600_000.0 }
+    val dailyLabel = remember(totalHours) { formatDailyTotal(totalHours) }
 
     // Target: goal is to stay off phone for 30 min = 1800s (adjustable)
     val targetSeconds = 1800L
@@ -113,7 +104,7 @@ fun PetScreen(
             TimerDisplay(
                 elapsedSeconds = elapsedSeconds,
                 progress       = progress,
-                onTap          = { timerRunning = !timerRunning },
+                onTap = { onTimerToggle() },
             )
 
             Spacer(Modifier.weight(1f))
