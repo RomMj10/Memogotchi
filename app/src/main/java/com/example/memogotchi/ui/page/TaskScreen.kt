@@ -55,7 +55,7 @@ private fun categoryColor(cat: AppCategory) = when (cat) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TasksScreen(today: DayData? = null) {
+fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
     val context      = LocalContext.current
     val batteryLevel = remember { getBatteryLevel(context) }
     val totalHours   = remember(today) { (today?.totalMs ?: 0L) / 3_600_000.0 }
@@ -65,23 +65,47 @@ fun TasksScreen(today: DayData? = null) {
         if (h > 0) "${h}h ${m}m" else "${m}m"
     }
 
+    val dateKey = remember {
+        java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+    }
+
     var tasks by remember { mutableStateOf<List<AnalogTask>>(emptyList()) }
+    var taskSource by remember { mutableStateOf("rule") }
     val milestones = remember(totalHours) { generateMilestones(totalHours) }
 
-    LaunchedEffect(today, batteryLevel) {
-        val categorized = generateAnalogTasks(context, today, batteryLevel)
-        tasks = categorized
+    LaunchedEffect(today, batteryLevel, dateKey) {
+        // 1. Use cached tasks for today if they exist (persisted across sessions)
+        val cached = TaskStore.loadTasksForDate(context, dateKey)
+        if (cached != null && cached.isNotEmpty()) {
+            tasks = cached
+            taskSource = TaskStore.getSourceForDate(context, dateKey) ?: "rule"
+            return@LaunchedEffect
+        }
 
-        val cats = today?.apps?.take(10)?.map { app ->
-            CategorizedApp(
-                info = app,
-                category = getAppCategory(context, app.packageName),
-                hours = app.totalTimeMs / 3_600_000.0,
-            )
-        } ?: emptyList()
+        // 2. Rule-based fallback first (instant, works offline)
+        val ruleTasks = generateAnalogTasks(context, today, batteryLevel)
+        tasks = ruleTasks
+        taskSource = "rule"
+        TaskStore.saveTasksForDate(context, dateKey, ruleTasks, "rule")
 
-        val geminiTasks = generateTasksWithGemini(today, batteryLevel, cats)
-        if (geminiTasks.isNotEmpty()) tasks = geminiTasks
+        // 3. If online, upgrade with Gemini using full usage history + personalization
+        if (isNetworkAvailable(context)) {
+            val cats = today?.apps?.take(10)?.map { app ->
+                CategorizedApp(
+                    info = app,
+                    category = getAppCategory(context, app.packageName),
+                    hours = app.totalTimeMs / 3_600_000.0,
+                )
+            } ?: emptyList()
+
+            val completedHistory = TaskStore.getCompletedHistory(context)
+            val geminiTasks = generateTasksWithGemini(weekData, batteryLevel, cats, completedHistory)
+            if (geminiTasks.isNotEmpty()) {
+                tasks = geminiTasks
+                taskSource = "gemini"
+                TaskStore.saveTasksForDate(context, dateKey, geminiTasks, "gemini")
+            }
+        }
     }
 
     LazyColumn(
@@ -90,7 +114,6 @@ fun TasksScreen(today: DayData? = null) {
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
 
-        // ── Header stats card ─────────────────────────────────────────────
         item {
             HeaderCard(
                 taskCount       = tasks.size,
@@ -99,10 +122,7 @@ fun TasksScreen(today: DayData? = null) {
             )
         }
 
-        // ── Analog Tasks section ──────────────────────────────────────────
-        item {
-            SectionHeader(title = "Analog Tasks")
-        }
+        item { SectionHeader(title = "Analog Tasks") }
 
         if (tasks.isEmpty()) {
             item {
@@ -111,7 +131,7 @@ fun TasksScreen(today: DayData? = null) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "No tasks yet — use your phone a bit more to trigger suggestions 🌱",
+                        "No tasks yet, suggestions are generated the more you use your phone. 🌱",
                         color    = TextSecondary,
                         fontFamily = GildaDisplay,
                         fontSize = 13.sp,
@@ -124,16 +144,32 @@ fun TasksScreen(today: DayData? = null) {
                 TaskCard(
                     task     = task,
                     onToggle = { toggled ->
-                        tasks = tasks.map { if (it.id == toggled.id) it.copy(isDone = !it.isDone) else it }
+                        val newDone = !toggled.isDone
+                        tasks = tasks.map { if (it.id == toggled.id) it.copy(isDone = newDone) else it }
+                        TaskStore.updateTaskDone(context, dateKey, toggled.id, newDone)
+
+                        if (newDone) {
+                            TaskStore.addCompletedTask(
+                                context,
+                                CompletedTaskRecord(
+                                    id = toggled.id,
+                                    title = toggled.title,
+                                    category = toggled.category,
+                                    durationMinutes = toggled.durationMinutes,
+                                    source = taskSource,
+                                    completedAtMs = System.currentTimeMillis(),
+                                    dateLabel = dateKey,
+                                )
+                            )
+                        } else {
+                            TaskStore.removeCompletedTask(context, toggled.id, dateKey)
+                        }
                     }
                 )
             }
         }
 
-        // ── Milestones section ────────────────────────────────────────────
-        item {
-            SectionHeader(title = "Milestones")
-        }
+        item { SectionHeader(title = "Milestones") }
 
         items(milestones, key = { it.id }) { milestone ->
             MilestoneRow(milestone = milestone)
@@ -142,7 +178,6 @@ fun TasksScreen(today: DayData? = null) {
         item { Spacer(Modifier.height(24.dp)) }
     }
 }
-
 // ════════════════════════════════════════════════════════════════════════════
 //  HEADER CARD
 // ════════════════════════════════════════════════════════════════════════════
@@ -355,7 +390,6 @@ fun MilestoneRow(milestone: Milestone) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Emoji badge
             Box(
                 modifier        = Modifier
                     .size(38.dp)

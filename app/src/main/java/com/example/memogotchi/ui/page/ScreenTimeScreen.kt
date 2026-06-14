@@ -3,12 +3,10 @@ package com.example.memogotchi.ui.page
 import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Process
-import android.provider.Settings
 import androidx.annotation.RequiresApi
 import android.app.usage.UsageEvents
 import androidx.compose.animation.animateColorAsState
@@ -195,15 +193,14 @@ suspend fun loadWeekData(context: Context): List<DayData> = withContext(Dispatch
 
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
-fun ScreenTimeScreen(windowSizeClass: WindowSizeClass? = null) {
-    val context = LocalContext.current
-    var hasPermission by remember { mutableStateOf(context.hasUsageStatsPermission()) }
-    var weekData      by remember { mutableStateOf<List<DayData>>(emptyList()) }
-    var isLoading     by remember { mutableStateOf(false) }
-
-    LaunchedEffect(hasPermission) {
-        if (hasPermission) { isLoading = true; weekData = loadWeekData(context); isLoading = false }
-    }
+fun ScreenTimeScreen(
+    windowSizeClass: WindowSizeClass? = null,
+    weekData: List<DayData> = emptyList(),
+    isLoading: Boolean = false,
+    hasPermission: Boolean = false,
+    onGrantPermission: () -> Unit = {},
+    onRefreshPermission: () -> Unit = {},
+) {
 
     val today       = weekData.lastOrNull()
     val hourNow     = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
@@ -213,8 +210,8 @@ fun ScreenTimeScreen(windowSizeClass: WindowSizeClass? = null) {
     Box(modifier = Modifier.fillMaxSize().background(BgColor)) {
         when {
             !hasPermission -> PermissionScreen(
-                onGrant   = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }) },
-                onRefresh = { hasPermission = context.hasUsageStatsPermission() }
+                onGrant   = onGrantPermission,
+                onRefresh = onRefreshPermission
             )
             isLoading -> CircularProgressIndicator(color = AccentGreen, modifier = Modifier.align(Alignment.Center))
             isWide    -> TabletLayout(weekData = weekData, petState = petState)
@@ -322,20 +319,6 @@ fun TabletLayout(weekData: List<DayData>, petState: PetState) {
         }
     }
 }
-
-// ════════════════════════════════════════════════════════════════════════════
-//  PET PLACEHOLDER
-//  ─────────────────────────────────────────────────────────────────────────
-//  When you have Rive ready, replace the inner Box marked TODO with:
-//
-//    RiveAnimation(
-//        resId          = R.raw.memogotchi,
-//        stateMachineName = "PetController",
-//        modifier       = Modifier.size(160.dp),
-//        update         = { it.setBooleanState("PetController", petState.mood.name, true) }
-//    )
-// ════════════════════════════════════════════════════════════════════════════
-
 @Composable
 fun PetPlaceholder(petState: PetState, modifier: Modifier = Modifier) {
 
@@ -358,7 +341,6 @@ fun PetPlaceholder(petState: PetState, modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(modifier = Modifier.height(64.dp))
-            // Speech bubble (only when there's a message)
             petState.speechBubble?.let { msg ->
                 SpeechBubble(text = msg)
                 Spacer(modifier = Modifier.height(8.dp))

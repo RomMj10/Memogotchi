@@ -4,6 +4,8 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
+import android.content.Intent
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -54,8 +56,8 @@ import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
-    @androidx.annotation.RequiresPermission(android.Manifest.permission.POST_NOTIFICATIONS)
     @RequiresApi(Build.VERSION_CODES.Q)
+    @androidx.annotation.RequiresPermission(android.Manifest.permission.POST_NOTIFICATIONS)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -103,6 +105,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     val batteryLevel = remember { getBatteryLevel(context) }
     var currentTab by remember { mutableStateOf(NavTab.PET) }
     var weekData by remember { mutableStateOf<List<DayData>>(emptyList()) }
+    var isLoadingWeekData by remember { mutableStateOf(false) }
     var hasPermission by remember {mutableStateOf(context.hasUsageStatsPermission()) }
     val virtualPoints  = 0
     val xpEarned = 0
@@ -123,15 +126,16 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
 
     LaunchedEffect(hasPermission) {
         if (hasPermission) {
+            isLoadingWeekData = true
             weekData = loadWeekData(context)
-            weekData.lastOrNull()?.let  { day ->
+            isLoadingWeekData = false
+            weekData.lastOrNull()?.let { day ->
                 maybeSendHealthAlert(context, day.totalMs, AppSettings.dailyLimitMinutes)
             }
         }
     }
 
     Box(modifier = Modifier.fillMaxSize().background(BgColor)) {
-        // Page content — leaves room for nav bar
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -140,13 +144,24 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
 
             when (currentTab) {
                 NavTab.PET         -> PetScreen(
-                    today = weekData.lastOrNull(),
+                    today = today,
                     petState = petState,
                     xpEarned = xpEarned,
                     batteryLevel = batteryLevel
                 )
-                NavTab.SCREEN_TIME -> ScreenTimeScreen(windowSizeClass)
-                NavTab.TASKS       -> TasksScreen(today = weekData.lastOrNull())
+                NavTab.SCREEN_TIME -> ScreenTimeScreen(
+                    windowSizeClass = windowSizeClass,
+                    weekData = weekData,
+                    isLoading = isLoadingWeekData,
+                    hasPermission = hasPermission,
+                    onGrantPermission = {
+                        context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        })
+                    },
+                    onRefreshPermission = { hasPermission = context.hasUsageStatsPermission() }
+                )
+                NavTab.TASKS       -> TasksScreen(today = weekData.lastOrNull(), weekData = weekData)
                 NavTab.SETTINGS    -> SettingsScreen()
             }
         }
