@@ -15,6 +15,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
@@ -36,12 +38,15 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.memogotchi.ui.page.AppSettings
+import com.example.memogotchi.ui.page.BatteryState
 import com.example.memogotchi.ui.page.DayData
+import com.example.memogotchi.ui.page.DiaryEntry
 import com.example.memogotchi.ui.page.PetScreen
 import com.example.memogotchi.ui.theme.MemogotchiTheme
 import com.example.memogotchi.ui.page.ScreenTimeScreen
 import com.example.memogotchi.ui.page.TasksScreen
 import com.example.memogotchi.ui.page.SettingsScreen
+import com.example.memogotchi.ui.page.WellnessScreen
 import com.example.memogotchi.ui.page.createNotificationChannel
 import com.example.memogotchi.ui.page.getBatteryLevel
 import com.example.memogotchi.ui.page.hasUsageStatsPermission
@@ -50,6 +55,7 @@ import com.example.memogotchi.ui.page.maybeSendHealthAlert
 import com.example.memogotchi.ui.page.petStateFromScreenTime
 import com.example.memogotchi.ui.theme.GildaDisplay
 import java.util.Calendar
+import kotlinx.coroutines.delay
 
 
 class MainActivity : ComponentActivity() {
@@ -59,18 +65,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
         AppSettings.init(this)
         createNotificationChannel(this)
 
         setContent {
-           val windowSizeClass = calculateWindowSizeClass(this)
-
+            val windowSizeClass = calculateWindowSizeClass(this)
             val baseDensity = LocalDensity.current
             val scaledDensity = remember(AppSettings.textSize, baseDensity) {
                 Density(
                     density = baseDensity.density,
-                    fontScale = baseDensity.fontScale* AppSettings.textSize.scale
+                    fontScale = baseDensity.fontScale * AppSettings.textSize.scale
                 )
             }
             MemogotchiTheme {
@@ -82,16 +87,16 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val BgColor      = Color(0xFF16171C)
-private val SurfaceColor = Color(0xFF1F2125)
-private val AccentGreen  = Color(0xFF77C59D)
+private val BgColor       = Color(0xFF16171C)
+private val SurfaceColor  = Color(0xFF1F2125)
+private val AccentGreen   = Color(0xFF77C59D)
 private val TextSecondary = Color(0xFF888888)
 
 enum class NavTab(val label: String, val iconRes: Int) {
-    PET("Pet", R.drawable.ic_nav_pet),
+    PET("Pet",           R.drawable.ic_nav_pet),
+    WELLNESS("Wellness", R.drawable.ic_nav_pet),        // swap icon when ready
     SCREEN_TIME("Screen Time", R.drawable.ic_nav_screentime),
-    TASKS("Tasks", R.drawable.ic_nav_tasks),
-    SETTINGS("Settings", R.drawable.ic_nav_settings)
+    TASKS("Tasks",       R.drawable.ic_nav_tasks),
 }
 
 @SuppressLint("RememberReturnType")
@@ -101,19 +106,41 @@ enum class NavTab(val label: String, val iconRes: Int) {
 fun MainShell(windowSizeClass: WindowSizeClass) {
     val context = LocalContext.current
     val batteryLevel = remember { getBatteryLevel(context) }
-    var currentTab by remember { mutableStateOf(NavTab.PET) }
-    var weekData by remember { mutableStateOf<List<DayData>>(emptyList()) }
-    var hasPermission by remember {mutableStateOf(context.hasUsageStatsPermission()) }
-    val virtualPoints  = 0
+    var currentTab   by remember { mutableStateOf(NavTab.PET) }
+    var showSettings by remember { mutableStateOf(false) }
+    var weekData     by remember { mutableStateOf<List<DayData>>(emptyList()) }
+    var hasPermission by remember { mutableStateOf(context.hasUsageStatsPermission()) }
     val xpEarned = 0
 
-    val hourNow = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY)}
-    val today = weekData.lastOrNull()
+
+    // ── Wellness state hoisted here so it survives tab switches ──────────
+    val wellnessStates = remember {
+        mutableStateListOf(
+            BatteryState("emotional",  "Emotional",  Color(0xFF5C2A3A), Color(0xFFD4537E)),
+            BatteryState("social",     "Social",     Color(0xFF2E2A5C), Color(0xFF7C6FE0)),
+            BatteryState("physical",   "Physical",   Color(0xFF0D3D2E), Color(0xFF1D9E75)),
+            BatteryState("motivation", "Motivation", Color(0xFF4A2E05), Color(0xFFD4920A)),
+        )
+    }
+    val wellnessSliders = remember { mutableStateListOf(50f, 50f, 50f, 50f) }
+    val diaryEntries    = remember { mutableStateListOf<DiaryEntry>() }
+    // ── Pet timer state hoisted here so it survives tab switches ─────────
+    var elapsedSeconds by remember { mutableLongStateOf(0L) }
+    var timerRunning   by remember { mutableStateOf(true) }
+    LaunchedEffect(timerRunning) {
+        while (timerRunning) {
+            delay(1000L)
+            elapsedSeconds++
+        }
+    }
+
+    val hourNow  = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
+    val today    = weekData.lastOrNull()
     val petState = remember(today) { petStateFromScreenTime(today?.totalMs ?: 0L, hourNow) }
 
     val notifPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* no-op: alerts simply won't show if denied */ }
+    ) { }
 
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -124,34 +151,70 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     LaunchedEffect(hasPermission) {
         if (hasPermission) {
             weekData = loadWeekData(context)
-            weekData.lastOrNull()?.let  { day ->
+            weekData.lastOrNull()?.let { day ->
                 maybeSendHealthAlert(context, day.totalMs, AppSettings.dailyLimitMinutes)
             }
         }
     }
 
     Box(modifier = Modifier.fillMaxSize().background(BgColor)) {
-        // Page content — leaves room for nav bar
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .padding(bottom = 72.dp)
         ) {
-
-            when (currentTab) {
-                NavTab.PET         -> PetScreen(
-                    today = weekData.lastOrNull(),
-                    petState = petState,
-                    xpEarned = xpEarned,
-                    batteryLevel = batteryLevel
-                )
-                NavTab.SCREEN_TIME -> ScreenTimeScreen(windowSizeClass)
-                NavTab.TASKS       -> TasksScreen(today = weekData.lastOrNull())
-                NavTab.SETTINGS    -> SettingsScreen()
+            if (showSettings) {
+                SettingsScreen()
+            } else {
+                when (currentTab) {
+                    NavTab.PET -> PetScreen(
+                        today          = weekData.lastOrNull(),
+                        petState       = petState,
+                        xpEarned       = xpEarned,
+                        batteryLevel   = batteryLevel,
+                        elapsedSeconds = elapsedSeconds,
+                        timerRunning   = timerRunning,
+                        onTimerToggle  = { timerRunning = !timerRunning }
+                    )
+                    NavTab.WELLNESS    -> WellnessScreen(
+                        states       = wellnessStates,
+                        sliderValues = wellnessSliders,
+                        diaryEntries = diaryEntries
+                    )
+                    NavTab.SCREEN_TIME -> ScreenTimeScreen(windowSizeClass)
+                    NavTab.TASKS       -> TasksScreen(today = weekData.lastOrNull())
+                }
             }
         }
 
-        // Bottom nav bar
+        // Gear icon on Pet tab
+        if (currentTab == NavTab.PET && !showSettings) {
+            IconButton(
+                onClick = { showSettings = true },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 12.dp, end = 12.dp)
+            ) {
+                Icon(Icons.Outlined.Settings, contentDescription = "Settings",
+                    tint = TextSecondary, modifier = Modifier.size(22.dp))
+            }
+        }
+
+        // Back from settings
+        if (showSettings) {
+            TextButton(
+                onClick = { showSettings = false },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = 12.dp, start = 4.dp)
+            ) {
+                Text("← Back", color = AccentGreen, fontSize = 14.sp)
+            }
+        }
+
+        // Bottom nav
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -168,13 +231,16 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 NavTab.entries.forEach { tab ->
-                    val isSelected = tab == currentTab
+                    val isSelected = tab == currentTab && !showSettings
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
-                            .clickable { currentTab = tab }
+                            .clickable {
+                                showSettings = false
+                                currentTab   = tab
+                            }
                             .padding(vertical = 8.dp)
                     ) {
                         Image(
@@ -204,4 +270,3 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
 fun ScreenTimeScreenPage(modifier: Modifier = Modifier) {
     PetScreen()
 }
-
