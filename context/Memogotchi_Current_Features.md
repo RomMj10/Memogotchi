@@ -1,7 +1,6 @@
 # Memogotchi Current Features & Status Reference
 
-*Updated after Wellness Page implementation*
-
+LATEST UPDATE
 ---
 
 ## 1. Feature Status Overview
