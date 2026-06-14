@@ -10,7 +10,7 @@ Unlike the popular tamagotchi / virtual pets that thrives on attention, Memo wea
 ## Authors
 
 - [@RomMj10](https://www.github.com/RomMj10)
-
+- [@Ellyxr](https://www.github.com/Ellyxr)
 
 ## Environment Variables
 
