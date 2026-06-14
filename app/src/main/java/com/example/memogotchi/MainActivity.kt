@@ -96,7 +96,7 @@ private val TextSecondary = Color(0xFF888888)
 
 enum class NavTab(val label: String, val iconRes: Int) {
     PET("Pet",           R.drawable.ic_nav_pet),
-    WELLNESS("Wellness", R.drawable.ic_nav_pet),        // swap icon when ready
+    WELLNESS("Wellness", R.drawable.ic_nav_wellness),
     SCREEN_TIME("Screen Time", R.drawable.ic_nav_screentime),
     TASKS("Tasks",       R.drawable.ic_nav_tasks),
 }
@@ -108,10 +108,7 @@ enum class NavTab(val label: String, val iconRes: Int) {
 fun MainShell(windowSizeClass: WindowSizeClass) {
     val context = LocalContext.current
     val batteryLevel = remember { getBatteryLevel(context) }
-    var currentTab   by remember { mutableStateOf(NavTab.PET) }
     var showSettings by remember { mutableStateOf(false) }
-    var weekData     by remember { mutableStateOf<List<DayData>>(emptyList()) }
-    var hasPermission by remember { mutableStateOf(context.hasUsageStatsPermission()) }
     var currentTab by remember { mutableStateOf(NavTab.PET) }
     var weekData by remember { mutableStateOf<List<DayData>>(emptyList()) }
     var isLoadingWeekData by remember { mutableStateOf(false) }
@@ -134,6 +131,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     // ── Pet timer state hoisted here so it survives tab switches ─────────
     var elapsedSeconds by remember { mutableLongStateOf(0L) }
     var timerRunning   by remember { mutableStateOf(true) }
+
     LaunchedEffect(timerRunning) {
         while (timerRunning) {
             delay(1000L)
@@ -192,8 +190,19 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         sliderValues = wellnessSliders,
                         diaryEntries = diaryEntries
                     )
-                    NavTab.SCREEN_TIME -> ScreenTimeScreen(windowSizeClass)
-                    NavTab.TASKS       -> TasksScreen(today = weekData.lastOrNull())
+                    NavTab.SCREEN_TIME -> ScreenTimeScreen(
+                        windowSizeClass = windowSizeClass,
+                        weekData = weekData,
+                        isLoading = isLoadingWeekData,
+                        hasPermission = hasPermission,
+                        onGrantPermission = {
+                            context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            })
+                        },
+                        onRefreshPermission = { hasPermission = context.hasUsageStatsPermission() }
+                    )
+                    NavTab.TASKS       -> TasksScreen(today = weekData.lastOrNull(), weekData = weekData)
                 }
             }
         }
@@ -205,9 +214,13 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(top = 12.dp, end = 12.dp)
+                    .offset(x=(-12).dp,y=24.dp)
             ) {
                 Icon(Icons.Outlined.Settings, contentDescription = "Settings",
-                    tint = TextSecondary, modifier = Modifier.size(22.dp))
+                    tint = TextSecondary, modifier = Modifier
+                        .size(22.dp)
+
+                )
             }
         }
 
@@ -217,30 +230,10 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 onClick = { showSettings = false },
                 modifier = Modifier
                     .align(Alignment.TopStart)
+                    .offset(x = 12.dp, y = 24.dp)
                     .padding(top = 12.dp, start = 4.dp)
             ) {
-                Text("← Back", color = AccentGreen, fontSize = 14.sp)
-            when (currentTab) {
-                NavTab.PET         -> PetScreen(
-                    today = today,
-                    petState = petState,
-                    xpEarned = xpEarned,
-                    batteryLevel = batteryLevel
-                )
-                NavTab.SCREEN_TIME -> ScreenTimeScreen(
-                    windowSizeClass = windowSizeClass,
-                    weekData = weekData,
-                    isLoading = isLoadingWeekData,
-                    hasPermission = hasPermission,
-                    onGrantPermission = {
-                        context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        })
-                    },
-                    onRefreshPermission = { hasPermission = context.hasUsageStatsPermission() }
-                )
-                NavTab.TASKS       -> TasksScreen(today = weekData.lastOrNull(), weekData = weekData)
-                NavTab.SETTINGS    -> SettingsScreen()
+                Text("< Back", color = AccentGreen, fontFamily = GildaDisplay, fontSize = 16.sp)
             }
         }
 
@@ -297,6 +290,6 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
 @Preview
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
-fun ScreenTimeScreenPage(modifier: Modifier = Modifier) {
+fun PreviewPage(modifier: Modifier = Modifier) {
     PetScreen()
 }

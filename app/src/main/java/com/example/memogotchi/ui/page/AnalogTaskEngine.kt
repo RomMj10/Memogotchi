@@ -56,7 +56,6 @@ fun getAppCategory(context: Context, packageName: String): AppCategory {
         val pm   = context.packageManager
         val info = pm.getApplicationInfo(packageName, 0)
 
-        // Try PackageManager category first (API 26+)
         when (info.category) {
             ApplicationInfo.CATEGORY_SOCIAL      -> AppCategory.SOCIAL
             ApplicationInfo.CATEGORY_GAME        -> AppCategory.GAMES
