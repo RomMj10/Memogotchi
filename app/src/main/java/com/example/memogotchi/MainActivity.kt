@@ -44,6 +44,7 @@ import com.example.memogotchi.ui.page.BatteryState
 import com.example.memogotchi.ui.page.DayData
 import com.example.memogotchi.ui.page.DiaryEntry
 import com.example.memogotchi.ui.page.PetScreen
+import com.example.memogotchi.ui.page.PomodoroStore
 import com.example.memogotchi.ui.theme.MemogotchiTheme
 import com.example.memogotchi.ui.page.ScreenTimeScreen
 import com.example.memogotchi.ui.page.TasksScreen
@@ -129,8 +130,8 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     val wellnessSliders = remember { mutableStateListOf(50f, 50f, 50f, 50f) }
     val diaryEntries    = remember { mutableStateListOf<DiaryEntry>() }
     // ── Pet timer state hoisted here so it survives tab switches ─────────
-    var elapsedSeconds by remember { mutableLongStateOf(0L) }
-    var timerRunning   by remember { mutableStateOf(true) }
+    var elapsedSeconds by remember { mutableLongStateOf(PomodoroStore.loadElapsedSeconds(context)) }
+    var timerRunning   by remember { mutableStateOf(PomodoroStore.isRunning(context)) }
 
     LaunchedEffect(timerRunning) {
         while (timerRunning) {
@@ -155,11 +156,15 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
 
     LaunchedEffect(hasPermission) {
         if (hasPermission) {
-            isLoadingWeekData = true
-            weekData = loadWeekData(context)
-            isLoadingWeekData = false
-            weekData.lastOrNull()?.let { day ->
-                maybeSendHealthAlert(context, day.totalMs, AppSettings.dailyLimitMinutes)
+            while (true) {
+                if (weekData.isEmpty()) isLoadingWeekData = true
+                isLoadingWeekData = true
+                weekData = loadWeekData(context)
+                isLoadingWeekData = false
+                weekData.lastOrNull()?.let { day ->
+                    maybeSendHealthAlert(context, day.totalMs, AppSettings.dailyLimitMinutes)
+                }
+                delay(60_000L)
             }
         }
     }
@@ -183,7 +188,15 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         batteryLevel   = batteryLevel,
                         elapsedSeconds = elapsedSeconds,
                         timerRunning   = timerRunning,
-                        onTimerToggle  = { timerRunning = !timerRunning }
+                        onTimerToggle  = {
+                            if (timerRunning) {
+                                PomodoroStore.pause(context, elapsedSeconds)
+                                timerRunning = false
+                            } else {
+                                PomodoroStore.start(context, elapsedSeconds)
+                                timerRunning = true
+                            }
+                        }
                     )
                     NavTab.WELLNESS    -> WellnessScreen(
                         states       = wellnessStates,
