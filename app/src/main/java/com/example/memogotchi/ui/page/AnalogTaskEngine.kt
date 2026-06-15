@@ -41,7 +41,7 @@ data class Milestone(
     val id: String,
     val title: String,
     val description: String,
-    val requiredHours: Double,   // threshold to unlock
+    val requiredHours: Double,
     val emoji: String,
     val isUnlocked: Boolean,
 )
@@ -56,7 +56,6 @@ fun getAppCategory(context: Context, packageName: String): AppCategory {
         val pm   = context.packageManager
         val info = pm.getApplicationInfo(packageName, 0)
 
-        // Try PackageManager category first (API 26+)
         when (info.category) {
             ApplicationInfo.CATEGORY_SOCIAL      -> AppCategory.SOCIAL
             ApplicationInfo.CATEGORY_GAME        -> AppCategory.GAMES
@@ -71,11 +70,11 @@ fun getAppCategory(context: Context, packageName: String): AppCategory {
 }
 
 private fun fallbackCategory(pkg: String): AppCategory {
-    val social        = listOf("instagram", "facebook", "twitter", "tiktok", "snapchat", "telegram", "whatsapp", "discord", "reddit", "linkedin", "pinterest", "tumblr","quora")
+    val social        = listOf("instagram", "facebook", "twitter", "tiktok", "snapchat", "telegram", "whatsapp", "discord", "reddit", "linkedin", "pinterest", "tumblr","quora","messenger")
     val games         = listOf("supercell", "king.com", "roblox", "mojang", "gameloft", "game", "clash", "candy", "puzzle", "chess")
     val entertainment = listOf("youtube", "netflix", "spotify", "twitch", "hulu", "disneyplus", "hbo", "prime", "music", "video", "stream")
     val browser       = listOf("chrome", "firefox", "opera", "brave", "edge", "browser", "samsung.internet", "vivaldi")
-    val productivity  = listOf("docs", "sheets", "gmail", "outlook", "notion", "slack", "zoom", "meet", "calendar", "drive", "office","gemini","chatgpt")
+    val productivity  = listOf("docs", "sheets", "gmail", "outlook", "notion", "slack", "zoom", "meet", "calendar", "drive", "office","gemini","chatgpt", "claude")
 
     return when {
         social.any        { pkg.contains(it, ignoreCase = true) } -> AppCategory.SOCIAL
@@ -83,7 +82,7 @@ private fun fallbackCategory(pkg: String): AppCategory {
         entertainment.any { pkg.contains(it, ignoreCase = true) } -> AppCategory.ENTERTAINMENT
         browser.any       { pkg.contains(it, ignoreCase = true) } -> AppCategory.BROWSER
         productivity.any  { pkg.contains(it, ignoreCase = true) } -> AppCategory.PRODUCTIVITY
-        else                                                       -> AppCategory.OTHER
+        else                                                      -> AppCategory.OTHER
     }
 }
 
@@ -169,7 +168,7 @@ fun generateAnalogTasks(
         tasks += AnalogTask(
             id              = "game_board",
             title           = "Play a board game or card game",
-            description     = "Challenge someone at home to a physical game — chess, cards, or anything analog.",
+            description     = "Challenge someone at home to a physical game e.g, chess, cards, or anything analog.",
             category        = AppCategory.GAMES,
             durationMinutes = 30,
             triggerReason   = "${formatHours(gameHours)} of gaming today",

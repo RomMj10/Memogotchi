@@ -4,6 +4,8 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
+import android.content.Intent
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -42,6 +44,7 @@ import com.example.memogotchi.ui.page.BatteryState
 import com.example.memogotchi.ui.page.DayData
 import com.example.memogotchi.ui.page.DiaryEntry
 import com.example.memogotchi.ui.page.PetScreen
+import com.example.memogotchi.ui.page.PomodoroStore
 import com.example.memogotchi.ui.theme.MemogotchiTheme
 import com.example.memogotchi.ui.page.ScreenTimeScreen
 import com.example.memogotchi.ui.page.TasksScreen
@@ -60,8 +63,8 @@ import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
-    @androidx.annotation.RequiresPermission(android.Manifest.permission.POST_NOTIFICATIONS)
     @RequiresApi(Build.VERSION_CODES.Q)
+    @androidx.annotation.RequiresPermission(android.Manifest.permission.POST_NOTIFICATIONS)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -94,7 +97,7 @@ private val TextSecondary = Color(0xFF888888)
 
 enum class NavTab(val label: String, val iconRes: Int) {
     PET("Pet",           R.drawable.ic_nav_pet),
-    WELLNESS("Wellness", R.drawable.ic_nav_pet),        // swap icon when ready
+    WELLNESS("Wellness", R.drawable.ic_nav_wellness),
     SCREEN_TIME("Screen Time", R.drawable.ic_nav_screentime),
     TASKS("Tasks",       R.drawable.ic_nav_tasks),
 }
@@ -106,10 +109,12 @@ enum class NavTab(val label: String, val iconRes: Int) {
 fun MainShell(windowSizeClass: WindowSizeClass) {
     val context = LocalContext.current
     val batteryLevel = remember { getBatteryLevel(context) }
-    var currentTab   by remember { mutableStateOf(NavTab.PET) }
     var showSettings by remember { mutableStateOf(false) }
-    var weekData     by remember { mutableStateOf<List<DayData>>(emptyList()) }
-    var hasPermission by remember { mutableStateOf(context.hasUsageStatsPermission()) }
+    var currentTab by remember { mutableStateOf(NavTab.PET) }
+    var weekData by remember { mutableStateOf<List<DayData>>(emptyList()) }
+    var isLoadingWeekData by remember { mutableStateOf(false) }
+    var hasPermission by remember {mutableStateOf(context.hasUsageStatsPermission()) }
+    val virtualPoints  = 0
     val xpEarned = 0
 
 
@@ -125,8 +130,9 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     val wellnessSliders = remember { mutableStateListOf(50f, 50f, 50f, 50f) }
     val diaryEntries    = remember { mutableStateListOf<DiaryEntry>() }
     // ── Pet timer state hoisted here so it survives tab switches ─────────
-    var elapsedSeconds by remember { mutableLongStateOf(0L) }
-    var timerRunning   by remember { mutableStateOf(true) }
+    var elapsedSeconds by remember { mutableLongStateOf(PomodoroStore.loadElapsedSeconds(context)) }
+    var timerRunning   by remember { mutableStateOf(PomodoroStore.isRunning(context)) }
+
     LaunchedEffect(timerRunning) {
         while (timerRunning) {
             delay(1000L)
@@ -150,9 +156,15 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
 
     LaunchedEffect(hasPermission) {
         if (hasPermission) {
-            weekData = loadWeekData(context)
-            weekData.lastOrNull()?.let { day ->
-                maybeSendHealthAlert(context, day.totalMs, AppSettings.dailyLimitMinutes)
+            while (true) {
+                if (weekData.isEmpty()) isLoadingWeekData = true
+                isLoadingWeekData = true
+                weekData = loadWeekData(context)
+                isLoadingWeekData = false
+                weekData.lastOrNull()?.let { day ->
+                    maybeSendHealthAlert(context, day.totalMs, AppSettings.dailyLimitMinutes)
+                }
+                delay(60_000L)
             }
         }
     }
@@ -176,15 +188,34 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         batteryLevel   = batteryLevel,
                         elapsedSeconds = elapsedSeconds,
                         timerRunning   = timerRunning,
-                        onTimerToggle  = { timerRunning = !timerRunning }
+                        onTimerToggle  = {
+                            if (timerRunning) {
+                                PomodoroStore.pause(context, elapsedSeconds)
+                                timerRunning = false
+                            } else {
+                                PomodoroStore.start(context, elapsedSeconds)
+                                timerRunning = true
+                            }
+                        }
                     )
                     NavTab.WELLNESS    -> WellnessScreen(
                         states       = wellnessStates,
                         sliderValues = wellnessSliders,
                         diaryEntries = diaryEntries
                     )
-                    NavTab.SCREEN_TIME -> ScreenTimeScreen(windowSizeClass)
-                    NavTab.TASKS       -> TasksScreen(today = weekData.lastOrNull())
+                    NavTab.SCREEN_TIME -> ScreenTimeScreen(
+                        windowSizeClass = windowSizeClass,
+                        weekData = weekData,
+                        isLoading = isLoadingWeekData,
+                        hasPermission = hasPermission,
+                        onGrantPermission = {
+                            context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            })
+                        },
+                        onRefreshPermission = { hasPermission = context.hasUsageStatsPermission() }
+                    )
+                    NavTab.TASKS       -> TasksScreen(today = weekData.lastOrNull(), weekData = weekData)
                 }
             }
         }
@@ -196,9 +227,13 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(top = 12.dp, end = 12.dp)
+                    .offset(x=(-12).dp,y=24.dp)
             ) {
                 Icon(Icons.Outlined.Settings, contentDescription = "Settings",
-                    tint = TextSecondary, modifier = Modifier.size(22.dp))
+                    tint = TextSecondary, modifier = Modifier
+                        .size(22.dp)
+
+                )
             }
         }
 
@@ -208,9 +243,10 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 onClick = { showSettings = false },
                 modifier = Modifier
                     .align(Alignment.TopStart)
+                    .offset(x = 12.dp, y = 24.dp)
                     .padding(top = 12.dp, start = 4.dp)
             ) {
-                Text("← Back", color = AccentGreen, fontSize = 14.sp)
+                Text("< Back", color = AccentGreen, fontFamily = GildaDisplay, fontSize = 16.sp)
             }
         }
 
@@ -267,6 +303,6 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
 @Preview
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
-fun ScreenTimeScreenPage(modifier: Modifier = Modifier) {
+fun PreviewPage(modifier: Modifier = Modifier) {
     PetScreen()
 }
