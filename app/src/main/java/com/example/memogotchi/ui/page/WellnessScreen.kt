@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.sp
 import com.example.memogotchi.ui.theme.GildaDisplay
 import java.util.Calendar
 import kotlin.math.roundToInt
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.animation.core.LinearEasing
 
 // ── Colors ────────────────────────────────────────────────────────────────────
 private val BgColor       = Color(0xFF16171C)
@@ -191,22 +193,92 @@ fun WellnessScreen(
             Spacer(Modifier.height(16.dp))
 
             // Overall battery card
+            // Animated battery background
+
+            val infiniteTransition = rememberInfiniteTransition(label = "battery_gradient")
+
+            val shinePosition by infiniteTransition.animateFloat(
+                initialValue = -0.3f,
+                targetValue = 1.3f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(
+                        durationMillis = 2800,
+                        easing = FastOutSlowInEasing
+                    ),
+                    repeatMode = RepeatMode.Restart
+                ),
+                label = "shine_position"
+            )
+
+            val baseDark = lerp(bgFillColor, Color.Black, 0.15f)
+            val baseMid = lerp(bgFillColor, Color.White, 0.08f)
+            val shine = lerp(bgFillColor, Color.White, 0.35f)
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .background(SurfaceColor)
             ) {
+
                 if (batteryPct != null) {
-                    Row(modifier = Modifier.matchParentSize()) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                    ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxHeight()
                                 .fillMaxWidth(batteryPct / 100f)
-                                .background(bgFillColor)
-                        )
+                        ) {
+
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            colors = listOf(baseDark, baseMid, baseDark),
+                                        )
+                                    )
+                            )
+
+// Shine sweep — only render when shine is actually within the fill area
+                            val shineAlpha = when {
+                                shinePosition < -0.2f || shinePosition > 1.2f -> 0f
+                                shinePosition < 0f -> (shinePosition + 0.2f) / 0.2f
+                                shinePosition > 1f -> 1f - (shinePosition - 1f) / 0.2f
+                                else -> 1f
+                            }
+                            if (shineAlpha > 0f) {
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .background(
+                                            Brush.horizontalGradient(
+                                                colorStops = arrayOf(
+                                                    0f to Color.Transparent,
+                                                    maxOf(
+                                                        0f,
+                                                        shinePosition - 0.2f
+                                                    ) to Color.Transparent,
+                                                    shinePosition.coerceIn(
+                                                        0f,
+                                                        1f
+                                                    ) to Color.White.copy(alpha = 0.18f * shineAlpha),
+                                                    minOf(
+                                                        1f,
+                                                        shinePosition + 0.2f
+                                                    ) to Color.Transparent,
+                                                    1f to Color.Transparent
+                                                )
+                                            )
+                                        )
+                                )
+                            }
+                        }
                     }
                 }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -215,22 +287,39 @@ fun WellnessScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text("Overall battery", fontSize = 20.sp, color = TextPrimary)
-                        Spacer(Modifier.height(1.dp))
                         Text(
-                            text = if (loggedCount < 4) "$loggedCount / 4 logged" else "All batteries logged",
-                            fontSize = 12.sp, color = TextSecondary
+                            "Overall battery",
+                            fontSize = 20.sp,
+                            color = TextPrimary
+                        )
+
+                        Spacer(Modifier.height(1.dp))
+
+                        Text(
+                            text = if (loggedCount < 4)
+                                "$loggedCount / 4 logged"
+                            else
+                                "All batteries logged",
+                            fontSize = 12.sp,
+                            color = TextSecondary
                         )
                     }
+
                     Box(
-                        modifier = Modifier.size(58.dp).clip(CircleShape).background(BgColor),
+                        modifier = Modifier
+                            .size(58.dp)
+                            .clip(CircleShape)
+                            .background(BgColor),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = if (batteryPct != null) "$batteryPct%" else "—",
                             fontSize = if (batteryPct != null) 18.sp else 22.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (batteryPct != null) AccentGreen else TextSecondary
+                            color = if (batteryPct != null)
+                                AccentGreen
+                            else
+                                TextSecondary
                         )
                     }
                 }
