@@ -15,6 +15,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountBox
+import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.BatteryStd
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.InsertChart
+import androidx.compose.material.icons.outlined.Park
+import androidx.compose.material.icons.outlined.Redeem
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -84,7 +91,34 @@ onModeChange: (TimerMode) -> Unit = {},
 onClose: () -> Unit      = {},
 onReset: () -> Unit = {},
 onSettings: () -> Unit   = {},
+previewTasks: List<AnalogTask> = emptyList(),
+onOpenTasks: () -> Unit = {},
+onOpenScreenTime: () -> Unit = {},
+onOpenWellness: () -> Unit = {},
 ) {
+    var hexMenuOpen by remember { mutableStateOf(false)}
+    var showTaskPanel by remember { mutableStateOf(false)}
+
+    val hexItems = remember(previewTasks, onOpenTasks, onOpenScreenTime, onOpenWellness) {
+        listOf(
+            HexMenuItem(Icons.Outlined.Checklist, "Tasks") {
+                hexMenuOpen = false
+                showTaskPanel = true
+            },
+            HexMenuItem(Icons.Outlined.InsertChart, "Screen Time") {
+                hexMenuOpen = false
+                onOpenScreenTime()
+            },
+            HexMenuItem(Icons.Outlined.BatteryStd, "Wellness") {
+                hexMenuOpen = false
+                onOpenWellness()
+            },
+            HexMenuItem(Icons.Outlined.AccountTree, "Activity Tree", enabled = false) ,
+            HexMenuItem(Icons.Outlined.Redeem, "Rewards", enabled = false),
+            HexMenuItem(Icons.Outlined.AccountBox, "Inventory", enabled = false),
+        )
+    }
+
     val totalHours = remember(today) { (today?.totalMs ?: 0L) / 3_600_000.0 }
     val dailyLabel = remember(totalHours) { formatDailyTotal(totalHours) }
 
@@ -134,7 +168,9 @@ onSettings: () -> Unit   = {},
                         modifier = Modifier
                             .size(220.dp)
                             .align(Alignment.TopCenter)
+                            .clickable { hexMenuOpen = !hexMenuOpen }
                     )
+
 
                     // Speech bubble sits at the bottom of the Box, overlapping pet
                     this@Column.AnimatedVisibility(
@@ -151,6 +187,14 @@ onSettings: () -> Unit   = {},
 
                         )
                     }
+                    PetHexFabMenu(
+                        expanded = hexMenuOpen,
+                        items = hexItems,
+                        modifier = Modifier
+                            .matchParentSize()
+                            .align(Alignment.TopCenter)
+                            .offset(y=(-10).dp)
+                    )
                 }
 
 
@@ -173,6 +217,16 @@ onSettings: () -> Unit   = {},
                 )
 
                 Spacer(Modifier.height(16.dp))
+            }
+            if (showTaskPanel) {
+                MiniTaskPanel(
+                    tasks = previewTasks,
+                    onDismiss = { showTaskPanel = false },
+                    onViewAll =  {
+                        showTaskPanel = false
+                        onOpenTasks()
+                    }
+                )
             }
         }
     }

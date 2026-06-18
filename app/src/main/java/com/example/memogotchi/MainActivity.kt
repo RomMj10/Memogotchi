@@ -49,6 +49,7 @@ import com.example.memogotchi.ui.theme.MemogotchiTheme
 import com.example.memogotchi.ui.page.ScreenTimeScreen
 import com.example.memogotchi.ui.page.TasksScreen
 import com.example.memogotchi.ui.page.SettingsScreen
+import com.example.memogotchi.ui.page.TaskStore
 import com.example.memogotchi.ui.page.WellnessScreen
 import com.example.memogotchi.ui.page.WellnessStore
 import com.example.memogotchi.ui.page.createNotificationChannel
@@ -236,7 +237,15 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             PomodoroStore.reset(context)
                             elapsedSeconds = 0L
                             timerRunning = false
-                        }
+                        },
+                        previewTasks = remember(weekData) {
+                            val dateKey = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+                            TaskStore.loadTasksForDate(context, dateKey) ?: emptyList()
+                        },
+                        onOpenTasks = {currentTab = NavTab.TASKS},
+                        onOpenScreenTime = {currentTab = NavTab.SCREEN_TIME},
+                        onOpenWellness = {currentTab = NavTab.WELLNESS},
+
                     )
                     NavTab.WELLNESS    -> WellnessScreen(
                         states       = wellnessStates,
