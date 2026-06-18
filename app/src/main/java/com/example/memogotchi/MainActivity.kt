@@ -50,6 +50,7 @@ import com.example.memogotchi.ui.page.ScreenTimeScreen
 import com.example.memogotchi.ui.page.TasksScreen
 import com.example.memogotchi.ui.page.SettingsScreen
 import com.example.memogotchi.ui.page.WellnessScreen
+import com.example.memogotchi.ui.page.WellnessStore
 import com.example.memogotchi.ui.page.createNotificationChannel
 import com.example.memogotchi.ui.page.getBatteryLevel
 import com.example.memogotchi.ui.page.hasUsageStatsPermission
@@ -120,15 +121,39 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
 
     // ── Wellness state hoisted here so it survives tab switches ──────────
     val wellnessStates = remember {
+        val savedSliders = WellnessStore.loadSliders(context)  // read saved values
         mutableStateListOf(
-            BatteryState("emotional",  "Emotional",  Color(0xFF5C2A3A), Color(0xFFD4537E)),
-            BatteryState("social",     "Social",     Color(0xFF2E2A5C), Color(0xFF7C6FE0)),
-            BatteryState("physical",   "Physical",   Color(0xFF0D3D2E), Color(0xFF1D9E75)),
-            BatteryState("motivation", "Motivation", Color(0xFF4A2E05), Color(0xFFD4920A)),
+            BatteryState("emotional",  "Emotional",  Color(0xFF5C2A3A), Color(0xFFD4537E), value = savedSliders[0]),
+            BatteryState("social",     "Social",     Color(0xFF2E2A5C), Color(0xFF7C6FE0), value = savedSliders[1]),
+            BatteryState("physical",   "Physical",   Color(0xFF0D3D2E), Color(0xFF1D9E75), value = savedSliders[2]),
+            BatteryState("motivation", "Motivation", Color(0xFF4A2E05), Color(0xFFD4920A), value = savedSliders[3]),
         )
     }
-    val wellnessSliders = remember { mutableStateListOf(50f, 50f, 50f, 50f) }
-    val diaryEntries    = remember { mutableStateListOf<DiaryEntry>() }
+
+    val wellnessSliders = remember {
+        mutableStateListOf<Float>().also { list ->
+            list.addAll(WellnessStore.loadSliders(context))
+        }
+    }
+
+    val diaryEntries = remember {
+        mutableStateListOf<DiaryEntry>().also { list ->
+            list.addAll(WellnessStore.loadDiaryEntries(context))
+        }
+    }
+
+    LaunchedEffect(wellnessStates.map { it.value }) {
+        WellnessStore.saveSliders(context, wellnessStates.map { it.value ?: 50f })
+    }
+
+    LaunchedEffect(wellnessSliders.toList()) {
+        WellnessStore.saveSliders(context, wellnessSliders.toList())
+    }
+
+    LaunchedEffect(diaryEntries.toList()) {
+        WellnessStore.saveDiaryEntries(context, diaryEntries.toList())
+    }
+
     // ── Pet timer state hoisted here so it survives tab switches ─────────
     var elapsedSeconds by remember { mutableLongStateOf(PomodoroStore.loadElapsedSeconds(context)) }
     var timerRunning   by remember { mutableStateOf(PomodoroStore.isRunning(context)) }

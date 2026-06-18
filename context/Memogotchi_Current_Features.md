@@ -107,6 +107,12 @@ LATEST UPDATE
 - Structured JSON schema responses parsed into `AnalogTask` entities.
 - Auto-fallback to local rule-based engine on API failure or missing credentials.
 
+#### Wellness Data Store (`WellnessStore.kt`) — NEW
+- Local persistence using `SharedPreferences` for wellness slider values and diary entries.
+- Provides functions to `saveSliders` and `loadSliders` for the four wellness states.
+- Implements `saveDiaryEntries` and `loadDiaryEntries` for diary entries, retaining up to the last 200.
+- Includes JSON serialization/deserialization helpers (`entryToJson`, `entryFromJson`) for `DiaryEntry` objects.
+
 #### Other Backend Systems
 - **Hardware Battery Reader** — `Intent.ACTION_BATTERY_CHANGED` listener.
 - **Milestone Engine** — auto-unlocks achievements at screen time thresholds (0h, 2h, 4h, 6h, 12h).
@@ -127,4 +133,3 @@ LATEST UPDATE
 - **Activity Verification** — photo submission + AI confirmation for completed tasks.
 - **Interactive Push Notifications** — actionable battery check-in via notification buttons.
 - **DND / Focus Mode & Pomodoro** — built into the task flow for active sessions.
-- **Voice & Photo diary modes** — currently stubbed in FAB, logic not yet implemented.
