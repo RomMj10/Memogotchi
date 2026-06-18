@@ -51,25 +51,15 @@ import java.util.TimeZone
 //  PET STATE  — hook your Rive / animation engine here later
 // ════════════════════════════════════════════════════════════════════════════
 
-/**
- * All the states your pet can be in.
- * Drive these from screen-time thresholds or time-of-day logic.
- */
+
 enum class PetMood { IDLE, HAPPY, CONCERNED, TIRED, ALARMED }
 
-/**
- * Everything the pet section needs to know.
- * Replace [petContent] with your Rive RiveAnimation composable when ready.
- */
+
 data class PetState(
     val mood: PetMood = PetMood.IDLE,
-    val speechBubble: String? = null,   // null = hide bubble
+    val speechBubble: String? = null,
 )
 
-/**
- * Derive a PetState from today's total screen time in ms.
- * Tweak thresholds to taste.
- */
 fun petStateFromScreenTime(totalMs: Long, hourOfDay: Int): PetState {
     val hours = totalMs / 3_600_000.0
     return when {
@@ -341,10 +331,6 @@ fun PetPlaceholder(petState: PetState, modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(modifier = Modifier.height(64.dp))
-            petState.speechBubble?.let { msg ->
-                SpeechBubble(text = msg)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
 
             LottieAnimation(
                 composition = composition,
@@ -362,27 +348,6 @@ fun PetPlaceholder(petState: PetState, modifier: Modifier = Modifier) {
                 color = TextSecondary
             )
         }
-    }
-}
-
-// ── Speech bubble ─────────────────────────────────────────────────────────────
-
-@Composable
-fun SpeechBubble(text: String) {
-    Box(
-        modifier = Modifier
-            .widthIn(max = 240.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    ) {
-        Text(
-            text       = text,
-            fontFamily = Comfortaa,
-            fontSize   = 14.sp,
-            color      = Color(0xFF1A1A1A),
-            lineHeight = 20.sp
-        )
     }
 }
 

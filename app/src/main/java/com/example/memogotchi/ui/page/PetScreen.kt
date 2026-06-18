@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,6 +53,20 @@ private val TimerColor    = Color(0xFFE6FCFF)
 //  ROOT
 // ════════════════════════════════════════════════════════════════════════════
 private const val POMODORO_TARGET_SECONDS = 1500L
+private const val SPEECH_BUBBLE_DURATION_MS = 8000L
+val bubbleEnterTransition = fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+        scaleIn(
+            animationSpec = spring(
+                stiffness = Spring.StiffnessLow,
+                dampingRatio = Spring.DampingRatioHighBouncy
+            ),
+            initialScale = 0.5f,
+
+            )
+val bubbleExitTransition = fadeOut(animationSpec = tween(durationMillis = 10000,easing = EaseOutBounce)) +
+        scaleOut(
+            targetScale = 0.0f
+        )
 
 @Preview
 @RequiresApi(Build.VERSION_CODES.O)
@@ -73,7 +88,17 @@ onSettings: () -> Unit   = {},
     val totalHours = remember(today) { (today?.totalMs ?: 0L) / 3_600_000.0 }
     val dailyLabel = remember(totalHours) { formatDailyTotal(totalHours) }
 
-    var isPomodoro by remember { mutableStateOf(false)}
+    var showSpeechBubble by remember { mutableStateOf(false)}
+    LaunchedEffect(petState.speechBubble) {
+        if (petState.speechBubble != null && petState.speechBubble.isNotBlank()) {
+            showSpeechBubble = true
+            delay(SPEECH_BUBBLE_DURATION_MS)
+            showSpeechBubble = false
+        } else {
+            // If the external message is cleared, hide the bubble immediately
+            showSpeechBubble = false
+        }
+    }
 
     // Target: goal is to stay off phone for 30 min = 1800s (adjustable)
     val targetSeconds = 1800L
@@ -113,11 +138,11 @@ onSettings: () -> Unit   = {},
 
                     // Speech bubble sits at the bottom of the Box, overlapping pet
                     this@Column.AnimatedVisibility(
-                        visible = true,
-                        enter = fadeIn() + scaleIn(),
-                        exit = fadeOut() + scaleOut()
+                        visible = showSpeechBubble,
+                        enter = bubbleEnterTransition,
+                        exit = bubbleExitTransition
                     ) {
-                        SpeechBubbleRow(
+                        SpeechBubble(
                             petState = petState,
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
@@ -211,7 +236,7 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
         iterations  = LottieConstants.IterateForever,
     )
     val clippedPetSize = 200.dp
-    val clippedPetShape = CircleShape
+    val clippedPetShape = RectangleShape
     val lottieRenderSize = 400.dp
 
     Box(
@@ -240,9 +265,9 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
         LottieAnimation(
             composition = composition,
             progress    = { progress },
-            modifier    = Modifier.size(lottieRenderSize)
-                .clip(clippedPetShape)
-                .scale(2f)
+            modifier    = Modifier
+                .size(lottieRenderSize)
+                .scale(1.8f)
 
         )
     }
@@ -252,15 +277,17 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
 //  SPEECH BUBBLE
 // ════════════════════════════════════════════════════════════════════════════
 
+
+
 @Composable
-fun SpeechBubbleRow(petState: PetState, modifier: Modifier = Modifier) {
-    val message = petState.speechBubble ?: "Shhh... Pixel is resting"
+fun SpeechBubble(petState: PetState, modifier: Modifier = Modifier) {
+    val message = petState.speechBubble ?: ""
 
      Card(
         modifier = modifier
-            .clip(RoundedCornerShape(50.dp))
             .widthIn(min = 50.dp, max = 390.dp)
             .wrapContentSize(),
+         shape = RoundedCornerShape(24.dp),
          colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -301,7 +328,7 @@ fun TimerModeSelector(
                     text       = label,
                     fontFamily = GildaDisplay,
                     fontSize   = 16.sp,
-                    color      = if (selected) BgColor else TextLight,
+                    color      = if (selected) BgColor else AccentDark,
                 )
             }
         }
@@ -375,7 +402,7 @@ fun TimerDisplay(
                         imageVector = Icons.Outlined.Refresh,
                         contentDescription = "Reset timer",
                         tint = TextLight,
-                        modifier = Modifier.size(16.dp),
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
