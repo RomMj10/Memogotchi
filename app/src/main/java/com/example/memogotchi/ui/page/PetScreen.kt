@@ -2,22 +2,34 @@ package com.example.memogotchi.ui.page
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.airbnb.lottie.compose.*
@@ -39,7 +51,9 @@ private val TimerColor    = Color(0xFFE6FCFF)
 // ════════════════════════════════════════════════════════════════════════════
 //  ROOT
 // ════════════════════════════════════════════════════════════════════════════
+private const val POMODORO_TARGET_SECONDS = 1500L
 
+@Preview
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PetScreen(
@@ -49,84 +63,101 @@ xpEarned: Int            = 0,
 batteryLevel: Int        = 0,
 elapsedSeconds: Long     = 0L,
 timerRunning: Boolean    = true,
+timerMode: TimerMode = TimerMode.STOPWATCH,
 onTimerToggle: () -> Unit = {},
+onModeChange: (TimerMode) -> Unit = {},
 onClose: () -> Unit      = {},
+onReset: () -> Unit = {},
 onSettings: () -> Unit   = {},
 ) {
     val totalHours = remember(today) { (today?.totalMs ?: 0L) / 3_600_000.0 }
     val dailyLabel = remember(totalHours) { formatDailyTotal(totalHours) }
 
+    var isPomodoro by remember { mutableStateOf(false)}
+
     // Target: goal is to stay off phone for 30 min = 1800s (adjustable)
     val targetSeconds = 1800L
-    val progress      = (elapsedSeconds.toFloat() / targetSeconds).coerceIn(0f, 1f)
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BgColor)
-    ) {
-        Column(
-            modifier            = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-
-            // ── Top bar ───────────────────────────────────────────────────
-            TopBar(onClose = onClose, onSettings = onSettings)
-
-            // ── Pet + speech bubble layered ───────────────────────────────
+    val progress      = when(timerMode) {
+        TimerMode.POMODORO ->
+            (elapsedSeconds.toFloat() / POMODORO_TARGET_SECONDS).coerceIn(0f, 1f)
+        TimerMode.STOPWATCH ->
+            (elapsedSeconds.toFloat() / 1800f).coerceIn(0f, 1f)
+    }
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(340.dp),
-                contentAlignment = Alignment.BottomCenter,
+                    .fillMaxSize()
+                    .background(BgColor)
+                ) {
+            Column(
+                modifier            = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // Pet overflows upward beyond the Box bounds
-                PetCard(
-                    petState = petState,
+
+                // ── Top bar ───────────────────────────────────────────────────
+                TopBar(onClose = onClose, onSettings = onSettings, timerMode= timerMode, onModeChange = onModeChange)
+
+                // ── Pet + speech bubble layered ───────────────────────────────
+                Box(
                     modifier = Modifier
-                        .size(420.dp)
-                        .align(Alignment.TopCenter)
-                        .offset(y = (-50).dp)
+                        .fillMaxWidth()
+                        .height(240.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    // Pet overflows upward beyond the Box bounds
+                    PetCard(
+                        petState = petState,
+                        modifier = Modifier
+                            .size(220.dp)
+                            .align(Alignment.TopCenter)
+                    )
+
+                    // Speech bubble sits at the bottom of the Box, overlapping pet
+                    this@Column.AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn() + scaleIn(),
+                        exit = fadeOut() + scaleOut()
+                    ) {
+                        SpeechBubbleRow(
+                            petState = petState,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 8.dp)
+                                .offset(y = (-100).dp)
+
+                        )
+                    }
+                }
+
+
+                // ── Giant timer display ───────────────────────────────────────
+                TimerDisplay(
+                    elapsedSeconds = elapsedSeconds,
+                    progress       = progress,
+                    timerMode = timerMode,
+                    showReset = elapsedSeconds > 0L,
+                    onTap = { onTimerToggle() },
+                    onReset = onReset,
                 )
 
-                // Speech bubble sits at the bottom of the Box, overlapping pet
-                SpeechBubbleRow(
-                    petState = petState,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 8.dp)
+                Spacer(Modifier.weight(1f))
+
+                StatsBar(
+                    xpEarned      = xpEarned,
+                    dailyTotal    = dailyLabel,
+                    batterylvl = batteryLevel
                 )
+
+                Spacer(Modifier.height(16.dp))
             }
-
-            Spacer(Modifier.weight(1f))
-
-            // ── Giant timer display ───────────────────────────────────────
-            TimerDisplay(
-                elapsedSeconds = elapsedSeconds,
-                progress       = progress,
-                onTap = { onTimerToggle() },
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            // ── Stats bar ─────────────────────────────────────────────────
-            StatsBar(
-                xpEarned      = xpEarned,
-                dailyTotal    = dailyLabel,
-                batterylvl = batteryLevel
-            )
-
-            Spacer(Modifier.height(16.dp))
         }
     }
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 //  TOP BAR
 // ════════════════════════════════════════════════════════════════════════════
 
 @Composable
-fun TopBar(onClose: () -> Unit, onSettings: () -> Unit) {
+fun TopBar(onClose: () -> Unit, onSettings: () -> Unit, timerMode: TimerMode, onModeChange: (TimerMode) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -138,17 +169,12 @@ fun TopBar(onClose: () -> Unit, onSettings: () -> Unit) {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(50.dp))
-                .border(1.5.dp, AccentDark, RoundedCornerShape(50.dp))
-                .padding(horizontal = 20.dp, vertical = 8.dp),
+                .border(1.5.dp, AccentDark, RoundedCornerShape(50.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text       = "DEEP FOCUS",
-                fontFamily = GildaDisplay,
-                fontSize   = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color      = AccentDark,
-                letterSpacing = 2.sp,
+            TimerModeSelector(
+                currentMode = timerMode,
+                onSelect = onModeChange,
             )
         }
     }
@@ -184,15 +210,21 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
         composition = composition,
         iterations  = LottieConstants.IterateForever,
     )
+    val clippedPetSize = 200.dp
+    val clippedPetShape = CircleShape
+    val lottieRenderSize = 400.dp
 
     Box(
-        modifier         = modifier.offset(y = offsetY.dp),
+        modifier = modifier
+            .offset(y = offsetY.dp)
+            .size(clippedPetSize)
+            .clip(clippedPetShape),
         contentAlignment = Alignment.Center,
     ) {
         // Soft radial glow behind the pet
         Box(
             modifier = Modifier
-                .size(260.dp)
+                .size(220.dp)
                 .align(Alignment.Center)
                 .clip(CircleShape)
                 .background(
@@ -208,7 +240,10 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
         LottieAnimation(
             composition = composition,
             progress    = { progress },
-            modifier    = Modifier.fillMaxSize(),
+            modifier    = Modifier.size(lottieRenderSize)
+                .clip(clippedPetShape)
+                .scale(2f)
+
         )
     }
 }
@@ -221,21 +256,55 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
 fun SpeechBubbleRow(petState: PetState, modifier: Modifier = Modifier) {
     val message = petState.speechBubble ?: "Shhh... Pixel is resting"
 
-    Box(
+     Card(
         modifier = modifier
             .clip(RoundedCornerShape(50.dp))
-            .border(1.5.dp, Color(0xFFFFFFFF), RoundedCornerShape(50.dp))
-            .background(Color(0xFFFFFFFF))
-            .padding(horizontal = 24.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center
+            .widthIn(min = 50.dp, max = 390.dp)
+            .wrapContentSize(),
+         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Text(
             text       = message,
-            fontSize   = 14.sp,
+            fontSize   = 12.sp,
             fontFamily = Comfortaa,
             fontWeight = FontWeight.Medium,
             color      = BgColor,
+            modifier = Modifier.padding(12.dp)
         )
+    }
+}
+
+@Composable
+fun TimerModeSelector(
+    currentMode: TimerMode,
+    onSelect: (TimerMode) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(SurfaceColor)
+            .padding(4.dp),
+    ) {
+        TimerMode.entries.forEach { mode ->
+            val selected = mode == currentMode
+            val label = if (mode == TimerMode.STOPWATCH) "Stopwatch" else "Pomodoro"
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50.dp))
+                    .background(if (selected) Accent else Color.Transparent)
+                    .clickable(enabled = !selected) { onSelect(mode) }
+                    .padding(horizontal = 10.dp, vertical = 10.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text       = label,
+                    fontFamily = GildaDisplay,
+                    fontSize   = 16.sp,
+                    color      = if (selected) BgColor else TextLight,
+                )
+            }
+        }
     }
 }
 
@@ -247,13 +316,23 @@ fun SpeechBubbleRow(petState: PetState, modifier: Modifier = Modifier) {
 fun TimerDisplay(
     elapsedSeconds: Long,
     progress: Float,
+    timerMode: TimerMode,
+    showReset: Boolean,
     onTap: () -> Unit,
+    onReset: () -> Unit,
 ) {
-    val minutes = elapsedSeconds / 60
-    val seconds = elapsedSeconds % 60
+    val displaySeconds = when(timerMode) {
+        TimerMode.POMODORO -> (POMODORO_TARGET_SECONDS - elapsedSeconds).coerceAtLeast(0L)
+        TimerMode.STOPWATCH -> (elapsedSeconds)
+    }
+    val minutes = displaySeconds / 60
+    val seconds = displaySeconds % 60
     val timeStr = String.format("%02d:%02d", minutes, seconds)
+    val subtitle = when(timerMode) {
+        TimerMode.POMODORO -> "FOCUS SESSION"
+        TimerMode.STOPWATCH -> "STAY OFF YOUR PHONE"
+    }
 
-    // Split into chars for the big blocky display
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -261,23 +340,52 @@ fun TimerDisplay(
             .clickable { onTap() }
             .padding(horizontal = 24.dp)
     ) {
-        // Giant timer text — two rows like the mockup
-        Text(
-            text       = timeStr,
-            fontSize   = 56.sp,
-            fontFamily = GildaDisplay,
-            fontWeight = FontWeight.Black,
-            color      = TimerColor,
-            letterSpacing = (-2).sp,
-            lineHeight = 56.sp,
-            textAlign  = TextAlign.Center,
-            modifier   = Modifier.fillMaxWidth(),
-        )
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Text(
+                text = timeStr,
+                fontSize = 56.sp,
+                fontFamily = GildaDisplay,
+                fontWeight = FontWeight.Black,
+                color = TimerColor,
+                letterSpacing = (-2).sp,
+                lineHeight = 56.sp,
+                textAlign = TextAlign.Center,
+                modifier   = Modifier
+                    .fillMaxWidth()
+                    .clickable { onTap() }
+                    .padding(vertical = 4.dp),
+            )
+
+            this@Column.AnimatedVisibility(
+                visible = showReset,
+                enter   = fadeIn() + scaleIn(),
+                exit    = fadeOut() + scaleOut(),
+                modifier = Modifier.align(Alignment.CenterEnd),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(SurfaceColor)
+                        .clickable { onReset() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Refresh,
+                        contentDescription = "Reset timer",
+                        tint = TextLight,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+            }
+        }
+
 
         Spacer(Modifier.height(6.dp))
 
         Text(
-            text          = "STAY OFF YOUR PHONE",
+            text          = subtitle,
             fontFamily = GildaDisplay,
             fontSize      = 11.sp,
             fontWeight    = FontWeight.SemiBold,
@@ -326,7 +434,7 @@ fun StatsBar(
             .fillMaxWidth()
             .padding(horizontal = 32.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment     = Alignment.Bottom,
+        verticalAlignment     = Alignment.Top,
     ) {
         StatItem(label = "BATTERY",      value = "$batterylvl%",          accent = false)
         StatItem(label = "XP EARNED",   value = "+$xpEarned",   accent = true)

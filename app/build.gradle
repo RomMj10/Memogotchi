@@ -4,6 +4,14 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { stream ->
+        localProperties.load(stream)
+    }
+}
+
 android {
     namespace 'com.example.memogotchi'
     compileSdk 36
@@ -16,7 +24,7 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField "String", "GEMINI_API_KEY", "\"${project.findProperty('gemini_api_key') ?: ''}\""
+        buildConfigField "String", "GEMINI_API_KEY", "\"${localProperties.getProperty('gemini_api_key', '')}\""
     }
 
     buildTypes {

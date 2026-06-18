@@ -58,6 +58,8 @@ import com.example.memogotchi.ui.page.loadWeekData
 import com.example.memogotchi.ui.page.maybeSendHealthAlert
 import com.example.memogotchi.ui.page.petStateFromScreenTime
 import com.example.memogotchi.ui.theme.GildaDisplay
+import com.example.memogotchi.ui.page.TimerMode
+import com.google.ai.client.generativeai.GenerativeModel
 import java.util.Calendar
 import kotlinx.coroutines.delay
 
@@ -157,6 +159,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     // ── Pet timer state hoisted here so it survives tab switches ─────────
     var elapsedSeconds by remember { mutableLongStateOf(PomodoroStore.loadElapsedSeconds(context)) }
     var timerRunning   by remember { mutableStateOf(PomodoroStore.isRunning(context)) }
+    var timerMode by remember { mutableStateOf(PomodoroStore.loadMode(context))}
 
     LaunchedEffect(timerRunning) {
         while (timerRunning) {
@@ -213,6 +216,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         batteryLevel   = batteryLevel,
                         elapsedSeconds = elapsedSeconds,
                         timerRunning   = timerRunning,
+                        timerMode = timerMode,
                         onTimerToggle  = {
                             if (timerRunning) {
                                 PomodoroStore.pause(context, elapsedSeconds)
@@ -221,6 +225,17 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                                 PomodoroStore.start(context, elapsedSeconds)
                                 timerRunning = true
                             }
+                        },
+                        onModeChange = { newMode ->
+                            timerMode = newMode
+                            PomodoroStore.setMode(context, newMode)
+                            elapsedSeconds = 0L
+                            timerRunning = false
+                        },
+                        onReset = {
+                            PomodoroStore.reset(context)
+                            elapsedSeconds = 0L
+                            timerRunning = false
                         }
                     )
                     NavTab.WELLNESS    -> WellnessScreen(
@@ -252,7 +267,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(top = 12.dp, end = 12.dp)
-                    .offset(x=(-12).dp,y=24.dp)
+                    .offset(x=(-12).dp,y=32.dp)
             ) {
                 Icon(Icons.Outlined.Settings, contentDescription = "Settings",
                     tint = TextSecondary, modifier = Modifier
@@ -268,7 +283,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 onClick = { showSettings = false },
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 12.dp, y = 24.dp)
+                    .offset(x = 12.dp, y = 32.dp)
                     .padding(top = 12.dp, start = 4.dp)
             ) {
                 Text("< Back", color = AccentGreen, fontFamily = GildaDisplay, fontSize = 16.sp)

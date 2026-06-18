@@ -56,6 +56,8 @@ private fun categoryColor(cat: AppCategory) = when (cat) {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
+    var geminiStatus by remember { mutableStateOf("IDLE") }
+
     val context      = LocalContext.current
     val batteryLevel = remember { getBatteryLevel(context) }
     val totalHours   = remember(today) { (today?.totalMs ?: 0L) / 3_600_000.0 }
@@ -99,9 +101,19 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
             } ?: emptyList()
 
             val completedHistory = TaskStore.getCompletedHistory(context)
-            val geminiTasks = generateTasksWithGemini(weekData, batteryLevel, cats, completedHistory)
+            geminiStatus = "Status: Connecting"
+
+            var geminiTasks = generateTasksWithGemini(weekData, batteryLevel, cats, completedHistory)
+            try {
+                geminiTasks = generateTasksWithGemini(weekData, batteryLevel, cats, completedHistory)
+            } catch (e: Exception) {
+                geminiStatus = "Status: Failed"
+            }
+
+
             if (geminiTasks.isNotEmpty()) {
                 tasks = geminiTasks
+                geminiStatus = "Status: Success"
                 taskSource = "gemini"
                 TaskStore.saveTasksForDate(context, dateKey, geminiTasks, "gemini")
             }
@@ -130,6 +142,13 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
                     Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 32.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    Text(
+                        geminiStatus,
+                        color = TextSecondary,
+                        fontFamily = GildaDisplay,
+                        fontSize = 14.sp
+
+                    )
                     Text(
                         "No tasks yet, suggestions are generated the more you use your phone. 🌱",
                         color    = TextSecondary,
@@ -305,7 +324,7 @@ fun TaskCard(task: AnalogTask, onToggle: (AnalogTask) -> Unit) {
         ) {
             // Category emoji badge
             Box(
-                modifier        = Modifier
+                modifier = Modifier
                     .size(42.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(accent.copy(alpha = 0.15f))

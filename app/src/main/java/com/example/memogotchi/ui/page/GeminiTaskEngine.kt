@@ -1,5 +1,6 @@
 package com.example.memogotchi.ui.page
 
+import android.util.Log
 import com.example.memogotchi.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.generationConfig
@@ -10,6 +11,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private const val TAG = "GEMINITASKENGINE"
+
 suspend fun generateTasksWithGemini(
     weekData: List<DayData>,
     batteryLevel: Int,
@@ -19,6 +22,12 @@ suspend fun generateTasksWithGemini(
 
     val today = weekData.lastOrNull() ?: return@withContext emptyList()
     val totalHours = today.totalMs / 3_600_000.0
+
+    if (BuildConfig.GEMINI_API_KEY.isBlank()) {
+        Log.w(TAG, "Skipped: GEMINI_API_KEY is blank. Check local.properties has gemini_api_key=... set")
+        return@withContext emptyList()
+    }
+
 
     val appSummary = categorizedApps.take(5).joinToString("\n") {
         "- ${it.info.appName} (${it.category.label}): ${String.format("%.1f", it.hours)}h"
@@ -78,6 +87,7 @@ suspend fun generateTasksWithGemini(
         val json = response.text?.trim() ?: return@withContext emptyList()
         parseGeminiTasks(json)
     } catch (e: Exception) {
+        Log.e("Memogotchi", "Error generating tasks with Gemini", e)
         emptyList()
     }
 }
