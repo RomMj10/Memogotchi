@@ -236,53 +236,6 @@ fun generateAnalogTasks(
     return tasks.distinctBy { it.id }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  MILESTONES
-// ════════════════════════════════════════════════════════════════════════════
-
-fun generateMilestones(totalHoursToday: Double): List<Milestone> = listOf(
-    Milestone(
-        id           = "first_aware",
-        title        = "First Check-in",
-        description  = "You opened Memogotchi and checked your screen time.",
-        requiredHours = 0.0,
-        emoji        = "👀",
-        isUnlocked   = true,
-    ),
-    Milestone(
-        id           = "two_hours",
-        title        = "2-Hour Mark",
-        description  = "You've hit 2 hours of screen time today.",
-        requiredHours = 2.0,
-        emoji        = "⏱️",
-        isUnlocked   = totalHoursToday >= 2.0,
-    ),
-    Milestone(
-        id           = "four_hours",
-        title        = "Half a Workday",
-        description  = "4 hours on screen — that's half a workday.",
-        requiredHours = 4.0,
-        emoji        = "😅",
-        isUnlocked   = totalHoursToday >= 4.0,
-    ),
-    Milestone(
-        id           = "six_hours",
-        title        = "Heavy User",
-        description  = "6 hours today. Your pet is getting worried.",
-        requiredHours = 6.0,
-        emoji        = "😬",
-        isUnlocked   = totalHoursToday >= 6.0,
-    ),
-    Milestone(
-        id           = "twelve_hours",
-        title        = "Full Day on Screen",
-        description  = "12 hours. That's most of your waking hours.",
-        requiredHours = 12.0,
-        emoji        = "🚨",
-        isUnlocked   = totalHoursToday >= 12.0,
-    ),
-)
-
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 private fun formatHours(h: Double): String {

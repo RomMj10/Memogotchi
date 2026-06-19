@@ -89,7 +89,6 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
 
     var tasks by remember { mutableStateOf<List<AnalogTask>>(emptyList()) }
     var taskSource by remember { mutableStateOf("rule") }
-    val milestones = remember(totalHours) { generateMilestones(totalHours) }
 
     // ── Goals state ───────────────────────────────────────────────────────
     var goals by remember { mutableStateOf<List<Goal>>(emptyList()) }
@@ -303,12 +302,6 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
                 }
             }
 
-            item { SectionHeader(title = "Milestones") }
-
-            items(milestones, key = { it.id }) { milestone ->
-                MilestoneRow(milestone = milestone)
-            }
-
             item { Spacer(Modifier.height(24.dp)) }
         }
 
@@ -381,35 +374,8 @@ fun HeaderCard(taskCount: Int, totalFocusLabel: String, batteryLevel: Int) {
                     Text("Total Focus",fontFamily = GildaDisplay, fontSize = 11.sp, color = TextSecondary)
                 }
             }
-
             Spacer(Modifier.height(16.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("🔋", fontSize = 13.sp)
-                Spacer(Modifier.width(6.dp))
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(TrackColor)
-                ) {
-                    val barColor = when {
-                        batteryLevel <= 20 -> Color(0xFFE05252)
-                        batteryLevel <= 50 -> AccentOrange
-                        else               -> AccentGreen
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(batteryLevel / 100f)
-                            .fillMaxHeight()
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(barColor)
-                    )
-                }
-                Spacer(Modifier.width(8.dp))
-                Text("$batteryLevel%", fontSize = 11.sp, fontFamily = Comfortaa, color = TextSecondary)
-            }
         }
     }
 }
@@ -510,60 +476,5 @@ fun Pill(text: String, color: Color) {
             .padding(horizontal = 8.dp, vertical = 3.dp)
     ) {
         Text(text, fontSize = 10.sp, color = color, fontWeight = FontWeight.Medium)
-    }
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  MILESTONE ROW
-// ════════════════════════════════════════════════════════════════════════════
-
-@Composable
-fun MilestoneRow(milestone: Milestone) {
-    val isUnlocked = milestone.isUnlocked
-    val bg         = if (isUnlocked) SurfaceColor else LockedColor
-    val titleColor = if (isUnlocked) TextPrimary else TextSecondary
-    val descColor  = if (isUnlocked) TextSecondary else Color(0xFF555555)
-
-    Surface(
-        shape    = RoundedCornerShape(14.dp),
-        color    = bg,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 4.dp)
-    ) {
-        Row(
-            modifier          = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier        = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(if (isUnlocked) AccentGreen.copy(alpha = 0.15f) else Color(0xFF222326)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text     = if (isUnlocked) milestone.emoji else "🔒",
-                    fontSize = 16.sp,
-                )
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(milestone.title, fontFamily = Comfortaa, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = titleColor)
-                Text(milestone.description,fontFamily = Comfortaa, fontSize = 11.sp, color = descColor, lineHeight = 16.sp)
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text       = "${milestone.requiredHours.toInt()}",
-                    fontFamily = GildaDisplay,
-                    fontSize   = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color      = if (isUnlocked) AccentGreen else Color(0xFF444444),
-                )
-                Text("HOURS",fontFamily = Comfortaa, fontSize = 9.sp, color = descColor, fontWeight = FontWeight.Medium)
-            }
-        }
     }
 }
