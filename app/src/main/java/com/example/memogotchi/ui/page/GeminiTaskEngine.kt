@@ -50,21 +50,14 @@ suspend fun generateTasksWithGemini(
     val prompt = """
         You are a digital wellbeing assistant for a virtual pet app called Memogotchi.
         Current date & time: $dateStr
-        Battery level: $batteryLevel%
-
-        Today's screen time: ${String.format("%.1f", totalHours)} hours
-        Top apps used today:
+        Stats: $batteryLevel% battery, ${String.format("%.1f", totalHours)} screen time.
+        Top apps:
         $appSummary
 
-        Past 7 days screen time trend:
-        $weekSummary
-
-        User's most completed offline tasks: $favoriteSummary
-        Recently completed tasks (avoid repeating these exactly): $recentSummary
-
-        Suggest 1 to 3 offline "analog tasks" personalized to usage patterns, time of day,
-        battery level, and past preferences. Each task must be specific and actionable.
-
+        History: likes [$favoriteSummary],
+        Recent (avoid repeating these exactly): [$recentSummary]
+        Suggest 1 to 3 offline "analog tasks" based on data provided. 
+        Each task must be specific and actionable.
         Respond ONLY with a JSON array, no markdown, no explanation:
         [
           {
