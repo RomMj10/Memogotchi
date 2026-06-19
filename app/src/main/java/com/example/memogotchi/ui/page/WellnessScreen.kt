@@ -313,7 +313,7 @@ fun WellnessScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text("Overall battery", fontSize = 20.sp, color = TextPrimary)
+                        Text("Overall battery", fontSize = 20.sp, color = TextPrimary, fontFamily = GildaDisplay)
                         Spacer(Modifier.height(1.dp))
                         Text(
                             text = if (loggedCount < 4) "$loggedCount / 4 logged" else "All batteries logged",
