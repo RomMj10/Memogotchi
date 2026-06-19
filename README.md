@@ -16,5 +16,5 @@ Unlike the popular tamagotchi / virtual pets that thrives on attention, Memo wea
 
 To run this project, you will need to add the following environment variables to your local.properties file
 
-`GEMINI_API_KEY` - to access google's generative ai for generating analog tasks
+`gemini_api_key` - to access google's generative ai for generating analog tasks
 
