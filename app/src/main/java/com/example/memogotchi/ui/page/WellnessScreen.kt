@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
@@ -64,7 +65,6 @@ data class DiaryEntry(
     val text: String,
     val categories: List<String>,
     val sliderSnapshot: List<Float>?,
-    val isWellnessLog: Boolean = false,
     val timeLabel: String = SimpleDateFormat("h:mm a", Locale.ENGLISH).format(Date()),
 )
 
@@ -97,11 +97,7 @@ fun stateIcon(key: String, pct: Float): ImageVector = when (key) {
     else -> Icons.Outlined.Circle
 }
 
-private val diaryCategories = listOf(
-    "Family", "Friends", "Work", "Hobbies", "Health",
-    "Food", "Self-care", "Travel", "Learning", "Rest",
-    "Exercise", "Creativity", "Gratitude", "Stress", "Love"
-)
+// Diary tags now use the shared `tagCategories` grouping from TagCategories.kt
 
 // ── Entry border color from sliderSnapshot or fallback to current states ──────
 private fun entryBorderColor(
@@ -166,12 +162,9 @@ fun WellnessScreen(
     val batteryPct  = if (loggedCount == 0) null
     else states.mapNotNull { it.value }.average().roundToInt()
 
-    val bgFillColor = if (batteryPct != null) when {
-        batteryPct >= 75 -> Color(0xFF1A3D2E)   // green
-        batteryPct >= 50 -> Color(0xFF3D3A10)   // yellow
-        batteryPct >= 25 -> Color(0xFF3D2A05)   // orange
-        else             -> Color(0xFF3D1A1A)   // red
-    } else SurfaceColor
+    val bgFillColor = if (batteryPct != null)
+        lerp(Color(0xFF3D1A1A), Color(0xFF1A3D2E), batteryPct / 100f)
+    else SurfaceColor
 
     val context = LocalContext.current
 
@@ -230,6 +223,13 @@ fun WellnessScreen(
                     categories    = cats,
                     sliderSnapshot = updatedSliders,
                 )
+
+                // Feed the shared personality tag tally — only count tags that are
+                // new compared to what this entry had before (avoids double-counting on edits)
+                val previousTags = editingEntry?.categories ?: emptyList()
+                val newlyAddedTags = cats.filterNot { it in previousTags }
+                GoalStore.incrementTagTally(context, newlyAddedTags)
+
                 if (editingEntry != null) {
                     val idx = diaryEntries.indexOfFirst { it.id == editingEntry!!.id }
                     if (idx >= 0) diaryEntries[idx] = newEntry
@@ -405,29 +405,6 @@ fun WellnessScreen(
                                     if (isExpanded) {
                                         states.forEachIndexed { i, state -> states[i] = state.copy(value = sliderValues[i]) }
                                         isExpanded = false
-
-                                        // Auto-add a wellness log entry
-                                        val snapshot = sliderValues.toList()
-                                        val todayLabel = "Today"
-                                        val autoText = states.mapIndexed { i, state ->
-                                            "${state.label}: ${levelLabel(snapshot[i])} (${snapshot[i].roundToInt()}%)"
-                                        }.joinToString(" · ")
-
-                                        val newEntry = DiaryEntry(
-                                            dateLabel      = todayLabel,
-                                            dayLabel       = dayOfWeekForLabel(todayLabel),
-                                            sortKey        = sortKeyForLabel(todayLabel),
-                                            text           = "",
-                                            categories     = listOf("Health"),
-                                            sliderSnapshot = snapshot,
-                                            isWellnessLog  = true,
-                                        )
-                                        // add new entry every state change
-                                        diaryEntries.add(0, newEntry)
-
-                                        val sorted = diaryEntries.sortedByDescending { it.sortKey }
-                                        diaryEntries.clear()
-                                        diaryEntries.addAll(sorted)
                                     } else {
                                         states.forEachIndexed { i, state -> sliderValues[i] = state.value ?: 50f }
                                         isExpanded = true
@@ -473,6 +450,12 @@ fun WellnessScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 10.dp)
+                            .shadow(
+                                elevation = 6.dp,
+                                shape = RoundedCornerShape(16.dp),
+                                ambientColor = Color.Black.copy(alpha = 0.4f),
+                                spotColor = Color.Black.copy(alpha = 0.5f),
+                            )
                             .clip(RoundedCornerShape(16.dp))
                             .border(1.5.dp, borderColor.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
                             .background(SurfaceColor)
@@ -480,63 +463,41 @@ fun WellnessScreen(
                             .padding(16.dp)
                     ) {
                         Column {
-                            // DAY · DATE and time header
+                            // DAY, DATE row
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(entry.dayLabel, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                                    color = borderColor, fontFamily = GildaDisplay)
-                                Text("  ·  ${entry.dateLabel}", fontSize = 12.sp, color = TextSecondary)
-                                Spacer(Modifier.weight(1f))
-                                Text(entry.timeLabel, fontSize = 11.sp, color = TextSecondary)
+                                Text(
+                                    text = entry.dayLabel,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = borderColor,
+                                    fontFamily = GildaDisplay,
+                                )
+                                Text(
+                                    text = "  ·  ${entry.dateLabel}",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary,
+                                )
+                            }
+
+                            // Tags below the date
+                            if (entry.categories.isNotEmpty()) {
+                                Spacer(Modifier.height(8.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    entry.categories.take(4).forEach { cat ->
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(20.dp))
+                                                .border(1.dp, borderColor.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
+                                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(cat, fontSize = 10.sp, color = borderColor.copy(alpha = 0.8f))
+                                        }
+                                    }
+                                }
                             }
 
                             Spacer(Modifier.height(10.dp))
-
-                            if (entry.isWellnessLog && entry.sliderSnapshot != null) {
-                                // ── Wellness log: icon grid ───────────────────────────────
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceEvenly
-                                ) {
-                                    states.forEachIndexed { i, state ->
-                                        val pct = entry.sliderSnapshot[i]
-                                        val iconColor = lerp(state.colorLow, state.colorHigh, pct / 100f)
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Icon(
-                                                imageVector = stateIcon(state.key, pct),
-                                                contentDescription = state.label,
-                                                tint = iconColor,
-                                                modifier = Modifier.size(22.dp)
-                                            )
-                                            Spacer(Modifier.height(4.dp))
-                                            Text(levelLabel(pct), fontSize = 9.sp,
-                                                color = iconColor, fontWeight = FontWeight.Medium)
-                                            Text("${pct.roundToInt()}%", fontSize = 9.sp,
-                                                color = iconColor.copy(alpha = 0.7f))
-                                        }
-                                    }
-                                }
-                            } else {
-                                // ── Regular diary entry ───────────────────────────────────
-                                if (entry.categories.isNotEmpty()) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        entry.categories.take(4).forEach { cat ->
-                                            Box(
-                                                modifier = Modifier
-                                                    .clip(RoundedCornerShape(20.dp))
-                                                    .border(1.dp, borderColor.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
-                                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                                            ) {
-                                                Text(cat, fontSize = 10.sp, color = borderColor.copy(alpha = 0.8f))
-                                            }
-                                        }
-                                    }
-                                    Spacer(Modifier.height(10.dp))
-                                }
-                                Text(entry.text, fontSize = 13.sp, color = TextPrimary, lineHeight = 20.sp)
-                            }
+                            Text(entry.text, fontSize = 13.sp, color = TextPrimary, lineHeight = 20.sp)
                         }
                     }
                 }
@@ -562,15 +523,15 @@ fun WellnessScreen(
         ) {
             // Arc items: Today, Yesterday, Other Day — fan upward from center
             val arcItems = listOf(
-                Triple(DiaryMode.YESTERDAY, Icons.Outlined.History,       "Yesterday"),
                 Triple(DiaryMode.TODAY,     Icons.Outlined.Today,         "Today"),
+                Triple(DiaryMode.YESTERDAY, Icons.Outlined.History,       "Yesterday"),
                 Triple(DiaryMode.OTHER_DAY, Icons.Outlined.CalendarMonth, "Other day"),
             )
             // Arc offsets: fan left-center-right upward
             val arcOffsets = listOf(
-                Pair(-90.dp, -120.dp),
-                Pair(0.dp, -80.dp),
-                Pair(90.dp, -120.dp),
+                Pair(-90.dp, -80.dp),
+                Pair(0.dp, -110.dp),
+                Pair(90.dp, -80.dp),
             )
 
             arcItems.forEachIndexed { i, (mode, icon, label) ->
@@ -595,7 +556,6 @@ fun WellnessScreen(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
                         .offset(x = offsetX, y = offsetY)
                         .alpha(alpha)
                         .scale(scale)
@@ -639,7 +599,7 @@ fun WellnessScreen(
 
                 // Write FAB (center, larger)
                 val rotation by animateFloatAsState(
-                    targetValue = if (fabExpanded) 135f else 0f,
+                    targetValue = if (fabExpanded) 45f else 0f,
                     animationSpec = tween(200), label = "write_rotation"
                 )
                 Box(
@@ -832,28 +792,14 @@ fun DiaryEntryScreen(
             Column {
                 Text("What's this about?", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
                 Spacer(Modifier.height(12.dp))
-                diaryCategories.chunked(4).forEach { row ->
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        row.forEach { cat ->
-                            key(cat) {
-                                val selected = cat in selectedCats
-                                Box(
-                                    modifier = Modifier
-                                        .padding(end = 6.dp, bottom = 8.dp)
-                                        .clip(RoundedCornerShape(20.dp))
-                                        .border(1.dp,
-                                            if (selected) AccentGreen else TextSecondary.copy(alpha = 0.3f),
-                                            RoundedCornerShape(20.dp))
-                                        .background(if (selected) AccentGreen.copy(alpha = 0.15f) else Color.Transparent)
-                                        .clickable { if (selected) selectedCats.remove(cat) else selectedCats.add(cat) }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                                ) {
-                                    Text(cat, fontSize = 12.sp, color = if (selected) AccentGreen else TextSecondary)
-                                }
-                            }
-                        }
-                    }
-                }
+                GroupedTagPicker(
+                    selectedTags = selectedCats,
+                    onToggleTag = { cat ->
+                        if (cat in selectedCats) selectedCats.remove(cat) else selectedCats.add(cat)
+                    },
+                    accentColor = AccentGreen,
+                    textSecondaryColor = TextSecondary,
+                )
             }
         }
 

@@ -60,6 +60,7 @@ import com.example.memogotchi.ui.page.maybeSendHealthAlert
 import com.example.memogotchi.ui.page.petStateFromScreenTime
 import com.example.memogotchi.ui.theme.GildaDisplay
 import com.example.memogotchi.ui.page.TimerMode
+import com.example.memogotchi.ui.page.createGoalNotificationChannels
 import com.google.ai.client.generativeai.GenerativeModel
 import java.util.Calendar
 import kotlinx.coroutines.delay
@@ -75,6 +76,7 @@ class MainActivity : ComponentActivity() {
 
         AppSettings.init(this)
         createNotificationChannel(this)
+        createGoalNotificationChannels(this)
 
         setContent {
             val windowSizeClass = calculateWindowSizeClass(this)
