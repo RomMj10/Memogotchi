@@ -11,7 +11,6 @@ import androidx.annotation.RequiresApi
 // ════════════════════════════════════════════════════════════════════════════
 //  MODELS
 // ════════════════════════════════════════════════════════════════════════════
-
 enum class AppCategory(val label: String, val emoji: String) {
     SOCIAL("Social",         "💬"),
     GAMES("Games",           "🎮"),
@@ -100,7 +99,6 @@ fun getBatteryLevel(context: Context): Int {
 // ════════════════════════════════════════════════════════════════════════════
 //  TASK ENGINE
 // ════════════════════════════════════════════════════════════════════════════
-
 @RequiresApi(Build.VERSION_CODES.O)
 fun generateAnalogTasks(
     context: Context,

@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.memogotchi.R
@@ -78,8 +79,8 @@ fun SettingsScreen(today: DayData? = null) {
                 fontWeight = FontWeight.Bold,
                 color      = TextPrimary,
                 letterSpacing = 3.sp,
-                modifier   = Modifier.fillMaxWidth().padding(bottom = 20.dp),
-                textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier   = Modifier.fillMaxWidth().padding(bottom = 20.dp, start = 24.dp),
+                textAlign  = TextAlign.Start,
             )
         }
 

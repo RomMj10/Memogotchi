@@ -87,6 +87,8 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
         java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
     }
 
+    val THRESHOLD_MIN = 60 * 60 * 1000L
+
     var tasks by remember { mutableStateOf<List<AnalogTask>>(emptyList()) }
     var taskSource by remember { mutableStateOf("rule") }
 
@@ -125,35 +127,40 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
             return@LaunchedEffect
         }
 
-        val ruleTasks = generateAnalogTasks(context, today, batteryLevel)
-        tasks = ruleTasks
-        taskSource = "rule"
-        TaskStore.saveTasksForDate(context, dateKey, ruleTasks, "rule")
+        val screenTimeMs = today?.totalMs ?: 0L
 
-        if (isNetworkAvailable(context)) {
-            val cats = today?.apps?.take(10)?.map { app ->
-                CategorizedApp(
-                    info = app,
-                    category = getAppCategory(context, app.packageName),
-                    hours = app.totalTimeMs / 3_600_000.0,
-                )
-            } ?: emptyList()
+        if (screenTimeMs >= THRESHOLD_MIN) {
+            val ruleTasks = generateAnalogTasks(context, today, batteryLevel)
+            tasks = ruleTasks
+            taskSource = "rule"
+            TaskStore.saveTasksForDate(context, dateKey, ruleTasks, "rule")
 
-            val completedHistory = TaskStore.getCompletedHistory(context)
-            geminiStatus = "Status: Connecting"
+            if (isNetworkAvailable(context)) {
+                val cats = today?.apps?.take(10)?.map { app ->
+                    CategorizedApp(
+                        info = app,
+                        category = getAppCategory(context, app.packageName),
+                        hours = app.totalTimeMs / 3_600_000.0,
+                    )
+                } ?: emptyList()
 
-            var geminiTasks = generateTasksWithGemini(weekData, batteryLevel, cats, completedHistory)
-            try {
-                geminiTasks = generateTasksWithGemini(weekData, batteryLevel, cats, completedHistory)
-            } catch (e: Exception) {
-                geminiStatus = "Status: Failed"
-            }
+                val completedHistory = TaskStore.getCompletedHistory(context)
+                geminiStatus = "Status: Connecting"
 
-            if (geminiTasks.isNotEmpty()) {
-                tasks = geminiTasks
-                geminiStatus = "Status: Success"
-                taskSource = "gemini"
-                TaskStore.saveTasksForDate(context, dateKey, geminiTasks, "gemini")
+                var geminiTasks = emptyList<AnalogTask>()
+                try {
+                    geminiTasks =
+                        generateTasksWithGemini(weekData, batteryLevel, cats, completedHistory)
+                } catch (e: Exception) {
+                    geminiStatus = "Status: Failed"
+                }
+
+                if (geminiTasks.isNotEmpty()) {
+                    tasks = geminiTasks
+                    geminiStatus = "Status: Success"
+                    taskSource = "gemini"
+                    TaskStore.saveTasksForDate(context, dateKey, geminiTasks, "gemini")
+                }
             }
         }
     }
@@ -340,6 +347,13 @@ fun HeaderCard(taskCount: Int, totalFocusLabel: String, batteryLevel: Int) {
             .background(Color(0xFF0D0E11))
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                text = "Tasks",
+                fontFamily = GildaDisplay,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Medium,
+                color = TextPrimary,
+            )
             Row(
                 modifier            = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(top = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,

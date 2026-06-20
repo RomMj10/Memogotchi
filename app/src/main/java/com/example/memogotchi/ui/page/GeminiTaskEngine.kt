@@ -29,7 +29,7 @@ suspend fun generateTasksWithGemini(
     }
 
 
-    val appSummary = categorizedApps.take(5).joinToString("\n") {
+    val appSummary = categorizedApps.take(4).joinToString("\n") {
         "- ${it.info.appName} (${it.category.label}): ${String.format("%.1f", it.hours)}h"
     }
 

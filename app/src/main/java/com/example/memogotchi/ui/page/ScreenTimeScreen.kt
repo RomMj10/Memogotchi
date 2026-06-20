@@ -9,8 +9,12 @@ import android.os.Build
 import android.os.Process
 import androidx.annotation.RequiresApi
 import android.app.usage.UsageEvents
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -197,12 +201,10 @@ fun ScreenTimeScreen(
     val petState    = remember(today) { petStateFromScreenTime(today?.totalMs ?: 0L, hourNow) }
     val isWide      = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Expanded
 
+
     Box(modifier = Modifier.fillMaxSize().background(BgColor)) {
+
         when {
-            !hasPermission -> PermissionScreen(
-                onGrant   = onGrantPermission,
-                onRefresh = onRefreshPermission
-            )
             isLoading -> CircularProgressIndicator(color = AccentGreen, modifier = Modifier.align(Alignment.Center))
             isWide    -> TabletLayout(weekData = weekData, petState = petState)
             else      -> PhoneLayout(weekData = weekData, petState = petState)
@@ -540,17 +542,43 @@ fun RowScope.TabBtn(label: String, selected: Boolean, onClick: () -> Unit) {
 
 @Composable
 fun PermissionScreen(onGrant: () -> Unit, onRefresh: () -> Unit) {
+    var isVisible by remember { mutableStateOf(false)}
+    LaunchedEffect(Unit) { isVisible = true }
     Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text("📊", fontSize = 52.sp)
-        Spacer(Modifier.height(20.dp))
-        Text("Usage access needed", fontFamily = GildaDisplay, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-        Spacer(Modifier.height(10.dp))
-        Text("Memogotchi needs permission to read app usage data.", fontFamily = Comfortaa, fontSize = 14.sp, color = TextSecondary, lineHeight = 20.sp)
-        Spacer(Modifier.height(28.dp))
-        Button(onClick = onGrant, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.buttonColors(containerColor = AccentGreen)) {
-            Text("Grant access", fontFamily = Comfortaa, fontWeight = FontWeight.SemiBold, color = Color.White)
+        AnimatedVisibility(
+            visible = isVisible,
+            enter = fadeIn(animationSpec = tween(1000)) + slideInVertically(
+                initialOffsetY = { 40 },
+                animationSpec = tween(2000)
+            ),
+            exit = fadeOut(),
+
+            ) {
+            Text("📊", fontSize = 52.sp)
         }
-        Spacer(Modifier.height(10.dp))
-        TextButton(onClick = onRefresh) { Text("I already granted it — refresh", color = TextSecondary, fontFamily = Comfortaa, fontSize = 13.sp) }
+
+        AnimatedVisibility(
+            visible = isVisible,
+            enter = fadeIn(animationSpec = tween(1000)
+            ),
+            exit = fadeOut(),
+
+            ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center
+            ) {
+                Spacer(Modifier.height(20.dp))
+                Text("Usage access needed", fontFamily = GildaDisplay, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Spacer(Modifier.height(10.dp))
+                Text("Memogotchi needs permission to read app usage data.", fontFamily = Comfortaa, fontSize = 14.sp, color = TextSecondary, lineHeight = 20.sp)
+                Spacer(Modifier.height(28.dp))
+                Button(onClick = onGrant, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.buttonColors(containerColor = AccentGreen)) {
+                    Text("Grant access", fontFamily = Comfortaa, fontWeight = FontWeight.SemiBold, color = Color.White)
+                }
+                Spacer(Modifier.height(10.dp))
+                TextButton(onClick = onRefresh) { Text("I already granted it — refresh", color = TextSecondary, fontFamily = Comfortaa, fontSize = 13.sp) }
+            }
+
+        }
     }
 }

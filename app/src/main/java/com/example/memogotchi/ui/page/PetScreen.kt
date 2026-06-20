@@ -86,6 +86,7 @@ batteryLevel: Int        = 0,
 elapsedSeconds: Long     = 0L,
 timerRunning: Boolean    = true,
 timerMode: TimerMode = TimerMode.STOPWATCH,
+petName:String = "",
 onTimerToggle: () -> Unit = {},
 onModeChange: (TimerMode) -> Unit = {},
 onClose: () -> Unit      = {},
@@ -95,16 +96,17 @@ previewTasks: List<AnalogTask> = emptyList(),
 onOpenTasks: () -> Unit = {},
 onOpenScreenTime: () -> Unit = {},
 onOpenWellness: () -> Unit = {},
+onOpenActivityTree: () -> Unit = {},
 ) {
     var hexMenuOpen by remember { mutableStateOf(false)}
     var showTaskPanel by remember { mutableStateOf(false)}
 
     val hexItems = remember(previewTasks, onOpenTasks, onOpenScreenTime, onOpenWellness) {
         listOf(
-            HexMenuItem(Icons.Outlined.Checklist, "Tasks") {
+            HexMenuItem(Icons.Outlined.AccountTree, "Activity Tree") {
                 hexMenuOpen = false
-                showTaskPanel = true
-            },
+                onOpenActivityTree()
+            } ,
             HexMenuItem(Icons.Outlined.InsertChart, "Screen Time") {
                 hexMenuOpen = false
                 onOpenScreenTime()
@@ -113,7 +115,10 @@ onOpenWellness: () -> Unit = {},
                 hexMenuOpen = false
                 onOpenWellness()
             },
-            HexMenuItem(Icons.Outlined.AccountTree, "Activity Tree", enabled = false) ,
+            HexMenuItem(Icons.Outlined.Checklist, "Tasks") {
+                hexMenuOpen = false
+                showTaskPanel = true
+            },
             HexMenuItem(Icons.Outlined.Redeem, "Rewards", enabled = false),
             HexMenuItem(Icons.Outlined.AccountBox, "Inventory", enabled = false),
         )
@@ -154,7 +159,13 @@ onOpenWellness: () -> Unit = {},
 
                 // ── Top bar ───────────────────────────────────────────────────
                 TopBar(onClose = onClose, onSettings = onSettings, timerMode= timerMode, onModeChange = onModeChange)
-
+                Text(
+                    text = petName,
+                    fontSize = 13.sp,
+                    fontFamily = GildaDisplay,
+                    fontWeight = FontWeight.Bold,
+                    color = TextLight
+                )
                 // ── Pet + speech bubble layered ───────────────────────────────
                 Box(
                     modifier = Modifier
@@ -170,7 +181,6 @@ onOpenWellness: () -> Unit = {},
                             .align(Alignment.TopCenter)
                             .clickable { hexMenuOpen = !hexMenuOpen }
                     )
-
 
                     // Speech bubble sits at the bottom of the Box, overlapping pet
                     this@Column.AnimatedVisibility(
@@ -196,7 +206,6 @@ onOpenWellness: () -> Unit = {},
                             .offset(y=(-10).dp)
                     )
                 }
-
 
                 // ── Giant timer display ───────────────────────────────────────
                 TimerDisplay(
