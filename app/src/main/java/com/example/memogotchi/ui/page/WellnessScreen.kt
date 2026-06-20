@@ -617,7 +617,7 @@ private fun BatteryStatesCard(
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            state.label, fontSize = 10.sp,
+                            state.label, fontSize = 12.sp,
                             color = if (isExpanded) state.colorHigh else TextSecondary
                         )
                         if (state.value != null) {
