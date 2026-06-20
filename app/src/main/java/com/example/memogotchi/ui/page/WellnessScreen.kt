@@ -82,9 +82,11 @@ enum class DiaryMode { NONE, TODAY, YESTERDAY, OTHER_DAY }
 
 fun stateIcon(key: String, pct: Float): ImageVector = when (key) {
     "emotional" -> when {
-        pct <= 20f -> Icons.Outlined.HeartBroken
-        pct <= 40f -> Icons.Outlined.FavoriteBorder
-        else -> Icons.Outlined.Favorite
+        pct <= 20f -> Icons.Outlined.MoodBad
+        pct <= 40f -> Icons.Outlined.SentimentDissatisfied
+        pct <= 60f -> Icons.Outlined.SentimentNeutral
+        pct <= 80f -> Icons.Outlined.SentimentSatisfied
+        else -> Icons.Outlined.SentimentVerySatisfied
     }
 
     "social" -> when {
@@ -891,9 +893,10 @@ private fun DiaryEntryCard(
                             contentDescription = state.label,
                             tint = lerp(state.colorLow, state.colorHigh, v / 100f),
                             modifier = Modifier
-                                .size(16.dp)
+                                .size(28.dp)
                                 .padding(end = 6.dp)
                         )
+                        Spacer(Modifier.height(10.dp))
                     }
                     Spacer(Modifier.weight(1f))
                     Text("${avgPct.roundToInt()}%", fontSize = 10.sp, color = borderColor)
