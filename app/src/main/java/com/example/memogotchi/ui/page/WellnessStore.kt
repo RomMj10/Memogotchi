@@ -58,6 +58,10 @@ object WellnessStore {
             put("categories",    catsArr)
             put("sliderSnapshot", if (e.sliderSnapshot != null) snapArr else JSONObject.NULL)
             put("timeLabel", e.timeLabel)
+            put("isStateLog",   e.isStateLog)
+            put("createdAtMs",  e.createdAtMs)
+            if (e.photoUri != null) put("photoUri", e.photoUri) else put("photoUri", JSONObject.NULL)
+            if (e.audioUri != null) put("audioUri", e.audioUri) else put("audioUri", JSONObject.NULL)
         }
     }
 
@@ -81,6 +85,10 @@ object WellnessStore {
             categories    = cats,
             sliderSnapshot = snap,
             timeLabel = o.optString("timeLabel", ""),
+            isStateLog     = o.optBoolean("isStateLog", false),
+            createdAtMs    = o.optLong("createdAtMs", 0L),
+            photoUri       = o.optString("photoUri", null).takeIf { it != "null" && it != null },
+            audioUri       = o.optString("audioUri", null).takeIf { it != "null" && it != null },
         )
     }
 }
