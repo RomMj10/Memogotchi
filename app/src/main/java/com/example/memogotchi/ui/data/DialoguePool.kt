@@ -5,7 +5,8 @@ enum class DialogueCategory {
     CONCERNED,
     TIRED,
     ALARMED,
-    NEW_TASK
+    NEW_TASK,
+    TASK_DONE
 }
 
 object DialoguePool {
@@ -39,6 +40,12 @@ object DialoguePool {
                     "New idea!, how about: \"{task}\"",
                     "{name} found something interesting, try: \"{task}\"",
                     "Got a suggestion you might like: \"{task}\"",
+                ),
+                DialogueCategory.TASK_DONE to mutableListOf(
+                    "You did it! \"{task}\" is done!",
+                    "{name} is proud of you for finishing \"{task}\"!",
+                    "👍",
+                    "\"{task}\" finished, nice work!"
                 )
     )
     fun addDialogue(category: DialogueCategory, vararg dialogues: String) {

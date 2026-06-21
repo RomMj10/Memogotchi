@@ -86,6 +86,8 @@ batteryLevel: Int        = 0,
 elapsedSeconds: Long     = 0L,
 timerRunning: Boolean    = true,
 timerMode: TimerMode = TimerMode.STOPWATCH,
+activeTaskTitle: String? = null,
+activeTaskTargetSeconds: Int? = null,
 taskAnnouncement:String? = null,
 petName:String = "",
 onTimerToggle: () -> Unit = {},
@@ -102,6 +104,7 @@ onTaskAnnouncementConsumed: () -> Unit = {},
 ) {
     var hexMenuOpen by remember { mutableStateOf(false)}
     var showTaskPanel by remember { mutableStateOf(false)}
+
 
     val hexItems = remember(previewTasks, onOpenTasks, onOpenScreenTime, onOpenWellness) {
         listOf(
@@ -154,13 +157,11 @@ onTaskAnnouncementConsumed: () -> Unit = {},
         }
     }
 
-    // Target: goal is to stay off phone for 30 min = 1800s (adjustable)
-    val targetSeconds = 1800L
-    val progress      = when(timerMode) {
-        TimerMode.POMODORO ->
-            (elapsedSeconds.toFloat() / POMODORO_TARGET_SECONDS).coerceIn(0f, 1f)
-        TimerMode.STOPWATCH ->
-            (elapsedSeconds.toFloat() / 1800f).coerceIn(0f, 1f)
+    val progress = if (activeTaskTargetSeconds != null && activeTaskTargetSeconds > 0) {
+        (elapsedSeconds.toFloat() / activeTaskTargetSeconds).coerceIn(0f, 1f)
+    } else when (timerMode) {
+        TimerMode.POMODORO  -> (elapsedSeconds.toFloat() / POMODORO_TARGET_SECONDS).coerceIn(0f, 1f)
+        TimerMode.STOPWATCH -> (elapsedSeconds.toFloat() / 1800f).coerceIn(0f, 1f)
     }
             Box(
                 modifier = Modifier
@@ -173,7 +174,8 @@ onTaskAnnouncementConsumed: () -> Unit = {},
             ) {
 
                 // ── Top bar ───────────────────────────────────────────────────
-                TopBar(onClose = onClose, onSettings = onSettings, timerMode= timerMode, onModeChange = onModeChange)
+                TopBar(onClose = onClose, onSettings = onSettings, timerMode= timerMode, onModeChange = onModeChange,
+                    locked = activeTaskTitle != null)
                 Text(
                     text = petName,
                     fontSize = 13.sp,
@@ -227,6 +229,7 @@ onTaskAnnouncementConsumed: () -> Unit = {},
                     elapsedSeconds = elapsedSeconds,
                     progress       = progress,
                     timerMode = timerMode,
+                    subtitleOverride = activeTaskTitle,
                     showReset = elapsedSeconds > 0L,
                     onTap = { onTimerToggle() },
                     onReset = onReset,
@@ -260,7 +263,7 @@ onTaskAnnouncementConsumed: () -> Unit = {},
 // ════════════════════════════════════════════════════════════════════════════
 
 @Composable
-fun TopBar(onClose: () -> Unit, onSettings: () -> Unit, timerMode: TimerMode, onModeChange: (TimerMode) -> Unit) {
+fun TopBar(onClose: () -> Unit, onSettings: () -> Unit, timerMode: TimerMode, onModeChange: (TimerMode) -> Unit, locked: Boolean = false) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -278,6 +281,7 @@ fun TopBar(onClose: () -> Unit, onSettings: () -> Unit, timerMode: TimerMode, on
             TimerModeSelector(
                 currentMode = timerMode,
                 onSelect = onModeChange,
+                enabled = !locked,
             )
         }
     }
@@ -383,6 +387,7 @@ fun SpeechBubble(text: String, modifier: Modifier = Modifier) {
 fun TimerModeSelector(
     currentMode: TimerMode,
     onSelect: (TimerMode) -> Unit,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier = Modifier
@@ -397,7 +402,7 @@ fun TimerModeSelector(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50.dp))
                     .background(if (selected) Accent else Color.Transparent)
-                    .clickable(enabled = !selected) { onSelect(mode) }
+                    .clickable(enabled = !selected && enabled) { onSelect(mode) }
                     .padding(horizontal = 10.dp, vertical = 10.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -405,7 +410,7 @@ fun TimerModeSelector(
                     text       = label,
                     fontFamily = GildaDisplay,
                     fontSize   = 16.sp,
-                    color      = if (selected) BgColor else AccentDark,
+                    color      = if (selected) BgColor else AccentDark.copy(alpha = if (enabled) 1f else 0.4f),
                 )
             }
         }
@@ -420,6 +425,7 @@ fun TimerModeSelector(
 fun TimerDisplay(
     elapsedSeconds: Long,
     progress: Float,
+    subtitleOverride: String? = null,
     timerMode: TimerMode,
     showReset: Boolean,
     onTap: () -> Unit,
@@ -432,8 +438,8 @@ fun TimerDisplay(
     val minutes = displaySeconds / 60
     val seconds = displaySeconds % 60
     val timeStr = String.format("%02d:%02d", minutes, seconds)
-    val subtitle = when(timerMode) {
-        TimerMode.POMODORO -> "FOCUS SESSION"
+    val subtitle = subtitleOverride?.let { "TASK: ${it.uppercase()}" } ?: when (timerMode) {
+        TimerMode.POMODORO  -> "FOCUS SESSION"
         TimerMode.STOPWATCH -> "STAY OFF YOUR PHONE"
     }
 
@@ -500,7 +506,6 @@ fun TimerDisplay(
 
         Spacer(Modifier.height(16.dp))
 
-        // Progress bar
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.6f)

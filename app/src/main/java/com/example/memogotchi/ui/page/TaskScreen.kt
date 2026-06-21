@@ -25,11 +25,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Flag
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.alpha
 import androidx.core.content.ContextCompat
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
 
+enum class TaskCardStatus {
+    IDLE,
+    ACTIVE,
+    LOCKED,
+    DONE
+}
 // ── Palette (matches ScreenTimeScreen) ───────────────────────────────────────
 private val BgColor        = Color(0xFF16171C)
 private val SurfaceColor   = Color(0xFF1F2125)
@@ -71,7 +88,14 @@ private fun syncGoalNotificationsSafely(context: android.content.Context, goals:
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(), onTasksGenerated: (List<AnalogTask>) -> Unit = {}) {
+fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
+                onTasksGenerated: (List<AnalogTask>) -> Unit = {},
+                onStartTaskTimer: (AnalogTask) -> Unit = {},
+                activeTaskTimer: ActiveTaskTimer? = null,
+                activeElapsedSeconds: Long = 0L,
+                onCancelTaskTimer: (AnalogTask) -> Unit = {},
+                onTaskCompleted: (AnalogTask) -> Unit = {},
+) {
     var geminiStatus by remember { mutableStateOf("IDLE") }
 
     val context      = LocalContext.current
@@ -87,6 +111,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(), o
         java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
     }
 
+
     val THRESHOLD_MIN = 60 * 60 * 1000L
 
     var tasks by remember { mutableStateOf<List<AnalogTask>>(emptyList()) }
@@ -100,6 +125,9 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(), o
     LaunchedEffect(Unit) {
         goals = GoalStore.loadGoals(context)
         syncGoalNotificationsSafely(context, goals)
+    }
+    LaunchedEffect(activeTaskTimer) {
+        TaskStore.loadTasksForDate(context, dateKey)?.let {tasks = it}
     }
 
     fun persistGoals(updated: List<Goal>) {
@@ -277,30 +305,31 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(), o
                 }
             } else {
                 items(tasks, key = { it.id }) { task ->
-                    TaskCard(
-                        task     = task,
-                        onToggle = { toggled ->
-                            val newDone = !toggled.isDone
-                            tasks = tasks.map { if (it.id == toggled.id) it.copy(isDone = newDone) else it }
-                            TaskStore.updateTaskDone(context, dateKey, toggled.id, newDone)
+                    val status = when {
+                        task.isDone -> TaskCardStatus.DONE
+                        activeTaskTimer?.taskId == task.id -> TaskCardStatus.ACTIVE
+                        activeTaskTimer != null -> TaskCardStatus.LOCKED
+                        else -> TaskCardStatus.IDLE
+                    }
+                    val remaining = if (status == TaskCardStatus.ACTIVE)
+                        (activeTaskTimer!!.targetSeconds - activeElapsedSeconds).coerceAtLeast(0L)
+                    else 0L
 
-                            if (newDone) {
-                                TaskStore.addCompletedTask(
-                                    context,
-                                    CompletedTaskRecord(
-                                        id = toggled.id,
-                                        title = toggled.title,
-                                        category = toggled.category,
-                                        durationMinutes = toggled.durationMinutes,
-                                        source = taskSource,
-                                        completedAtMs = System.currentTimeMillis(),
-                                        dateLabel = dateKey,
-                                    )
-                                )
-                            } else {
-                                TaskStore.removeCompletedTask(context, toggled.id, dateKey)
-                            }
-                        }
+                    TaskCard(
+                        task = task,
+                        status = status,
+                        remainingSeconds = remaining,
+                        onStartTask = onStartTaskTimer,
+                        onSkip = { skipped ->
+                            tasks = tasks.filterNot { it.id == skipped.id }
+                            TaskStore.saveTasksForDate(context, dateKey, tasks, taskSource)
+                        },
+                        onConvertToGoal = { t ->
+                            persistGoals(goals + Goal(title = t.title, description = t.description, category = t.category))
+                            tasks = tasks.filterNot { it.id == t.id }
+                            TaskStore.saveTasksForDate(context, dateKey, tasks, taskSource)
+                        },
+                        onCancelTask = onCancelTaskTimer,
                     )
                 }
             }
@@ -410,13 +439,27 @@ fun SectionHeader(title: String) {
 //  TASK CARD
 // ════════════════════════════════════════════════════════════════════════════
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TaskCard(task: AnalogTask, onToggle: (AnalogTask) -> Unit) {
-    val accent    = categoryColor(task.category)
-    val isDone    = task.isDone
+fun TaskCard(
+    task: AnalogTask,
+    status: TaskCardStatus,
+    remainingSeconds: Long = 0L,
+    onStartTask: (AnalogTask) -> Unit = {},
+    onSkip: (AnalogTask) -> Unit = {},
+    onConvertToGoal: (AnalogTask) -> Unit = {},
+    onCancelTask: (AnalogTask) -> Unit = {},
+) {
+    val accent = categoryColor(task.category)
+    val cardAlpha = if (status == TaskCardStatus.LOCKED) 0.45f else 1f
     val bgColor by animateColorAsState(
-        if (isDone) Color(0xFF1A1D1A) else SurfaceColor, tween(300), label = "taskbg"
+        when (status) {
+            TaskCardStatus.DONE   -> Color(0xFF1A1D1A)
+            TaskCardStatus.ACTIVE -> Color(0xFF1B2A22)
+            else                  -> SurfaceColor
+        }, tween(300), label = "taskbg"
     )
+    var showQuickMenu by remember { mutableStateOf(false) }
 
     Surface(
         shape    = RoundedCornerShape(16.dp),
@@ -424,54 +467,101 @@ fun TaskCard(task: AnalogTask, onToggle: (AnalogTask) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 5.dp)
+            .alpha(cardAlpha)
+            .then(
+                if (status == TaskCardStatus.ACTIVE)
+                    Modifier.border(1.5.dp, AccentGreen.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                else Modifier
+            )
     ) {
-        Row(
-            modifier          = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
+        Box {
+            Row(
                 modifier = Modifier
-                    .size(42.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(accent.copy(alpha = 0.15f))
-                    .border(1.dp, accent.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
+                    .padding(14.dp)
+                    .combinedClickable(
+                        onClick = {},
+                        onLongClick = {
+                            if (status == TaskCardStatus.IDLE || status == TaskCardStatus.ACTIVE) showQuickMenu = true
+                        }
+                    ),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(task.category.emoji, fontSize = 18.sp)
-            }
+                Box(
+                    modifier = Modifier.size(42.dp).clip(RoundedCornerShape(12.dp))
+                        .background(accent.copy(alpha = 0.15f))
+                        .border(1.dp, accent.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) { Text(task.category.emoji, fontSize = 18.sp) }
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text           = task.title,
-                    fontSize       = 14.sp,
-                    fontWeight     = FontWeight.SemiBold,
-                    color          = if (isDone) TextSecondary else TextPrimary,
-                    textDecoration = if (isDone) TextDecoration.LineThrough else null,
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text     = task.description,
-                    fontSize = 12.sp,
-                    color    = TextSecondary,
-                    lineHeight = 17.sp,
-                )
-                Spacer(Modifier.height(8.dp))
-                Column(horizontalAlignment = Alignment.End) {
-                    Pill(text = task.triggerReason, color = accent)
-                    Pill(text = "${task.durationMinutes} min", color = TextSecondary)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = task.title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                        color = if (status == TaskCardStatus.DONE) TextSecondary else TextPrimary,
+                        textDecoration = if (status == TaskCardStatus.DONE) TextDecoration.LineThrough else null,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(task.description, fontSize = 12.sp, color = TextSecondary, lineHeight = 17.sp)
+                    Spacer(Modifier.height(8.dp))
+                    Column(horizontalAlignment = Alignment.End) {
+                        Pill(text = task.triggerReason, color = accent)
+                        Pill(text = "${task.durationMinutes} min", color = TextSecondary)
+                    }
+                }
+
+                when (status) {
+                    TaskCardStatus.DONE -> Box(
+                        modifier = Modifier.size(24.dp).clip(CircleShape).background(AccentGreen),
+                        contentAlignment = Alignment.Center
+                    ) { Text("✓", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold) }
+
+                    TaskCardStatus.ACTIVE -> {
+                        val m = remainingSeconds / 60
+                        val s = remainingSeconds % 60
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(String.format("%02d:%02d", m, s), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AccentGreen)
+                            Text("left", fontSize = 8.sp, color = TextSecondary)
+                        }
+                    }
+
+                    TaskCardStatus.LOCKED -> Icon(
+                        Icons.Outlined.Lock, contentDescription = "Locked",
+                        tint = TextSecondary, modifier = Modifier.size(18.dp)
+                    )
+
+                    TaskCardStatus.IDLE -> Box(
+                        modifier = Modifier.size(24.dp).clip(CircleShape)
+                            .border(1.5.dp, TrackColor, CircleShape)
+                    )
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(if (isDone) AccentGreen else TrackColor)
-                    .clickable { onToggle(task) },
-                contentAlignment = Alignment.Center
-            ) {
-                if (isDone) Text("✓", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+            DropdownMenu(expanded = showQuickMenu, onDismissRequest = { showQuickMenu = false }) {
+                when (status) {
+                    TaskCardStatus.IDLE -> {
+                        DropdownMenuItem(
+                            text = { Text("Start Task") },
+                            leadingIcon = { Icon(Icons.Outlined.PlayArrow, contentDescription = null) },
+                            onClick = { showQuickMenu = false; onStartTask(task) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Skip") },
+                            leadingIcon = { Icon(Icons.Outlined.Close, contentDescription = null) },
+                            onClick = { showQuickMenu = false; onSkip(task) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Convert to Goal") },
+                            leadingIcon = { Icon(Icons.Outlined.Flag, contentDescription = null) },
+                            onClick = { showQuickMenu = false; onConvertToGoal(task) }
+                        )
+                    }
+                    TaskCardStatus.ACTIVE -> DropdownMenuItem(
+                        text = { Text("Cancel Task") },
+                        leadingIcon = { Icon(Icons.Outlined.Close, contentDescription = null) },
+                        onClick = { showQuickMenu = false; onCancelTask(task) }
+                    )
+                    else -> {}
+                }
             }
         }
     }

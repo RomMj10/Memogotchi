@@ -43,6 +43,7 @@ import com.example.memogotchi.ui.data.DialogueCategory
 import com.example.memogotchi.ui.data.DialoguePool
 import com.example.memogotchi.ui.data.fillTemplate
 import com.example.memogotchi.ui.page.ActivityTreeScreen
+import com.example.memogotchi.ui.page.AnalogTask
 import com.example.memogotchi.ui.page.AppSettings
 import com.example.memogotchi.ui.page.BatteryState
 import com.example.memogotchi.ui.page.DayData
@@ -64,6 +65,8 @@ import com.example.memogotchi.ui.page.maybeSendHealthAlert
 import com.example.memogotchi.ui.page.MemoStore
 import com.example.memogotchi.ui.page.NameInputScreen
 import com.example.memogotchi.ui.page.PermissionScreen
+import com.example.memogotchi.ui.page.TaskTimerStore
+import com.example.memogotchi.ui.page.TimerMode
 import com.example.memogotchi.ui.page.petStateFromScreenTime
 import com.example.memogotchi.ui.theme.GildaDisplay
 import com.example.memogotchi.ui.page.createGoalNotificationChannels
@@ -197,12 +200,8 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     var timerRunning by remember { mutableStateOf(PomodoroStore.isRunning(context)) }
     var timerMode by remember { mutableStateOf(PomodoroStore.loadMode(context)) }
 
-    LaunchedEffect(timerRunning) {
-        while (timerRunning) {
-            delay(1000L)
-            elapsedSeconds++
-        }
-    }
+    val dateKeyToday = remember { java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date()) }
+    var activeTaskTimer by remember { mutableStateOf(TaskTimerStore.load(context)) }
 
     var isFirstDialogue by remember { mutableStateOf(true) }
     val hourNow = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
@@ -223,6 +222,25 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
         }
     }
 
+    LaunchedEffect(timerRunning) {
+        while (timerRunning) {
+            activeTaskTimer?.let { active ->
+                if (elapsedSeconds >= active.targetSeconds) {
+                    TaskTimerStore.completeActiveTaskAndClear(context)
+                    taskAnnouncement = DialoguePool.randomLine(DialogueCategory.TASK_DONE)
+                        ?.fillTemplate("task" to active.taskTitle, "name" to (petName ?: ""))
+                    activeTaskTimer = null
+                    PomodoroStore.reset(context)
+                    elapsedSeconds = 0L
+                    timerRunning = false
+                }
+            }
+            if (!timerRunning) break
+            delay(1000L)
+            elapsedSeconds++
+        }
+    }
+
     LaunchedEffect(hasPermission) {
         if (hasPermission) {
             while (true) {
@@ -237,6 +255,27 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
             }
         }
     }
+
+    val onStartTaskTimer: (AnalogTask) -> Unit = { task ->
+        if (activeTaskTimer == null) {
+            TaskTimerStore.start(context, task.id, task.title, task.durationMinutes, dateKeyToday)
+            activeTaskTimer = TaskTimerStore.load(context)
+            timerMode = TimerMode.STOPWATCH
+            PomodoroStore.setMode(context, TimerMode.STOPWATCH)
+            PomodoroStore.start(context, 0L)
+            elapsedSeconds = 0L
+            timerRunning = true
+            currentTab = NavTab.PET
+        }
+    }
+    val onCancelTaskTimer: (AnalogTask) -> Unit = {
+        TaskTimerStore.clear(context)
+        activeTaskTimer = null
+        PomodoroStore.reset(context)
+        elapsedSeconds = 0L
+        timerRunning = false
+    }
+
 
     if (!startupComplete) {
         Box(modifier = Modifier.fillMaxSize().background(BgColor)) {
@@ -282,6 +321,8 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             elapsedSeconds = elapsedSeconds,
                             timerRunning = timerRunning,
                             timerMode = timerMode,
+                            activeTaskTitle = activeTaskTimer?.taskTitle,
+                            activeTaskTargetSeconds = activeTaskTimer?.targetSeconds,
                             petName = petName ?: "",
                             onTimerToggle = {
                                 if (timerRunning) {
@@ -347,6 +388,14 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                                 newTasks.firstOrNull()?.let { task ->
                                     taskAnnouncement = DialoguePool.randomLine(DialogueCategory.NEW_TASK)?.fillTemplate("task" to task.title)//replaces {task} with the title
                                 }
+                            },
+                            activeTaskTimer = activeTaskTimer,
+                            activeElapsedSeconds = elapsedSeconds,
+                            onStartTaskTimer = onStartTaskTimer,
+                            onCancelTaskTimer = onCancelTaskTimer,
+                            onTaskCompleted = { tasks ->
+                                taskAnnouncement = DialoguePool.randomLine(DialogueCategory.TASK_DONE)?.fillTemplate("task" to tasks.title, "name" to (petName ?: ""))
+
                             }
                         )
                     }
