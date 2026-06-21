@@ -39,6 +39,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.ui.data.DialogueCategory
+import com.example.memogotchi.ui.data.DialoguePool
+import com.example.memogotchi.ui.data.fillTemplate
 import com.example.memogotchi.ui.page.ActivityTreeScreen
 import com.example.memogotchi.ui.page.AppSettings
 import com.example.memogotchi.ui.page.BatteryState
@@ -63,9 +66,7 @@ import com.example.memogotchi.ui.page.NameInputScreen
 import com.example.memogotchi.ui.page.PermissionScreen
 import com.example.memogotchi.ui.page.petStateFromScreenTime
 import com.example.memogotchi.ui.theme.GildaDisplay
-import com.example.memogotchi.ui.page.TimerMode
 import com.example.memogotchi.ui.page.createGoalNotificationChannels
-import com.google.ai.client.generativeai.GenerativeModel
 import java.util.Calendar
 import kotlinx.coroutines.delay
 
@@ -203,9 +204,14 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
         }
     }
 
+    var isFirstDialogue by remember { mutableStateOf(true) }
     val hourNow = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
     val today = weekData.lastOrNull()
-    val petState = remember(today) { petStateFromScreenTime(today?.totalMs ?: 0L, hourNow) }
+    val petState = remember(today) { petStateFromScreenTime(today?.totalMs ?: 0L, hourNow, isFirstDialogue, petName?: "") }
+    LaunchedEffect(petState) {
+        isFirstDialogue = false
+    }
+    var taskAnnouncement by remember { mutableStateOf<String?>(null) }
 
     val notifPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -307,7 +313,9 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             onOpenTasks = { currentTab = NavTab.TASKS },
                             onOpenScreenTime = { currentTab = NavTab.SCREEN_TIME },
                             onOpenWellness = { currentTab = NavTab.WELLNESS },
-                            onOpenActivityTree = { showActivityTree = true }
+                            onOpenActivityTree = { showActivityTree = true },
+                            taskAnnouncement = taskAnnouncement,
+                            onTaskAnnouncementConsumed = {taskAnnouncement = null}
 
                         )
 
@@ -334,7 +342,12 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
 
                         NavTab.TASKS -> TasksScreen(
                             today = weekData.lastOrNull(),
-                            weekData = weekData
+                            weekData = weekData,
+                            onTasksGenerated = { newTasks ->
+                                newTasks.firstOrNull()?.let { task ->
+                                    taskAnnouncement = DialoguePool.randomLine(DialogueCategory.NEW_TASK)?.fillTemplate("task" to task.title)//replaces {task} with the title
+                                }
+                            }
                         )
                     }
                 }

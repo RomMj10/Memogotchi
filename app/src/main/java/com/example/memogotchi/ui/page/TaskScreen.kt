@@ -71,7 +71,7 @@ private fun syncGoalNotificationsSafely(context: android.content.Context, goals:
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
+fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(), onTasksGenerated: (List<AnalogTask>) -> Unit = {}) {
     var geminiStatus by remember { mutableStateOf("IDLE") }
 
     val context      = LocalContext.current
@@ -134,6 +134,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
             tasks = ruleTasks
             taskSource = "rule"
             TaskStore.saveTasksForDate(context, dateKey, ruleTasks, "rule")
+            onTasksGenerated(ruleTasks)
 
             if (isNetworkAvailable(context)) {
                 val cats = today?.apps?.take(10)?.map { app ->
@@ -160,6 +161,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
                     geminiStatus = "Status: Success"
                     taskSource = "gemini"
                     TaskStore.saveTasksForDate(context, dateKey, geminiTasks, "gemini")
+                    onTasksGenerated(ruleTasks)
                 }
             }
         }
@@ -264,12 +266,6 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList()) {
                         Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 32.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            geminiStatus,
-                            color = TextSecondary,
-                            fontFamily = GildaDisplay,
-                            fontSize = 14.sp
-                        )
                         Text(
                             "No tasks yet, suggestions are generated the more you use your phone. 🌱",
                             color    = TextSecondary,

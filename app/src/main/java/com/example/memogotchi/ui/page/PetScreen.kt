@@ -86,6 +86,7 @@ batteryLevel: Int        = 0,
 elapsedSeconds: Long     = 0L,
 timerRunning: Boolean    = true,
 timerMode: TimerMode = TimerMode.STOPWATCH,
+taskAnnouncement:String? = null,
 petName:String = "",
 onTimerToggle: () -> Unit = {},
 onModeChange: (TimerMode) -> Unit = {},
@@ -97,6 +98,7 @@ onOpenTasks: () -> Unit = {},
 onOpenScreenTime: () -> Unit = {},
 onOpenWellness: () -> Unit = {},
 onOpenActivityTree: () -> Unit = {},
+onTaskAnnouncementConsumed: () -> Unit = {},
 ) {
     var hexMenuOpen by remember { mutableStateOf(false)}
     var showTaskPanel by remember { mutableStateOf(false)}
@@ -128,14 +130,27 @@ onOpenActivityTree: () -> Unit = {},
     val dailyLabel = remember(totalHours) { formatDailyTotal(totalHours) }
 
     var showSpeechBubble by remember { mutableStateOf(false)}
-    LaunchedEffect(petState.speechBubble) {
-        if (petState.speechBubble != null && petState.speechBubble.isNotBlank()) {
+    var bubbleText by remember { mutableStateOf<String?>(null)}
+
+    LaunchedEffect(taskAnnouncement) {
+        if (!taskAnnouncement.isNullOrBlank()) {
+            bubbleText = taskAnnouncement
             showSpeechBubble = true
             delay(SPEECH_BUBBLE_DURATION_MS)
             showSpeechBubble = false
-        } else {
-            // If the external message is cleared, hide the bubble immediately
-            showSpeechBubble = false
+            onTaskAnnouncementConsumed()
+        }
+    }
+    LaunchedEffect(petState.speechBubble, taskAnnouncement) {
+        if (taskAnnouncement.isNullOrBlank()) {
+            if (!petState.speechBubble.isNullOrBlank()) {
+                bubbleText = petState.speechBubble
+                showSpeechBubble = true
+                delay(SPEECH_BUBBLE_DURATION_MS)
+                showSpeechBubble = false
+            } else {
+                showSpeechBubble = false
+            }
         }
     }
 
@@ -189,7 +204,7 @@ onOpenActivityTree: () -> Unit = {},
                         exit = bubbleExitTransition
                     ) {
                         SpeechBubble(
-                            petState = petState,
+                            text = bubbleText ?: "",
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .padding(bottom = 8.dp)
@@ -343,8 +358,7 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
 
 
 @Composable
-fun SpeechBubble(petState: PetState, modifier: Modifier = Modifier) {
-    val message = petState.speechBubble ?: ""
+fun SpeechBubble(text: String, modifier: Modifier = Modifier) {
 
      Card(
         modifier = modifier
@@ -355,7 +369,7 @@ fun SpeechBubble(petState: PetState, modifier: Modifier = Modifier) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Text(
-            text       = message,
+            text       = text,
             fontSize   = 12.sp,
             fontFamily = Comfortaa,
             fontWeight = FontWeight.Medium,

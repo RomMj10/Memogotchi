@@ -139,7 +139,7 @@ fun ActivityTreeScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(task.category.emoji, fontSize = 14.sp)
                                 Spacer(Modifier.width(6.dp))
-                                Text(task.title, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary, maxLines = 1)
+                                Text(task.title, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
                             }
                             Spacer(Modifier.height(2.dp))
                             Text(

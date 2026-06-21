@@ -43,6 +43,9 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.memogotchi.R
+import com.example.memogotchi.ui.data.DialogueCategory
+import com.example.memogotchi.ui.data.DialoguePool
+import com.example.memogotchi.ui.data.fillTemplate
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
 import kotlinx.coroutines.Dispatchers
@@ -64,15 +67,20 @@ data class PetState(
     val speechBubble: String? = null,
 )
 
-fun petStateFromScreenTime(totalMs: Long, hourOfDay: Int): PetState {
+fun petStateFromScreenTime(totalMs: Long, hourOfDay: Int, isFirstOpen: Boolean = false, petName: String = ""): PetState {
     val hours = totalMs / 3_600_000.0
-    return when {
-        hourOfDay >= 22 && hours >= 4  -> PetState(PetMood.TIRED,    "It's late and you've been on your phone for ${hours.toInt()} hrs. Maybe rest?")
-        hours >= 12                    -> PetState(PetMood.ALARMED,  "${hours.toInt()} hrs?! That's a lot…")
-        hours >= 6                     -> PetState(PetMood.CONCERNED,"${hours.toInt()} hrs today. Take a break soon!")
-        hours >= 2                     -> PetState(PetMood.IDLE,    null)
-        else                           -> PetState(PetMood.HAPPY,     "Looking good today 🌱")
+    val hoursLbl = "${hours.toInt()} hrs"
+    val (mood, category) = when {
+        hourOfDay >= 22 && hours >= 4 -> PetMood.TIRED to DialogueCategory.TIRED
+        hours >= 12 -> PetMood.ALARMED to DialogueCategory.ALARMED
+        hours >= 6 -> PetMood.CONCERNED to DialogueCategory.CONCERNED
+        hours >= 2 -> PetMood.IDLE to null
+        else -> PetMood.HAPPY to DialogueCategory.HAPPY
     }
+    val line = category?.let {
+        if (isFirstOpen) DialoguePool.firstLine(it) else DialoguePool.randomLine(it)
+    }
+    return PetState(mood = mood, speechBubble = line?.fillTemplate("hours" to hoursLbl, "name" to petName))
 }
 
 // ════════════════════════════════════════════════════════════════════════════
