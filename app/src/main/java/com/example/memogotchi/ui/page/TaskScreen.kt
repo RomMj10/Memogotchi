@@ -296,7 +296,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "No tasks yet, suggestions are generated the more you use your phone. 🌱",
+                            "No tasks yet, suggestions are generated the more you use your phone.",
                             color    = TextSecondary,
                             fontFamily = GildaDisplay,
                             fontSize = 13.sp,

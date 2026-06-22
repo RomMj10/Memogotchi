@@ -134,7 +134,7 @@ fun PetScreen(
                     hexMenuOpen = false
                     showTaskPanel = true
                 },
-                HexMenuItem(Icons.Outlined.Checklist, "Personality") {
+                HexMenuItem(Icons.Outlined.Psychology, "Personality") {
                     hexMenuOpen = false
                     onOpenPersonality()
                 },

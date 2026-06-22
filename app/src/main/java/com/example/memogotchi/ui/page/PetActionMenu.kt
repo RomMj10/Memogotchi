@@ -1,5 +1,6 @@
 package com.example.memogotchi.ui.page
 
+
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,6 +20,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,11 +36,6 @@ private val AccentHex       = Color(0xFF77C59D)
 private val TextLightHex    = Color(0xFF98ABA0)
 private val TextDimHex      = Color(0xFF68736C)
 
-/**
- * One slot in the hexagonal pet menu.
- * Set [enabled] = false for features that are placeholders for now —
- * they render dimmed and ignore taps.
- */
 data class HexMenuItem(
     val icon: ImageVector,
     val label: String,
@@ -128,7 +125,7 @@ fun PetHexFabMenu(
 
 /**
  * Small modal panel listing a few analog tasks, popped up when the "Tasks"
- * hex item is tapped. Tapping outside the card or the close glyph dismisses it.
+ * hex item is tapped. Tapping outside the card dismisses it.
  */
 @Composable
 fun MiniTaskPanel(
@@ -148,7 +145,7 @@ fun MiniTaskPanel(
                 .padding(horizontal = 28.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(SurfaceColorHex)
-                .clickable(enabled = false) {} // swallow taps so they don't bubble to the scrim
+                .clickable(enabled = false) {}
                 .padding(20.dp)
         ) {
             Column {
@@ -163,12 +160,6 @@ fun MiniTaskPanel(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFE6FCFF)
-                    )
-                    Text(
-                        "✕",
-                        color = TextLightHex,
-                        fontSize = 16.sp,
-                        modifier = Modifier.clickable { onDismiss() }
                     )
                 }
 
@@ -198,7 +189,8 @@ fun MiniTaskPanel(
                                     fontSize = 13.sp,
                                     fontFamily = Comfortaa,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color(0xFFE6FCFF)
+                                    textDecoration = if (task.isDone) TextDecoration.LineThrough else null,
+                                    color = if (task.isDone) TextLightHex else Color(0xFFE6FCFF)
                                 )
                                 Text(
                                     "${task.durationMinutes} min · ${task.triggerReason}",
