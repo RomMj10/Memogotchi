@@ -15,6 +15,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +26,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,10 +45,13 @@ private val TextSecondary = Color(0xFF888888)
 
 
 @Composable
-fun SettingsScreen(today: DayData? = null) {
+fun SettingsScreen(today: DayData? = null,
+                   currentPetName: String = "",
+                   onPetRenamed: (String) -> Unit = {}) {
     val context = LocalContext.current
 
     var strictMode by remember { mutableStateOf(false) }
+    var showRenamePetDialog by remember { mutableStateOf(false) }
 
     var monochromeUI by remember { mutableStateOf(false) }
     var healthAlerts by remember { mutableStateOf(true) }
@@ -119,6 +125,14 @@ fun SettingsScreen(today: DayData? = null) {
         item { SectionLabel("PET & THEME") }
         item {
             SettingsGroup {
+                SettingsRow(
+                    icon        = R.drawable.ic_nav_pet,
+                    title = "Rename Pet",
+                    subtitle = currentPetName.ifBlank {"Tap to set a name"},
+                    showChevron = true,
+                    onClick = { showRenamePetDialog = true}
+                )
+                RowDivider()
                 SettingsRow(
                     icon     = R.drawable.outline_contrast_icon,
                     title    = "Monochrome UI",
@@ -199,6 +213,7 @@ fun SettingsScreen(today: DayData? = null) {
 
         item { Spacer(Modifier.height(24.dp)) }
     }
+
     if (showDailyLimitDialog) {
         DailyLimitDialog(
             currentMinutes = dailyLimitMinutes,
@@ -208,6 +223,17 @@ fun SettingsScreen(today: DayData? = null) {
                 dailyLimitMinutes = minutes
                 AppSettings.setDailyLimitMinutes(context, minutes)
                 showDailyLimitDialog = false
+            }
+        )
+    }
+    if (showRenamePetDialog) {
+        RenamePetDialog(
+            currentName = currentPetName,
+            onDismiss = { showRenamePetDialog = false },
+            onConfirm = { newName ->
+                MemoStore.saveName(context, newName)
+                onPetRenamed(newName)
+                showRenamePetDialog = false
             }
         )
     }
@@ -287,6 +313,66 @@ fun TextSizeSelector(currentSize: TextSizeOption, onSelect: (TextSizeOption) -> 
             }
         }
     }
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RenamePetDialog(
+    currentName: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var name by remember { mutableStateOf(currentName)}
+    var error by remember { mutableStateOf<String?>(null)}
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceColor,
+        title = {
+            Text("Rename Pet", color = TextPrimary, fontFamily = GildaDisplay, fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column {
+                TextField(
+                    value = name,
+                    onValueChange = {
+                        if (it.length <= 24) name = it
+                        error = null
+                    },
+                    placeholder = { Text("Tap to rename a pet", color = TextSecondary) },
+                    singleLine = true,
+                    textStyle = TextStyle(fontSize = 15.sp, color = TextPrimary, fontFamily = Comfortaa),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = BgColor,
+                        unfocusedContainerColor = BgColor,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    )
+                )
+                if (error != null) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(error!!, color = Color(0xFFE05252), fontSize = 12.sp, fontFamily = Comfortaa)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val trimmed = name.trim()
+                if (trimmed.isEmpty()) {
+                    error = "Name can't be empty"
+                } else {
+                    onConfirm(trimmed)
+                }
+            }) {
+                Text("Rename", fontFamily = Comfortaa, color = AccentGreen, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", fontFamily = Comfortaa, color = TextSecondary)
+            }
+        }
+    )
 }
 
 //label sections

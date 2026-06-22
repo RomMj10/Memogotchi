@@ -317,7 +317,10 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                     .padding(bottom = 72.dp)
             ) {
                 if (showSettings) {
-                    SettingsScreen()
+                    SettingsScreen(
+                        currentPetName = petName ?: "",
+                        onPetRenamed = { newName -> petName = newName}
+                    )
                 } else if (showActivityTree) {
                     ActivityTreeScreen(
                         completedTasks = remember { TaskStore.getCompletedHistory(context) },
