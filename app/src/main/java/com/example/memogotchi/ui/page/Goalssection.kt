@@ -678,6 +678,7 @@ fun AddGoalSheet(
                             val previousTags = existingGoal?.tags ?: emptyList()
                             val newlyAddedTags = selectedTags.filterNot { it in previousTags }
                             GoalStore.incrementTagTally(context, newlyAddedTags)
+                            PersonalityStore.incrementTagCategoryTally(context, newlyAddedTags)
 
                             onCreate(goal)
                         }

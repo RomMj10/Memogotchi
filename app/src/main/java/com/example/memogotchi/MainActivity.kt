@@ -65,6 +65,8 @@ import com.example.memogotchi.ui.page.maybeSendHealthAlert
 import com.example.memogotchi.ui.page.MemoStore
 import com.example.memogotchi.ui.page.NameInputScreen
 import com.example.memogotchi.ui.page.PermissionScreen
+import com.example.memogotchi.ui.page.PersonalityScreen
+import com.example.memogotchi.ui.page.PersonalityStore
 import com.example.memogotchi.ui.page.TaskTimerStore
 import com.example.memogotchi.ui.page.TimerMode
 import com.example.memogotchi.ui.page.petStateFromScreenTime
@@ -206,11 +208,21 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     var isFirstDialogue by remember { mutableStateOf(true) }
     val hourNow = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
     val today = weekData.lastOrNull()
+    LaunchedEffect(today) {
+        PersonalityStore.rollupScreenCategoryTallyIfNeeded(
+            context,
+            today
+        )
+    }
     val petState = remember(today) { petStateFromScreenTime(today?.totalMs ?: 0L, hourNow, isFirstDialogue, petName?: "") }
     LaunchedEffect(petState) {
         isFirstDialogue = false
     }
     var taskAnnouncement by remember { mutableStateOf<String?>(null) }
+    var showPersonality by remember {
+        mutableStateOf(false)
+    }
+
 
     val notifPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -311,6 +323,12 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         completedTasks = remember { TaskStore.getCompletedHistory(context) },
                         onBack = { showActivityTree = false }
                     )
+                } else if (showPersonality) {
+                    PersonalityScreen(
+                        onBack = {
+                            showPersonality = false
+                        }
+                    )
                 } else {
                     when (currentTab) {
                         NavTab.PET -> PetScreen(
@@ -355,6 +373,9 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             onOpenScreenTime = { currentTab = NavTab.SCREEN_TIME },
                             onOpenWellness = { currentTab = NavTab.WELLNESS },
                             onOpenActivityTree = { showActivityTree = true },
+                            onOpenPersonality = {
+                                showPersonality = true
+                            },
                             taskAnnouncement = taskAnnouncement,
                             onTaskAnnouncementConsumed = {taskAnnouncement = null}
 

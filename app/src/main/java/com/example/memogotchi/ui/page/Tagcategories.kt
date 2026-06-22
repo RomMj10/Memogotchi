@@ -18,3 +18,15 @@ val tagCategories: List<TagCategory> = listOf(
 
 // Flat list, derived from the grouped structure — kept for any code that still wants all tags at once
 val allTagOptions: List<String> = tagCategories.flatMap { it.tags }
+
+// ── Add to TagCategories.kt ──────────────────────────────────────────────
+
+// Reverse lookup: tag string -> its category label ("Social", "Work", etc.)
+private val tagToCategoryLabel: Map<String, String> =
+    tagCategories.flatMap { cat -> cat.tags.map { tag -> tag to cat.label } }.toMap()
+
+fun categoryLabelForTag(tag: String): String? = tagToCategoryLabel[tag]
+
+/** Maps a list of raw tags (e.g. from a diary entry or goal) to the set of category labels they touch. */
+fun categoryLabelsForTags(tags: List<String>): Set<String> =
+    tags.mapNotNull { categoryLabelForTag(it) }.toSet()

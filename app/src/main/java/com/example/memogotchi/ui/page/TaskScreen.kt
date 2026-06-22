@@ -154,6 +154,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
             taskSource = TaskStore.getSourceForDate(context, dateKey) ?: "rule"
             return@LaunchedEffect
         }
+        PersonalityStore.rollupScreenCategoryTallyIfNeeded(context, today)
 
         val screenTimeMs = today?.totalMs ?: 0L
 

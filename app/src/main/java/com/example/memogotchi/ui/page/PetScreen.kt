@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.BatteryStd
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.InsertChart
 import androidx.compose.material.icons.outlined.Park
+import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.Redeem
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Card
@@ -44,17 +45,21 @@ import com.airbnb.lottie.compose.*
 import com.example.memogotchi.R
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
+import com.example.memogotchi.ui.theme.Pink40
+import androidx.compose.material.icons.outlined.Psychology
 import kotlinx.coroutines.delay
 import java.util.Calendar
 
 // ── Palette ───────────────────────────────────────────────────────────────────
-private val BgColor       = Color(0xFF16171C)   // warm off-white
-private val SurfaceColor  = Color(0xFF1F2125)
-private val AccentDark    = Color(0xFFAEB9B3)
-private val Accent  = Color(0xFF77C59D)
-private val TextLight     = Color(0xFF708A7A)
-private val PetBorderClr  = Color(0xFF77C59D)
-private val TimerColor    = Color(0xFFE6FCFF)
+private val BgColor = Color(0xFF16171C)   // warm off-white
+private val SurfaceColor = Color(0xFF1F2125)
+private val AccentDark = Color(0xFFAEB9B3)
+private val Accent = Color(0xFF77C59D)
+private val AccentGreen = Color(0xFF77C59D)
+private val TextLight = Color(0xFF708A7A)
+private val TextSecondary = Color(0xFF888888)
+private val PetBorderClr = Color(0xFF77C59D)
+private val TimerColor = Color(0xFFE6FCFF)
 
 // ════════════════════════════════════════════════════════════════════════════
 //  ROOT
@@ -70,70 +75,79 @@ val bubbleEnterTransition = fadeIn(animationSpec = spring(stiffness = Spring.Sti
             initialScale = 0.5f,
 
             )
-val bubbleExitTransition = fadeOut(animationSpec = tween(durationMillis = 10000,easing = EaseOutBounce)) +
-        scaleOut(
-            targetScale = 0.0f
-        )
+val bubbleExitTransition =
+    fadeOut(animationSpec = tween(durationMillis = 10000, easing = EaseOutBounce)) +
+            scaleOut(
+                targetScale = 0.0f
+            )
 
 @Preview
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PetScreen(
-today: DayData?          = null,
-petState: PetState       = PetState(),
-xpEarned: Int            = 0,
-batteryLevel: Int        = 0,
-elapsedSeconds: Long     = 0L,
-timerRunning: Boolean    = true,
-timerMode: TimerMode = TimerMode.STOPWATCH,
-activeTaskTitle: String? = null,
-activeTaskTargetSeconds: Int? = null,
-taskAnnouncement:String? = null,
-petName:String = "",
-onTimerToggle: () -> Unit = {},
-onModeChange: (TimerMode) -> Unit = {},
-onClose: () -> Unit      = {},
-onReset: () -> Unit = {},
-onSettings: () -> Unit   = {},
-previewTasks: List<AnalogTask> = emptyList(),
-onOpenTasks: () -> Unit = {},
-onOpenScreenTime: () -> Unit = {},
-onOpenWellness: () -> Unit = {},
-onOpenActivityTree: () -> Unit = {},
-onTaskAnnouncementConsumed: () -> Unit = {},
+    today: DayData? = null,
+    petState: PetState = PetState(),
+    xpEarned: Int = 0,
+    batteryLevel: Int = 0,
+    elapsedSeconds: Long = 0L,
+    timerRunning: Boolean = true,
+    timerMode: TimerMode = TimerMode.STOPWATCH,
+    activeTaskTitle: String? = null,
+    activeTaskTargetSeconds: Int? = null,
+    taskAnnouncement: String? = null,
+    petName: String = "",
+    onTimerToggle: () -> Unit = {},
+    onModeChange: (TimerMode) -> Unit = {},
+    onClose: () -> Unit = {},
+    onReset: () -> Unit = {},
+    onSettings: () -> Unit = {},
+    previewTasks: List<AnalogTask> = emptyList(),
+    onOpenTasks: () -> Unit = {},
+    onOpenScreenTime: () -> Unit = {},
+    onOpenWellness: () -> Unit = {},
+    onOpenActivityTree: () -> Unit = {},
+    onTaskAnnouncementConsumed: () -> Unit = {},
+    personalityUnlocked: Boolean = false,
+    personalityDirty: Boolean = false,
+    onOpenPersonality: () -> Unit = {},
 ) {
-    var hexMenuOpen by remember { mutableStateOf(false)}
-    var showTaskPanel by remember { mutableStateOf(false)}
+    var hexMenuOpen by remember { mutableStateOf(false) }
+    var showTaskPanel by remember { mutableStateOf(false) }
 
 
-    val hexItems = remember(previewTasks, onOpenTasks, onOpenScreenTime, onOpenWellness) {
-        listOf(
-            HexMenuItem(Icons.Outlined.AccountTree, "Activity Tree") {
-                hexMenuOpen = false
-                onOpenActivityTree()
-            } ,
-            HexMenuItem(Icons.Outlined.InsertChart, "Screen Time") {
-                hexMenuOpen = false
-                onOpenScreenTime()
-            },
-            HexMenuItem(Icons.Outlined.BatteryStd, "Wellness") {
-                hexMenuOpen = false
-                onOpenWellness()
-            },
-            HexMenuItem(Icons.Outlined.Checklist, "Tasks") {
-                hexMenuOpen = false
-                showTaskPanel = true
-            },
-            HexMenuItem(Icons.Outlined.Redeem, "Rewards", enabled = false),
-            HexMenuItem(Icons.Outlined.AccountBox, "Inventory", enabled = false),
-        )
-    }
+    val hexItems =
+        remember(previewTasks, onOpenTasks, onOpenScreenTime, onOpenWellness, onOpenPersonality) {
+            listOf(
+                HexMenuItem(Icons.Outlined.AccountTree, "Activity Tree") {
+                    hexMenuOpen = false
+                    onOpenActivityTree()
+                },
+                HexMenuItem(Icons.Outlined.InsertChart, "Screen Time") {
+                    hexMenuOpen = false
+                    onOpenScreenTime()
+                },
+                HexMenuItem(Icons.Outlined.BatteryStd, "Wellness") {
+                    hexMenuOpen = false
+                    onOpenWellness()
+                },
+                HexMenuItem(Icons.Outlined.Checklist, "Tasks") {
+                    hexMenuOpen = false
+                    showTaskPanel = true
+                },
+                HexMenuItem(Icons.Outlined.Checklist, "Personality") {
+                    hexMenuOpen = false
+                    onOpenPersonality()
+                },
+                HexMenuItem(Icons.Outlined.Redeem, "Rewards", enabled = false),
+                HexMenuItem(Icons.Outlined.AccountBox, "Inventory", enabled = false),
+            )
+        }
 
     val totalHours = remember(today) { (today?.totalMs ?: 0L) / 3_600_000.0 }
     val dailyLabel = remember(totalHours) { formatDailyTotal(totalHours) }
 
-    var showSpeechBubble by remember { mutableStateOf(false)}
-    var bubbleText by remember { mutableStateOf<String?>(null)}
+    var showSpeechBubble by remember { mutableStateOf(false) }
+    var bubbleText by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(taskAnnouncement) {
         if (!taskAnnouncement.isNullOrBlank()) {
@@ -160,129 +174,169 @@ onTaskAnnouncementConsumed: () -> Unit = {},
     val progress = if (activeTaskTargetSeconds != null && activeTaskTargetSeconds > 0) {
         (elapsedSeconds.toFloat() / activeTaskTargetSeconds).coerceIn(0f, 1f)
     } else when (timerMode) {
-        TimerMode.POMODORO  -> (elapsedSeconds.toFloat() / POMODORO_TARGET_SECONDS).coerceIn(0f, 1f)
+        TimerMode.POMODORO -> (elapsedSeconds.toFloat() / POMODORO_TARGET_SECONDS).coerceIn(0f, 1f)
         TimerMode.STOPWATCH -> (elapsedSeconds.toFloat() / 1800f).coerceIn(0f, 1f)
     }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BgColor)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+
+            // ── Top bar ───────────────────────────────────────────────────
+            TopBar(
+                onClose = onClose,
+                onSettings = onSettings,
+                timerMode = timerMode,
+                onModeChange = onModeChange,
+                locked = activeTaskTitle != null,
+                onOpenPersonality = onOpenPersonality
+            )
+            Text(
+                text = petName,
+                fontSize = 13.sp,
+                fontFamily = GildaDisplay,
+                fontWeight = FontWeight.Bold,
+                color = TextLight
+            )
+            // ── Pet + speech bubble layered ───────────────────────────────
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(BgColor)
-                ) {
-            Column(
-                modifier            = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .fillMaxWidth()
+                    .height(240.dp),
+                contentAlignment = Alignment.Center,
             ) {
-
-                // ── Top bar ───────────────────────────────────────────────────
-                TopBar(onClose = onClose, onSettings = onSettings, timerMode= timerMode, onModeChange = onModeChange,
-                    locked = activeTaskTitle != null)
-                Text(
-                    text = petName,
-                    fontSize = 13.sp,
-                    fontFamily = GildaDisplay,
-                    fontWeight = FontWeight.Bold,
-                    color = TextLight
-                )
-                // ── Pet + speech bubble layered ───────────────────────────────
-                Box(
+                // Pet overflows upward beyond the Box bounds
+                PetCard(
+                    petState = petState,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(240.dp),
-                    contentAlignment = Alignment.Center,
+                        .size(220.dp)
+                        .align(Alignment.TopCenter)
+                        .clickable { hexMenuOpen = !hexMenuOpen }
+                )
+
+                // Speech bubble sits at the bottom of the Box, overlapping pet
+                this@Column.AnimatedVisibility(
+                    visible = showSpeechBubble,
+                    enter = bubbleEnterTransition,
+                    exit = bubbleExitTransition
                 ) {
-                    // Pet overflows upward beyond the Box bounds
-                    PetCard(
-                        petState = petState,
+                    SpeechBubble(
+                        text = bubbleText ?: "",
                         modifier = Modifier
-                            .size(220.dp)
-                            .align(Alignment.TopCenter)
-                            .clickable { hexMenuOpen = !hexMenuOpen }
-                    )
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 8.dp)
+                            .offset(y = (-100).dp)
 
-                    // Speech bubble sits at the bottom of the Box, overlapping pet
-                    this@Column.AnimatedVisibility(
-                        visible = showSpeechBubble,
-                        enter = bubbleEnterTransition,
-                        exit = bubbleExitTransition
-                    ) {
-                        SpeechBubble(
-                            text = bubbleText ?: "",
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 8.dp)
-                                .offset(y = (-100).dp)
-
-                        )
-                    }
-                    PetHexFabMenu(
-                        expanded = hexMenuOpen,
-                        items = hexItems,
-                        modifier = Modifier
-                            .matchParentSize()
-                            .align(Alignment.TopCenter)
-                            .offset(y=(-10).dp)
                     )
                 }
-
-                // ── Giant timer display ───────────────────────────────────────
-                TimerDisplay(
-                    elapsedSeconds = elapsedSeconds,
-                    progress       = progress,
-                    timerMode = timerMode,
-                    subtitleOverride = activeTaskTitle,
-                    showReset = elapsedSeconds > 0L,
-                    onTap = { onTimerToggle() },
-                    onReset = onReset,
-                )
-
-                Spacer(Modifier.weight(1f))
-
-                StatsBar(
-                    xpEarned      = xpEarned,
-                    dailyTotal    = dailyLabel,
-                    batterylvl = batteryLevel
-                )
-
-                Spacer(Modifier.height(16.dp))
-            }
-            if (showTaskPanel) {
-                MiniTaskPanel(
-                    tasks = previewTasks,
-                    onDismiss = { showTaskPanel = false },
-                    onViewAll =  {
-                        showTaskPanel = false
-                        onOpenTasks()
-                    }
+                PetHexFabMenu(
+                    expanded = hexMenuOpen,
+                    items = hexItems,
+                    modifier = Modifier
+                        .matchParentSize()
+                        .align(Alignment.TopCenter)
+                        .offset(y = (-10).dp)
                 )
             }
+
+            // ── Giant timer display ───────────────────────────────────────
+            TimerDisplay(
+                elapsedSeconds = elapsedSeconds,
+                progress = progress,
+                timerMode = timerMode,
+                subtitleOverride = activeTaskTitle,
+                showReset = elapsedSeconds > 0L,
+                onTap = { onTimerToggle() },
+                onReset = onReset,
+            )
+
+            Spacer(Modifier.weight(1f))
+
+            StatsBar(
+                xpEarned = xpEarned,
+                dailyTotal = dailyLabel,
+                batterylvl = batteryLevel
+            )
+
+            Spacer(Modifier.height(16.dp))
+        }
+        if (showTaskPanel) {
+            MiniTaskPanel(
+                tasks = previewTasks,
+                onDismiss = { showTaskPanel = false },
+                onViewAll = {
+                    showTaskPanel = false
+                    onOpenTasks()
+                }
+            )
         }
     }
+}
 
 // ════════════════════════════════════════════════════════════════════════════
 //  TOP BAR
 // ════════════════════════════════════════════════════════════════════════════
 
 @Composable
-fun TopBar(onClose: () -> Unit, onSettings: () -> Unit, timerMode: TimerMode, onModeChange: (TimerMode) -> Unit, locked: Boolean = false) {
-    Row(
+fun TopBar(
+    onClose: () -> Unit,
+    onSettings: () -> Unit,
+    timerMode: TimerMode,
+    onModeChange: (TimerMode) -> Unit,
+    locked: Boolean = false,
+    personalityUnlocked: Boolean = false,
+    personalityDirty: Boolean = false,
+    onOpenPersonality: () -> Unit = {},
+
+) {
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 80.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment     = Alignment.CenterVertically,
     ) {
-        // Title pill
+        // Personality icon — top-left
         Box(
             modifier = Modifier
+                .align(Alignment.CenterStart)
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(SurfaceColor)
+                .clickable { onOpenPersonality() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Psychology,
+                contentDescription = "Memo's personality",
+                tint = if (personalityUnlocked) AccentGreen else Color.Gray.copy(alpha = 0.5f),
+                modifier = Modifier.size(20.dp),
+            )
+            if (personalityUnlocked && personalityDirty) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(AccentGreen)
+                )
+
+            }
+        }
+
+        // Title pill — centered
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
                 .clip(RoundedCornerShape(50.dp))
                 .border(1.5.dp, AccentDark, RoundedCornerShape(50.dp)),
             contentAlignment = Alignment.Center
         ) {
-            TimerModeSelector(
-                currentMode = timerMode,
-                onSelect = onModeChange,
-                enabled = !locked,
-            )
+            TimerModeSelector(currentMode = timerMode, onSelect = onModeChange, enabled = !locked)
         }
     }
 }
@@ -295,27 +349,27 @@ fun TopBar(onClose: () -> Unit, onSettings: () -> Unit, timerMode: TimerMode, on
 fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "float")
     val offsetY by infiniteTransition.animateFloat(
-        initialValue   = 0f,
-        targetValue    = -10f,
-        animationSpec  = infiniteRepeatable(
-            animation  = tween(2000, easing = EaseInOutSine),
+        initialValue = 0f,
+        targetValue = -10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
         ),
         label = "floatY"
     )
 
     val rawRes = when (petState.mood) {
-        PetMood.IDLE      -> R.raw.pet_idle
-        PetMood.HAPPY     -> R.raw.pet_happy
+        PetMood.IDLE -> R.raw.pet_idle
+        PetMood.HAPPY -> R.raw.pet_happy
         PetMood.CONCERNED -> R.raw.pet_concerned
-        PetMood.TIRED     -> R.raw.pet_concerned
-        PetMood.ALARMED   -> R.raw.pet_concerned
+        PetMood.TIRED -> R.raw.pet_concerned
+        PetMood.ALARMED -> R.raw.pet_concerned
     }
 
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(rawRes))
-    val progress    by animateLottieCompositionAsState(
+    val progress by animateLottieCompositionAsState(
         composition = composition,
-        iterations  = LottieConstants.IterateForever,
+        iterations = LottieConstants.IterateForever,
     )
     val clippedPetSize = 200.dp
     val clippedPetShape = RectangleShape
@@ -346,8 +400,8 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
 
         LottieAnimation(
             composition = composition,
-            progress    = { progress },
-            modifier    = Modifier
+            progress = { progress },
+            modifier = Modifier
                 .size(lottieRenderSize)
                 .scale(1.8f)
 
@@ -360,24 +414,23 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
 // ════════════════════════════════════════════════════════════════════════════
 
 
-
 @Composable
 fun SpeechBubble(text: String, modifier: Modifier = Modifier) {
 
-     Card(
+    Card(
         modifier = modifier
             .widthIn(min = 50.dp, max = 390.dp)
             .wrapContentSize(),
-         shape = RoundedCornerShape(24.dp),
-         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Text(
-            text       = text,
-            fontSize   = 12.sp,
+            text = text,
+            fontSize = 12.sp,
             fontFamily = Comfortaa,
             fontWeight = FontWeight.Medium,
-            color      = BgColor,
+            color = BgColor,
             modifier = Modifier.padding(12.dp)
         )
     }
@@ -407,10 +460,10 @@ fun TimerModeSelector(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text       = label,
+                    text = label,
                     fontFamily = GildaDisplay,
-                    fontSize   = 16.sp,
-                    color      = if (selected) BgColor else AccentDark.copy(alpha = if (enabled) 1f else 0.4f),
+                    fontSize = 16.sp,
+                    color = if (selected) BgColor else AccentDark.copy(alpha = if (enabled) 1f else 0.4f),
                 )
             }
         }
@@ -431,7 +484,7 @@ fun TimerDisplay(
     onTap: () -> Unit,
     onReset: () -> Unit,
 ) {
-    val displaySeconds = when(timerMode) {
+    val displaySeconds = when (timerMode) {
         TimerMode.POMODORO -> (POMODORO_TARGET_SECONDS - elapsedSeconds).coerceAtLeast(0L)
         TimerMode.STOPWATCH -> (elapsedSeconds)
     }
@@ -439,7 +492,7 @@ fun TimerDisplay(
     val seconds = displaySeconds % 60
     val timeStr = String.format("%02d:%02d", minutes, seconds)
     val subtitle = subtitleOverride?.let { "TASK: ${it.uppercase()}" } ?: when (timerMode) {
-        TimerMode.POMODORO  -> "FOCUS SESSION"
+        TimerMode.POMODORO -> "FOCUS SESSION"
         TimerMode.STOPWATCH -> "STAY OFF YOUR PHONE"
     }
 
@@ -460,7 +513,7 @@ fun TimerDisplay(
                 letterSpacing = (-2).sp,
                 lineHeight = 56.sp,
                 textAlign = TextAlign.Center,
-                modifier   = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onTap() }
                     .padding(vertical = 4.dp),
@@ -468,8 +521,8 @@ fun TimerDisplay(
 
             this@Column.AnimatedVisibility(
                 visible = showReset,
-                enter   = fadeIn() + scaleIn(),
-                exit    = fadeOut() + scaleOut(),
+                enter = fadeIn() + scaleIn(),
+                exit = fadeOut() + scaleOut(),
                 modifier = Modifier.align(Alignment.CenterEnd),
             ) {
                 Box(
@@ -495,13 +548,13 @@ fun TimerDisplay(
         Spacer(Modifier.height(6.dp))
 
         Text(
-            text          = subtitle,
+            text = subtitle,
             fontFamily = GildaDisplay,
-            fontSize      = 11.sp,
-            fontWeight    = FontWeight.SemiBold,
-            color         = TextLight,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextLight,
             letterSpacing = 3.sp,
-            textAlign     = TextAlign.Center,
+            textAlign = TextAlign.Center,
         )
 
         Spacer(Modifier.height(16.dp))
@@ -539,15 +592,15 @@ fun StatsBar(
     batterylvl: Int
 ) {
     Row(
-        modifier              = Modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 32.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment     = Alignment.Top,
+        verticalAlignment = Alignment.Top,
     ) {
-        StatItem(label = "BATTERY",      value = "$batterylvl%",          accent = false)
-        StatItem(label = "XP EARNED",   value = "+$xpEarned",   accent = true)
-        StatItem(label = "DAILY TOTAL", value = dailyTotal,     accent = false)
+        StatItem(label = "BATTERY", value = "$batterylvl%", accent = false)
+        StatItem(label = "XP EARNED", value = "+$xpEarned", accent = true)
+        StatItem(label = "DAILY TOTAL", value = dailyTotal, accent = false)
     }
 }
 
@@ -555,19 +608,19 @@ fun StatsBar(
 fun StatItem(label: String, value: String, accent: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text       = value,
+            text = value,
             fontFamily = GildaDisplay,
-            fontSize   = 18.sp,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color      = if (accent) Accent else AccentDark,
+            color = if (accent) Accent else AccentDark,
         )
         Spacer(Modifier.height(2.dp))
         Text(
-            text          = label,
+            text = label,
             fontFamily = Comfortaa,
-            fontSize      = 9.sp,
-            fontWeight    = FontWeight.Medium,
-            color         = TextLight,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Medium,
+            color = TextLight,
             letterSpacing = 1.5.sp,
         )
     }

@@ -77,7 +77,6 @@ data class DiaryEntry(
 )
 
 
-
 enum class DiaryMode { NONE, TODAY, YESTERDAY, OTHER_DAY }
 
 fun stateIcon(key: String, pct: Float): ImageVector = when (key) {
@@ -289,7 +288,8 @@ fun WellnessScreen(
                 onDismiss = { showVoiceRecorderSheet = false },
                 onAttach = { uri ->
                     pendingAudioUri = uri
-                    diaryMode = DiaryMode.TODAY   // same idea as photo: open a fresh "Today" entry with this attached
+                    diaryMode =
+                        DiaryMode.TODAY   // same idea as photo: open a fresh "Today" entry with this attached
                 }
             )
         }
@@ -339,6 +339,7 @@ private fun handleDiarySubmit(
     val previousTags = editingEntry?.categories ?: emptyList()
     val newlyAddedTags = cats.filterNot { it in previousTags }
     GoalStore.incrementTagTally(context, newlyAddedTags)
+    PersonalityStore.incrementTagCategoryTally(context, newlyAddedTags)
 
     if (editingEntry != null) {
         val idx = diaryEntries.indexOfFirst { it.id == editingEntry.id }
@@ -382,7 +383,6 @@ private fun handleBatterySubmit(
                 isStateLog = true,
             )
         )
-        android.widget.Toast.makeText(context, "ADD CALLED, new size: ${diaryEntries.size}", android.widget.Toast.LENGTH_LONG).show()
     }
     val sorted = diaryEntries.sortedWith(
         compareByDescending<DiaryEntry> { it.sortKey }.thenByDescending { it.createdAtMs }
@@ -538,7 +538,12 @@ private fun OverallBatteryCard(batteryPct: Int?, loggedCount: Int) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text("Overall battery", fontSize = 20.sp, color = TextPrimary, fontFamily = GildaDisplay)
+                Text(
+                    "Overall battery",
+                    fontSize = 20.sp,
+                    color = TextPrimary,
+                    fontFamily = GildaDisplay
+                )
                 Spacer(Modifier.height(1.dp))
                 Text(
                     text = if (loggedCount < 4) "$loggedCount / 4 logged" else "All batteries logged",
@@ -864,7 +869,7 @@ private fun DiaryEntryCard(
             }
 
             if (entry.categories.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     entry.categories.take(4).forEach { cat ->
                         Box(
@@ -881,6 +886,30 @@ private fun DiaryEntryCard(
                         }
                     }
                 }
+            }
+
+            if (entry.text.isNotBlank()) {
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier
+                        .padding(vertical = 4.dp)
+                        .height(IntrinsicSize.Min)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(3.dp)
+                            .fillMaxHeight()
+                            .background(Color(0xFF3B383B))
+                    )
+
+                    Text(
+                        text = entry.text,
+                        modifier = Modifier.padding(start = 12.dp),
+                        fontSize = 13.sp,
+                        color = TextPrimary
+                    )
+                }
+
             }
 
             Spacer(Modifier.height(10.dp))
@@ -919,10 +948,6 @@ private fun DiaryEntryCard(
                 )
             }
 
-            if (entry.text.isNotBlank()) {
-                Spacer(Modifier.height(10.dp))
-                Text(entry.text, fontSize = 13.sp, color = TextPrimary, lineHeight = 20.sp)
-            }
         }
     }
 }
@@ -1191,7 +1216,9 @@ fun DiaryEntryScreen(
         if (photoUri != null) Spacer(Modifier.height(12.dp))
 
         audioUri?.let { uri ->
-            Box(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth()) {
+            Box(modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth()) {
                 DiaryAudioPlayer(audioUri = uri, onRemove = { audioUri = null })
             }
             Spacer(Modifier.height(12.dp))
@@ -1199,7 +1226,9 @@ fun DiaryEntryScreen(
 
         if (photoUri == null && audioUri == null) {
             Row(
-                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth(),
+                modifier = Modifier
+                    .padding(horizontal = 20.dp)
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (photoUri == null) {
@@ -1304,7 +1333,11 @@ fun DiaryEntryScreen(
                 .padding(horizontal = 20.dp)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
-                .background(if (entryText.isNotBlank() || photoUri != null || audioUri != null) AccentGreen else Color(0xFF2A2A30))
+                .background(
+                    if (entryText.isNotBlank() || photoUri != null || audioUri != null) AccentGreen else Color(
+                        0xFF2A2A30
+                    )
+                )
                 .clickable {
                     if (entryText.isNotBlank() || photoUri != null || audioUri != null) onSubmit(
                         entryText,
@@ -1362,7 +1395,12 @@ private fun AttachButton(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = label, tint = Color(0xFF77C59D), modifier = Modifier.size(16.dp))
+        Icon(
+            icon,
+            contentDescription = label,
+            tint = Color(0xFF77C59D),
+            modifier = Modifier.size(16.dp)
+        )
         Spacer(Modifier.width(6.dp))
         Text(label, fontSize = 12.sp, color = Color(0xFFE8E6F0))
     }
@@ -1451,14 +1489,14 @@ private fun DiaryEntryTopBar(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .clip(RoundedCornerShape(10.dp))
-                .background(if (entryText.isNotBlank() ) AccentGreen else Color(0xFF2A2A30))
+                .background(if (entryText.isNotBlank()) AccentGreen else Color(0xFF2A2A30))
                 .clickable(onClick = onSubmit)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Text(
                 if (isUpdate) "Update" else "Submit",
                 fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                color = if (entryText.isNotBlank() ) BgColor else TextSecondary
+                color = if (entryText.isNotBlank()) BgColor else TextSecondary
             )
         }
     }
