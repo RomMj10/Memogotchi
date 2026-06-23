@@ -29,7 +29,6 @@ import com.example.memogotchi.ui.theme.GildaDisplay
 import kotlin.math.cos
 import kotlin.math.sin
 
-// ── Local palette (mirrors PetScreen.kt) ────────────────────────────────────
 private val BgColorHex      = Color(0xFF16171C)
 private val SurfaceColorHex = Color(0xFF1F2125)
 private val AccentHex       = Color(0xFF77C59D)

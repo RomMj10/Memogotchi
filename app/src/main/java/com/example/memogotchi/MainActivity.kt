@@ -79,7 +79,7 @@ import kotlinx.coroutines.delay
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     @RequiresApi(Build.VERSION_CODES.Q)
-    @androidx.annotation.RequiresPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+    @androidx.annotation.RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -119,7 +119,7 @@ enum class NavTab(val label: String, val iconRes: Int) {
 }
 
 @SuppressLint("RememberReturnType")
-@androidx.annotation.RequiresPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+@androidx.annotation.RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun MainShell(windowSizeClass: WindowSizeClass) {
@@ -134,7 +134,6 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     var hasPermission by remember { mutableStateOf(context.hasUsageStatsPermission()) }
     var petName by remember { mutableStateOf(MemoStore.loadName(context)) }
     val startupComplete = !petName.isNullOrBlank() && hasPermission
-    val virtualPoints = 0
     val xpEarned = 0
 
 
@@ -410,7 +409,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             weekData = weekData,
                             onTasksGenerated = { newTasks ->
                                 newTasks.firstOrNull()?.let { task ->
-                                    taskAnnouncement = DialoguePool.randomLine(DialogueCategory.NEW_TASK)?.fillTemplate("task" to task.title)//replaces {task} with the title
+                                    taskAnnouncement = DialoguePool.randomLine(DialogueCategory.NEW_TASK)?.fillTemplate("task" to task.title, "name" to (petName ?: ""))
                                 }
                             },
                             activeTaskTimer = activeTaskTimer,
@@ -418,7 +417,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             onStartTaskTimer = onStartTaskTimer,
                             onCancelTaskTimer = onCancelTaskTimer,
                             onTaskCompleted = { tasks ->
-                                taskAnnouncement = DialoguePool.randomLine(DialogueCategory.TASK_DONE)?.fillTemplate("task" to tasks.title, "name" to (petName ?: ""))
+                                taskAnnouncement = DialoguePool.randomLine(DialogueCategory.TASK_DONE)?.fillTemplate("name" to (petName ?: ""), "task" to tasks.title,)
 
                             }
                         )

@@ -36,15 +36,6 @@ data class AnalogTask(
     var isDone: Boolean = false,
 )
 
-data class Milestone(
-    val id: String,
-    val title: String,
-    val description: String,
-    val requiredHours: Double,
-    val emoji: String,
-    val isUnlocked: Boolean,
-)
-
 // ════════════════════════════════════════════════════════════════════════════
 //  APP CATEGORY HELPER
 // ════════════════════════════════════════════════════════════════════════════

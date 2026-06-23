@@ -79,8 +79,7 @@ fun ActivityTreeScreen(
         if (tasks.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🌱", fontSize = 40.sp)
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(48.dp))
                     Text("Your tree hasn't sprouted yet", fontFamily = Comfortaa, fontSize = 13.sp, color = TextSecondary)
                     Text("Complete analog tasks to grow it", fontFamily = Comfortaa, fontSize = 12.sp, color = TextSecondary)
                 }
