@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    FocusGuard nav icon — outlined phone glyph.
+    Matches the assumed style of ic_nav_pet / ic_nav_wellness / ic_nav_screentime /
+    ic_nav_tasks: single-color, 24x24 viewport, tinted at runtime via
+    ColorFilter.tint(AccentGreen) when selected, otherwise left untinted (TextSecondary
+    is applied by the Image's default rendering — adjust fillColor below if your
+    other icons hardcode a base color instead of relying on tint).
+
+    If your existing icons use a different stroke weight/viewBox, replace this file's
+    path data with one matching that style — this is a safe placeholder, not a
+    guaranteed visual match.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M17,2H7C5.9,2 5,2.9 5,4v16c0,1.1 0.9,2 2,2h10c1.1,0 2,-0.9 2,-2V4C19,2.9 18.1,2 17,2zM17,18H7V4h10V18z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M11,19h2v-1h-2v1z" />
+</vector>
