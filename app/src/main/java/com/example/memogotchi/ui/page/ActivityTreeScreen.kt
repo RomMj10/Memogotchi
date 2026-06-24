@@ -1,7 +1,9 @@
 package com.example.memogotchi.ui.page
 
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -9,7 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.TagFaces
+import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -20,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -79,8 +82,7 @@ fun ActivityTreeScreen(
         if (tasks.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🌱", fontSize = 40.sp)
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(48.dp))
                     Text("Your tree hasn't sprouted yet", fontFamily = Comfortaa, fontSize = 13.sp, color = TextSecondary)
                     Text("Complete analog tasks to grow it", fontFamily = Comfortaa, fontSize = 12.sp, color = TextSecondary)
                 }
@@ -117,19 +119,23 @@ fun ActivityTreeScreen(
                             start = Offset(centerX, y + nodeSpacingPx * 0.3f),
                             end   = Offset(nodeX, y),
                             strokeWidth = 6f,
+                            pathEffect = PathEffect.cornerPathEffect(80f),
                         )
                     }
                 }
 
                 tasks.forEachIndexed { i, task ->
-                    val yPx = with(density) { totalHeightDp.toPx() - 40.dp.toPx() - (i + 1) * nodeSpacingPx }
+                    val yPx =
+                        with(density) { totalHeightDp.toPx() - 40.dp.toPx() - (i + 1) * nodeSpacingPx }
                     val yDp = with(density) { yPx.toDp() }
                     val left = i % 2 == 0
+
 
                     Box(
                         modifier = Modifier
                             .align(if (left) Alignment.TopStart else Alignment.TopEnd)
                             .offset(x = if (left) 8.dp else (-8).dp, y = yDp - 26.dp)
+                            .border(2.dp, branchColor(task.category), RoundedCornerShape(14.dp))
                             .widthIn(max = 150.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .background(SurfaceColor)
@@ -139,16 +145,26 @@ fun ActivityTreeScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(task.category.emoji, fontSize = 14.sp)
                                 Spacer(Modifier.width(6.dp))
-                                Text(task.title, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                                Text(
+                                    task.title,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                    fontFamily = GildaDisplay
+                                )
                             }
                             Spacer(Modifier.height(2.dp))
                             Text(
-                                SimpleDateFormat("MMM d", Locale.ENGLISH).format(Date(task.completedAtMs)),
+                                SimpleDateFormat(
+                                    "MMM d",
+                                    Locale.ENGLISH
+                                ).format(Date(task.completedAtMs)),
                                 fontSize = 9.sp, color = TextSecondary
                             )
                         }
                     }
                 }
+
 
                 Box(
                     modifier = Modifier
@@ -159,7 +175,7 @@ fun ActivityTreeScreen(
                         .background(AccentGreen)
                 ) {
                     Icon(
-                        Icons.Outlined.TagFaces,
+                        Icons.Outlined.PersonOutline,
                         contentDescription = "Sprout",
                         tint = TextPrimary,
                         modifier = Modifier.size(32.dp).align(Alignment.Center)
