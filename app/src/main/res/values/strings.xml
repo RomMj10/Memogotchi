@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Memogotchi</string>
+    <string name="focus_guard_accessibility_description">Allows Memogotchi close apps you\'ve hard-blocked in Focus Guard.</string>
 </resources>

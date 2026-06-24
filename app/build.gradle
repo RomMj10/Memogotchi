@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id 'com.google.protobuf'
 }
 
 def localProperties = new Properties()
@@ -46,12 +47,35 @@ android {
     }
 }
 
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.3"
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    option 'lite'   // generates the lighter-weight runtime,
+                    // standard choice for Android (full
+                    // protobuf-java is meant for servers)
+                }
+            }
+        }
+    }
+}
+
 dependencies {
     implementation 'com.airbnb.android:lottie-compose:6.4.0'
     implementation 'androidx.compose.animation:animation'
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.compose.material:material-icons-extended")
+
+    //focusguard
+    implementation "androidx.datastore:datastore:1.1.1"
+    implementation "com.google.protobuf:protobuf-javalite:3.25.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
+    
     implementation libs.androidx.core.ktx
     implementation libs.androidx.lifecycle.runtime.ktx
     implementation libs.androidx.activity.compose
