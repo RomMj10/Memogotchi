@@ -79,6 +79,7 @@ import com.example.memogotchi.ui.page.FocusGuardAction
 import com.example.memogotchi.focusguard.AppBlockerScreen
 import com.example.memogotchi.focusguard.AppTimerScreen
 import com.example.memogotchi.focusguard.ScheduleScreen
+import com.example.memogotchi.ui.page.XpStore
 import kotlinx.coroutines.delay
 
 
@@ -175,7 +176,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     var hasPermission by remember { mutableStateOf(context.hasUsageStatsPermission()) }
     var petName by remember { mutableStateOf(MemoStore.loadName(context)) }
     val startupComplete = !petName.isNullOrBlank() && hasPermission
-    val xpEarned = 0
+    var totalXp by remember { mutableStateOf(XpStore.loadXp(context))}
 
 
     // ── Wellness state hoisted here so it survives tab switches ──────────
@@ -289,6 +290,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
             activeTaskTimer?.let { active ->
                 if (elapsedSeconds >= active.targetSeconds) {
                     TaskTimerStore.completeActiveTaskAndClear(context)
+                    totalXp = XpStore.loadXp(context)
                     taskAnnouncement = DialoguePool.randomLine(DialogueCategory.TASK_DONE)
                         ?.fillTemplate("task" to active.taskTitle, "name" to (petName ?: ""))
                     activeTaskTimer = null
@@ -406,7 +408,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             NavTab.PET -> PetScreen(
                                 today = weekData.lastOrNull(),
                                 petState = petState,
-                                xpEarned = xpEarned,
+                                xpEarned = totalXp,
                                 batteryLevel = batteryLevel,
                                 elapsedSeconds = elapsedSeconds,
                                 timerRunning = timerRunning,
@@ -486,11 +488,18 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             onStartTaskTimer = onStartTaskTimer,
                             onCancelTaskTimer = onCancelTaskTimer,
                             onTaskCompleted = { tasks ->
-                                taskAnnouncement = DialoguePool.randomLine(DialogueCategory.TASK_DONE)?.fillTemplate("name" to (petName ?: ""), "task" to tasks.title,)
+                                taskAnnouncement =
+                                    DialoguePool.randomLine(DialogueCategory.TASK_DONE)
+                                        ?.fillTemplate(
+                                            "name" to (petName ?: ""),
+                                            "task" to tasks.title,
+                                        )
+                                }
                             )
                         }
                     }
                 }
+
 
                 // Gear icon on Pet tab
                 if (currentTab == NavTab.PET && !showSettings && !showActivityTree && !showAppBlocker && !showAppTimer && !showSchedule && !showPersonality)  {
@@ -527,6 +536,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         )
                     }
                 }
+
                 // Bottom nav
                 Box(
                     modifier = Modifier
@@ -572,26 +582,27 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         // ── FocusGuard button — icon only, no label. Visually
                         // distinct from the tabs since it triggers an overlay
                         // rather than switching screens. ─────────────────────
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable { showFocusGuardMenu = true }
-                                .padding(vertical = 8.dp)
-                        ) {
-                            Image(
-                                painter = rememberVectorPainter(
-                                    ImageVector.vectorResource(R.drawable.ic_nav_focusguard)
-                                ),
-                                contentDescription = "Focus Guard",
-                                modifier = Modifier.size(22.dp),
-                                colorFilter = ColorFilter.tint(
-                                    if (showFocusGuardMenu) AccentGreen else TextSecondary
+
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { showFocusGuardMenu = true }
+                                    .padding(vertical = 8.dp)
+                            ) {
+                                Image(
+                                    painter = rememberVectorPainter(
+                                        ImageVector.vectorResource(R.drawable.ic_nav_focusguard)
+                                    ),
+                                    contentDescription = "Focus Guard",
+                                    modifier = Modifier.size(22.dp),
+                                    colorFilter = ColorFilter.tint(
+                                        if (showFocusGuardMenu) AccentGreen else TextSecondary
+                                    )
                                 )
-                            )
-                        }
+                            }
 
                         NavTabItem(
                             tab = NavTab.SCREEN_TIME,

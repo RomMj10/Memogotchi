@@ -111,13 +111,6 @@ fun SettingsScreen(today: DayData? = null,
                     }
                 )
                 RowDivider()
-                SettingsRow(
-                    icon        = R.drawable.outline_monitor_heart_icon,
-                    title       = "Monitored Apps",
-                    subtitle    = "12 apps selected",
-                    showChevron = true,
-                    onClick     = { /* TODO: navigate to app picker */ }
-                )
             }
         }
 

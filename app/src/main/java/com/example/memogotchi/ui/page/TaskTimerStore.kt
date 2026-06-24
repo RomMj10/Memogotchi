@@ -8,6 +8,9 @@ data class ActiveTaskTimer(
     val targetSeconds: Int,
     val dateKey: String,
 )
+
+fun xpForTask(durationMinutes: Int): Int = (10 + durationMinutes * 2).coerceAtLeast(10)
+
 object TaskTimerStore {
     private const val PREFS = "memogotchi_task_timer"
     private const val KEY_TASK_ID = "active_task_id"
@@ -56,6 +59,7 @@ object TaskTimerStore {
                 dateLabel = active.dateKey,
             )
         )
+        XpStore.addXp(context, xpForTask(active.targetSeconds / 60))
         clear(context)
         return active
     }
