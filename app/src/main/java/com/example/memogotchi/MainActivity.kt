@@ -16,6 +16,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
@@ -80,6 +81,8 @@ import com.example.memogotchi.focusguard.AppBlockerScreen
 import com.example.memogotchi.focusguard.AppTimerScreen
 import com.example.memogotchi.focusguard.ScheduleScreen
 import com.example.memogotchi.ui.page.XpStore
+import androidx.compose.ui.graphics.Path
+import androidx.compose.foundation.Canvas
 import kotlinx.coroutines.delay
 
 
@@ -176,7 +179,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     var hasPermission by remember { mutableStateOf(context.hasUsageStatsPermission()) }
     var petName by remember { mutableStateOf(MemoStore.loadName(context)) }
     val startupComplete = !petName.isNullOrBlank() && hasPermission
-    var totalXp by remember { mutableStateOf(XpStore.loadXp(context))}
+    var totalXp by remember { mutableStateOf(XpStore.loadXp(context)) }
 
 
     // ── Wellness state hoisted here so it survives tab switches ──────────
@@ -365,9 +368,11 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
             }
         }
     } else {
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .background(BgColor)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BgColor)
+        ) {
 
             Box(
                 modifier = Modifier
@@ -404,83 +409,89 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         onBack = { showSchedule = false }
                     )
                 } else {
-                        when (currentTab) {
-                            NavTab.PET -> PetScreen(
-                                today = weekData.lastOrNull(),
-                                petState = petState,
-                                xpEarned = totalXp,
-                                batteryLevel = batteryLevel,
-                                elapsedSeconds = elapsedSeconds,
-                                timerRunning = timerRunning,
-                                timerMode = timerMode,
-                                activeTaskTitle = activeTaskTimer?.taskTitle,
-                                activeTaskTargetSeconds = activeTaskTimer?.targetSeconds,
-                                petName = petName ?: "",
-                                onTimerToggle = {
-                                    if (timerRunning) {
-                                        PomodoroStore.pause(context, elapsedSeconds)
-                                        timerRunning = false
-                                    } else {
-                                        PomodoroStore.start(context, elapsedSeconds)
-                                        timerRunning = true
-                                    }
-                                },
-                                onModeChange = { newMode ->
-                                    timerMode = newMode
-                                    PomodoroStore.setMode(context, newMode)
-                                    elapsedSeconds = 0L
+                    when (currentTab) {
+                        NavTab.PET -> PetScreen(
+                            today = weekData.lastOrNull(),
+                            petState = petState,
+                            xpEarned = totalXp,
+                            batteryLevel = batteryLevel,
+                            elapsedSeconds = elapsedSeconds,
+                            timerRunning = timerRunning,
+                            timerMode = timerMode,
+                            activeTaskTitle = activeTaskTimer?.taskTitle,
+                            activeTaskTargetSeconds = activeTaskTimer?.targetSeconds,
+                            petName = petName ?: "",
+                            onTimerToggle = {
+                                if (timerRunning) {
+                                    PomodoroStore.pause(context, elapsedSeconds)
                                     timerRunning = false
-                                },
-                                onReset = {
-                                    PomodoroStore.reset(context)
-                                    elapsedSeconds = 0L
-                                    timerRunning = false
-                                },
-                                previewTasks = remember(weekData) {
-                                    val dateKey = java.text.SimpleDateFormat(
-                                        "yyyy-MM-dd",
-                                        java.util.Locale.getDefault()
-                                    ).format(java.util.Date())
-                                    TaskStore.loadTasksForDate(context, dateKey) ?: emptyList()
-                                },
-                                onOpenTasks = { currentTab = NavTab.TASKS },
-                                onOpenScreenTime = { currentTab = NavTab.SCREEN_TIME },
-                                onOpenWellness = { currentTab = NavTab.WELLNESS },
-                                onOpenActivityTree = { showActivityTree = true },
-                                onOpenPersonality = {
-                                    showPersonality = true
-                                },
-                                taskAnnouncement = taskAnnouncement,
-                                onTaskAnnouncementConsumed = { taskAnnouncement = null }
-
-                            )
-
-                            NavTab.WELLNESS -> WellnessScreen(
-                                states = wellnessStates,
-                                sliderValues = wellnessSliders,
-                                diaryEntries = diaryEntries
-                            )
-
-                            NavTab.SCREEN_TIME -> ScreenTimeScreen(
-                                windowSizeClass = windowSizeClass,
-                                weekData = weekData,
-                                isLoading = isLoadingWeekData,
-                                hasPermission = hasPermission,
-                                onGrantPermission = {
-                                    context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
-                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                    })
-                                },
-                                onRefreshPermission = {
-                                    hasPermission = context.hasUsageStatsPermission()
+                                } else {
+                                    PomodoroStore.start(context, elapsedSeconds)
+                                    timerRunning = true
                                 }
-                            )
+                            },
+                            onModeChange = { newMode ->
+                                timerMode = newMode
+                                PomodoroStore.setMode(context, newMode)
+                                elapsedSeconds = 0L
+                                timerRunning = false
+                            },
+                            onReset = {
+                                PomodoroStore.reset(context)
+                                elapsedSeconds = 0L
+                                timerRunning = false
+                            },
+                            previewTasks = remember(weekData) {
+                                val dateKey = java.text.SimpleDateFormat(
+                                    "yyyy-MM-dd",
+                                    java.util.Locale.getDefault()
+                                ).format(java.util.Date())
+                                TaskStore.loadTasksForDate(context, dateKey) ?: emptyList()
+                            },
+                            onOpenTasks = { currentTab = NavTab.TASKS },
+                            onOpenScreenTime = { currentTab = NavTab.SCREEN_TIME },
+                            onOpenWellness = { currentTab = NavTab.WELLNESS },
+                            onOpenActivityTree = { showActivityTree = true },
+                            onOpenPersonality = {
+                                showPersonality = true
+                            },
+                            taskAnnouncement = taskAnnouncement,
+                            onTaskAnnouncementConsumed = { taskAnnouncement = null }
+
+                        )
+
+                        NavTab.WELLNESS -> WellnessScreen(
+                            states = wellnessStates,
+                            sliderValues = wellnessSliders,
+                            diaryEntries = diaryEntries
+                        )
+
+                        NavTab.SCREEN_TIME -> ScreenTimeScreen(
+                            windowSizeClass = windowSizeClass,
+                            weekData = weekData,
+                            isLoading = isLoadingWeekData,
+                            hasPermission = hasPermission,
+                            onGrantPermission = {
+                                context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                })
+                            },
+                            onRefreshPermission = {
+                                hasPermission = context.hasUsageStatsPermission()
+                            }
+                        )
+
                         NavTab.TASKS -> TasksScreen(
                             today = weekData.lastOrNull(),
                             weekData = weekData,
                             onTasksGenerated = { newTasks ->
                                 newTasks.firstOrNull()?.let { task ->
-                                    taskAnnouncement = DialoguePool.randomLine(DialogueCategory.NEW_TASK)?.fillTemplate("task" to task.title, "name" to (petName ?: ""))
+                                    taskAnnouncement =
+                                        DialoguePool.randomLine(DialogueCategory.NEW_TASK)
+                                            ?.fillTemplate(
+                                                "task" to task.title,
+                                                "name" to (petName ?: "")
+                                            )
                                 }
                             },
                             activeTaskTimer = activeTaskTimer,
@@ -494,159 +505,176 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                                             "name" to (petName ?: ""),
                                             "task" to tasks.title,
                                         )
-                                }
-                            )
+                            }
+                        )
+                    }
+                }
+            }
+
+
+            // Gear icon on Pet tab
+            if (currentTab == NavTab.PET && !showSettings && !showActivityTree && !showAppBlocker && !showAppTimer && !showSchedule && !showPersonality) {
+                IconButton(
+                    onClick = { showSettings = true },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 12.dp, end = 12.dp)
+                        .offset(x = (-12).dp, y = 32.dp)
+                ) {
+                    Icon(
+                        Icons.Outlined.Settings, contentDescription = "Settings",
+                        tint = TextSecondary, modifier = Modifier
+                            .size(22.dp)
+
+                    )
+                }
+            }
+
+            // Back from settings
+            if (showSettings) {
+                TextButton(
+                    onClick = { showSettings = false },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = 12.dp, y = 32.dp)
+                        .padding(top = 12.dp, start = 4.dp)
+                ) {
+                    Text(
+                        "< Back",
+                        color = AccentGreen,
+                        fontFamily = GildaDisplay,
+                        fontSize = 16.sp
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .navigationBarsPadding(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                // 1. Custom curved background drawn on canvas
+                val barColor = SurfaceColor
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(72.dp)
+                ) {
+                    val width = size.width
+                    val height = size.height
+                    val curveWidth = 250f   // how wide the arch is
+                    val curveDepth = 44f    // how deep the arch cuts upward
+                    val centerX = width / 2f
+
+                    val path = Path().apply {
+                        moveTo(0f, 0f)
+                        lineTo(centerX - curveWidth / 2f, 0f)
+                        cubicTo(
+                            centerX - curveWidth / 4f, 0f,
+                            centerX - curveWidth / 4f, -curveDepth,
+                            centerX, -curveDepth
+                        )
+                        cubicTo(
+                            centerX + curveWidth / 4f, -curveDepth,
+                            centerX + curveWidth / 4f, 0f,
+                            centerX + curveWidth / 2f, 0f
+                        )
+                        lineTo(width, 0f)
+                        lineTo(width, height)
+                        lineTo(0f, height)
+                        close()
+                    }
+                    drawPath(path, color = barColor)
+                }
+
+                // 2. Nav items row (transparent background, sits on top of canvas)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp)
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    NavTabItem(
+                        tab = NavTab.PET,
+                        isSelected = currentTab == NavTab.PET && !showSettings,
+                        onClick = {
+                            showSettings = false
+                            showActivityTree = false
+                            currentTab = NavTab.PET
                         }
-                    }
+                    )
+                    NavTabItem(
+                        tab = NavTab.WELLNESS,
+                        isSelected = currentTab == NavTab.WELLNESS && !showSettings,
+                        onClick = {
+                            showSettings = false
+                            showActivityTree = false
+                            currentTab = NavTab.WELLNESS
+                        }
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    NavTabItem(
+                        tab = NavTab.SCREEN_TIME,
+                        isSelected = currentTab == NavTab.SCREEN_TIME && !showSettings,
+                        onClick = {
+                            showSettings = false
+                            showActivityTree = false
+                            currentTab = NavTab.SCREEN_TIME
+                        }
+                    )
+                    NavTabItem(
+                        tab = NavTab.TASKS,
+                        isSelected = currentTab == NavTab.TASKS && !showSettings,
+                        onClick = {
+                            showSettings = false
+                            showActivityTree = false
+                            currentTab = NavTab.TASKS
+                        }
+                    )
                 }
 
-
-                // Gear icon on Pet tab
-                if (currentTab == NavTab.PET && !showSettings && !showActivityTree && !showAppBlocker && !showAppTimer && !showSchedule && !showPersonality)  {
-                    IconButton(
-                        onClick = { showSettings = true },
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(top = 12.dp, end = 12.dp)
-                            .offset(x = (-12).dp, y = 32.dp)
-                    ) {
-                        Icon(
-                            Icons.Outlined.Settings, contentDescription = "Settings",
-                            tint = TextSecondary, modifier = Modifier
-                                .size(22.dp)
-
-                        )
-                    }
-                }
-
-                // Back from settings
-                if (showSettings) {
-                    TextButton(
-                        onClick = { showSettings = false },
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .offset(x = 12.dp, y = 32.dp)
-                            .padding(top = 12.dp, start = 4.dp)
-                    ) {
-                        Text(
-                            "< Back",
-                            color = AccentGreen,
-                            fontFamily = GildaDisplay,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
-
-                // Bottom nav
+                // 3. Floating FocusGuard button (sits in the arch)
                 Box(
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(SurfaceColor)
-                        .navigationBarsPadding()
+                        .size(60.dp)
+                        .offset(y = (-14).dp)
+                        .background(color = Color(0xFF77C59D), shape = CircleShape)
+                        .clip(CircleShape)
+                        .clickable { showFocusGuardMenu = true },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp)
-                            .padding(horizontal = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Explicit items instead of NavTab.entries.forEach — the
-                        // FocusGuard button below isn't a tab (it opens an overlay,
-                        // it doesn't change currentTab), so it can't live inside a
-                        // uniform tab loop. Explicit ordering also makes future
-                        // non-tab buttons easy to insert without restructuring again.
-
-                        NavTabItem(
-                            tab = NavTab.PET,
-                            isSelected = currentTab == NavTab.PET && !showSettings,
-                            onClick = {
-                                showSettings = false
-                                showActivityTree = false
-                                currentTab = NavTab.PET
-                            }
-                        )
-
-                        NavTabItem(
-                            tab = NavTab.WELLNESS,
-                            isSelected = currentTab == NavTab.WELLNESS && !showSettings,
-                            onClick = {
-                                showSettings = false
-                                showActivityTree = false
-                                currentTab = NavTab.WELLNESS
-                            }
-                        )
-
-                        // ── FocusGuard button — icon only, no label. Visually
-                        // distinct from the tabs since it triggers an overlay
-                        // rather than switching screens. ─────────────────────
-
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable { showFocusGuardMenu = true }
-                                    .padding(vertical = 8.dp)
-                            ) {
-                                Image(
-                                    painter = rememberVectorPainter(
-                                        ImageVector.vectorResource(R.drawable.ic_nav_focusguard)
-                                    ),
-                                    contentDescription = "Focus Guard",
-                                    modifier = Modifier.size(22.dp),
-                                    colorFilter = ColorFilter.tint(
-                                        if (showFocusGuardMenu) AccentGreen else TextSecondary
-                                    )
-                                )
-                            }
-
-                        NavTabItem(
-                            tab = NavTab.SCREEN_TIME,
-                            isSelected = currentTab == NavTab.SCREEN_TIME && !showSettings,
-                            onClick = {
-                                showSettings = false
-                                showActivityTree = false
-                                currentTab = NavTab.SCREEN_TIME
-                            }
-                        )
-
-                        NavTabItem(
-                            tab = NavTab.TASKS,
-                            isSelected = currentTab == NavTab.TASKS && !showSettings,
-                            onClick = {
-                                showSettings = false
-                                showActivityTree = false
-                                currentTab = NavTab.TASKS
-                            }
-                        )
-                    }
+                    Image(
+                        painter = rememberVectorPainter(
+                            ImageVector.vectorResource(R.drawable.ic_nav_focusguard)
+                        ),
+                        contentDescription = "Focus Guard",
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = ColorFilter.tint(Color.White)
+                    )
                 }
-            }
+            } // end bottom nav Box
+
+            // ── FocusGuard overlay menu (inside root Box so it layers on top) ─
+            FocusGuardFabMenu(
+                visible = showFocusGuardMenu,
+                onDismiss = { showFocusGuardMenu = false },
+                onActionSelected = { action ->
+                    when (action) {
+                        FocusGuardAction.BLOCK_APP -> showAppBlocker = true
+                        FocusGuardAction.SET_TIME_LIMIT -> showAppTimer = true
+                        FocusGuardAction.CREATE_SCHEDULE -> showSchedule = true
+                    }
+                    showFocusGuardMenu = false
+                }
+            )
+
         }
-
-        FocusGuardFabMenu(
-            visible = showFocusGuardMenu,
-            onDismiss = { showFocusGuardMenu = false },
-            onActionSelected = { action ->
-                when (action) {
-                    FocusGuardAction.BLOCK_APP -> {
-                        showAppBlocker = true
-                    }
-                    FocusGuardAction.SET_TIME_LIMIT -> {
-                        showAppTimer = true
-                    }
-                    FocusGuardAction.CREATE_SCHEDULE -> {
-                        showSchedule = true
-                    }
-                }
-                showFocusGuardMenu = false
-            }
-        )
     }
+}
 
     @Preview
     @RequiresApi(Build.VERSION_CODES.Q)
