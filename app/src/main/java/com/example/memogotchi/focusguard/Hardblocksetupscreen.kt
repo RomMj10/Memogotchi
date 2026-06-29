@@ -70,8 +70,9 @@ private val TextSecondary = Color(0xFF888888)
  * in onResume rather than relying on a callback the OS doesn't provide.
  */
 @Composable
-fun HardBlockSetupScreen(
+fun AccessibilitySetupScreen(
     appLabelBeingBlocked: String,
+    isHardBlock: Boolean,          // NEW — changes the copy shown
     onCancel: () -> Unit
 ) {
     val context = LocalContext.current
@@ -85,7 +86,8 @@ fun HardBlockSetupScreen(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "One more step for strict blocking",
+                text = if (isHardBlock) "One more step for strict blocking"
+                else "One more step to enable blocking",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = TextPrimary,
@@ -93,9 +95,14 @@ fun HardBlockSetupScreen(
             )
 
             Text(
-                text = "To strictly block $appLabelBeingBlocked, Memogotchi needs " +
-                        "Accessibility access. This lets it actually close the app " +
-                        "when you try to open it, instead of just asking nicely.",
+                text = if (isHardBlock)
+                    "To strictly block $appLabelBeingBlocked, Memogotchi needs " +
+                            "Accessibility access. This lets it actually close the app " +
+                            "when you try to open it, instead of just asking nicely."
+                else
+                    "To block $appLabelBeingBlocked, Memogotchi needs Accessibility " +
+                            "access. This lets it detect when a blocked app opens and show " +
+                            "you the friction screen before you get in.",
                 fontSize = 14.sp,
                 color = TextSecondary,
                 modifier = Modifier.padding(bottom = 28.dp)
@@ -122,9 +129,7 @@ fun HardBlockSetupScreen(
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = AccentGreen),
                 shape = RoundedCornerShape(14.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
+                modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
                 Text("Open Accessibility Settings", color = BgColor, fontSize = 15.sp)
             }
@@ -135,7 +140,12 @@ fun HardBlockSetupScreen(
                 onClick = onCancel,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Not now, use soft block instead", color = TextSecondary, fontSize = 14.sp)
+                Text(
+                    if (isHardBlock) "Not now, use soft block instead"
+                    else "Cancel",
+                    color = TextSecondary,
+                    fontSize = 14.sp
+                )
             }
         }
     }

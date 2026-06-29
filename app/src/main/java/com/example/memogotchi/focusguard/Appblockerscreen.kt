@@ -105,13 +105,11 @@ fun AppBlockerScreen(onBack: () -> Unit) {
     if (pendingHardBlockPackage != null && !accessibilityEnabled) {
         val pkg = pendingHardBlockPackage!!
         val label = installedApps.firstOrNull { it.packageName == pkg }?.label ?: pkg
-        HardBlockSetupScreen(
+        val rule = blockedApps.firstOrNull { it.packageName == pkg }
+        AccessibilitySetupScreen(
             appLabelBeingBlocked = label,
-            onCancel = {
-                // User backed out — leave the rule as soft block, don't
-                // silently force hard=true with no enforcement behind it.
-                pendingHardBlockPackage = null
-            }
+            isHardBlock = rule?.isHardBlock ?: false,
+            onCancel = { pendingHardBlockPackage = null }
         )
         return
     }
@@ -135,46 +133,35 @@ fun AppBlockerScreen(onBack: () -> Unit) {
                             app = app,
                             rule = rule,
                             onToggleBlocked = { isBlocked ->
-                                coroutineScope.launch {
-                                    if (isBlocked) {
-                                        val newRule = rule?.toBuilder()?.setIsActive(true)?.build()
-                                            ?: BlockedApp.newBuilder()
-                                                .setPackageName(app.packageName)
-                                                .setAppLabel(app.label)
-                                                .setIsHardBlock(false)
-                                                .setIsActive(true)
-                                                .setUnblockMethod(UnblockMethod.PHRASE)
-                                                .setPhraseConfig(
-                                                    PhraseConfig.newBuilder()
-                                                        .setTone(PhraseTone.DEFAULT)
-                                                        .build()
-                                                )
-                                                .build()
-                                        FocusGuardStore.upsertBlockedApp(context, newRule)
-                                    } else if (rule != null) {
-                                        // Use setBlockedAppActive rather than
-                                        // removeBlockedApp here: turning the
-                                        // toggle off should pause enforcement,
-                                        // not throw away the user's configured
-                                        // hard/soft mode and unblock method.
-                                        // Switching it back on later (the `if`
-                                        // branch above) reuses rule's existing
-                                        // config via toBuilder() rather than
-                                        // rebuilding from scratch with PHRASE/
-                                        // DEFAULT every time.
-                                        FocusGuardStore.setBlockedAppActive(
-                                            context,
-                                            app.packageName,
-                                            false
-                                        )
-                                    } else {
-                                        // No existing rule and toggled off —
-                                        // nothing to do, this shouldn't
-                                        // normally be reachable since the
-                                        // switch only shows "off" when rule
-                                        // is null or inactive already.
+                                if (isBlocked && !accessibilityEnabled) {
+                                    // Need accessibility even for soft block — route to setup first
+                                    pendingHardBlockPackage = app.packageName
+                                } else {
+                                    coroutineScope.launch {
+                                        if (isBlocked) {
+                                            val newRule = rule?.toBuilder()?.setIsActive(true)?.build()
+                                                ?: BlockedApp.newBuilder()
+                                                    .setPackageName(app.packageName)
+                                                    .setAppLabel(app.label)
+                                                    .setIsHardBlock(false)
+                                                    .setIsActive(true)
+                                                    .setUnblockMethod(UnblockMethod.PHRASE)
+                                                    .setPhraseConfig(
+                                                        PhraseConfig.newBuilder()
+                                                            .setTone(PhraseTone.DEFAULT)
+                                                            .build()
+                                                    )
+                                                    .build()
+                                            FocusGuardStore.upsertBlockedApp(context, newRule)
+                                        } else if (rule != null) {
+                                            FocusGuardStore.setBlockedAppActive(
+                                                context,
+                                                app.packageName,
+                                                false
+                                            )
+                                        }
+                                        reloadBlockedApps()
                                     }
-                                    reloadBlockedApps()
                                 }
                             },
                             onSetHardBlock = { wantsHard ->
