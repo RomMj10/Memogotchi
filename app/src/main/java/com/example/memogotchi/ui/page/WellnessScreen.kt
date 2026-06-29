@@ -365,25 +365,23 @@ private fun handleBatterySubmit(
 ) {
     states.forEachIndexed { i, state -> states[i] = state.copy(value = sliderValues[i]) }
 
-    val today = "Today"
     val snapshot = sliderValues.toList()
-    val existingLogIdx = diaryEntries.indexOfFirst { it.dateLabel == today && it.isStateLog }
-    if (existingLogIdx >= 0) {
-        diaryEntries[existingLogIdx] =
-            diaryEntries[existingLogIdx].copy(sliderSnapshot = snapshot)
-    } else {
-        diaryEntries.add(
-            DiaryEntry(
-                dateLabel = today,
-                dayLabel = dayOfWeekForLabel(today),
-                sortKey = sortKeyForLabel(today),
-                text = "",
-                categories = emptyList(),
-                sliderSnapshot = snapshot,
-                isStateLog = true,
-            )
+
+    // Always create a NEW state log entry — never overwrite an existing one.
+    // Each tap of the submit button is a distinct moment-in-time snapshot.
+    diaryEntries.add(
+        DiaryEntry(
+            dateLabel = "Today",
+            dayLabel = dayOfWeekForLabel("Today"),
+            sortKey = sortKeyForLabel("Today"),
+            text = "",
+            categories = emptyList(),
+            sliderSnapshot = snapshot,
+            isStateLog = true,
+            createdAtMs = System.currentTimeMillis(), // unique timestamp per log
         )
-    }
+    )
+
     val sorted = diaryEntries.sortedWith(
         compareByDescending<DiaryEntry> { it.sortKey }.thenByDescending { it.createdAtMs }
     )
@@ -843,6 +841,15 @@ private fun DiaryEntryCard(
     ) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                // Resolve "Today"/"Yesterday" to actual date string for display
+                val displayDate = when (entry.dateLabel) {
+                    "Today" -> SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).format(Date())
+                    "Yesterday" -> {
+                        val cal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+                        SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).format(cal.time)
+                    }
+                    else -> entry.dateLabel
+                }
                 Text(
                     text = entry.dayLabel,
                     fontSize = 13.sp,
@@ -850,7 +857,7 @@ private fun DiaryEntryCard(
                     color = borderColor,
                     fontFamily = GildaDisplay,
                 )
-                Text(text = "  ·  ${entry.dateLabel}", fontSize = 12.sp, color = TextSecondary)
+                Text(text = "  ·  $displayDate", fontSize = 12.sp, color = TextSecondary)
                 if (entry.isStateLog) {
                     Spacer(Modifier.weight(1f))
                     Text("Battery log", fontSize = 10.sp, color = TextSecondary)
