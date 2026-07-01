@@ -11,6 +11,8 @@ composeBom = "2024.09.00"
 material3WindowSizeClass = "1.4.0"
 foundation = "1.11.2"
 material3 = "1.4.0"
+runtime = "1.11.3"
+foundationVersion = "1.11.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -30,6 +32,8 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-material3-window-size-class1 = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "material3WindowSizeClass" }
 androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
+foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundationVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
