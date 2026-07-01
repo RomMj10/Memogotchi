@@ -119,7 +119,7 @@ fun SettingsScreen(today: DayData? = null,
         item {
             SettingsGroup {
                 SettingsRow(
-                    icon        = R.drawable.ic_nav_pet,
+                    icon        = R.drawable.memogotchi_vector,
                     title = "Rename Pet",
                     subtitle = currentPetName.ifBlank {"Tap to set a name"},
                     showChevron = true,

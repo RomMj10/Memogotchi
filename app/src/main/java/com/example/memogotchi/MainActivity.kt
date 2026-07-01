@@ -83,6 +83,7 @@ import com.example.memogotchi.focusguard.ScheduleScreen
 import com.example.memogotchi.ui.page.XpStore
 import androidx.compose.ui.graphics.Path
 import androidx.compose.foundation.Canvas
+import com.example.memogotchi.ui.page.ShopScreen
 import kotlinx.coroutines.delay
 
 
@@ -153,10 +154,11 @@ private val AccentGreen = Color(0xFF77C59D)
 private val TextSecondary = Color(0xFF888888)
 
 enum class NavTab(val label: String, val iconRes: Int) {
-    PET("Pet", R.drawable.ic_nav_pet),
+    PET("Pet", R.drawable.memogotchi_vector),
     WELLNESS("Wellness", R.drawable.ic_nav_wellness),
     SCREEN_TIME("Screen Time", R.drawable.ic_nav_screentime),
     TASKS("Tasks", R.drawable.ic_nav_tasks),
+    SHOP("Shop", R.drawable.ic_nav_shopping)
 }
 
 @SuppressLint("RememberReturnType")
@@ -507,6 +509,10 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                                         )
                             }
                         )
+
+                        NavTab.SHOP -> ShopScreen(
+                            onBack = { currentTab = NavTab.PET }
+                        )
                     }
                 }
             }
@@ -604,6 +610,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         onClick = {
                             showSettings = false
                             showActivityTree = false
+                            showPersonality = false
                             currentTab = NavTab.PET
                         }
                     )
@@ -613,17 +620,28 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         onClick = {
                             showSettings = false
                             showActivityTree = false
+                            showPersonality = false
                             currentTab = NavTab.WELLNESS
                         }
                     )
                     Spacer(modifier = Modifier.weight(1f))
+//                    NavTabItem(
+//                        tab = NavTab.SCREEN_TIME,
+//                        isSelected = currentTab == NavTab.SCREEN_TIME && !showSettings,
+//                        onClick = {
+//                            showSettings = false
+//                            showActivityTree = false
+//                            currentTab = NavTab.SCREEN_TIME
+//                        }
+//                    )
                     NavTabItem(
-                        tab = NavTab.SCREEN_TIME,
-                        isSelected = currentTab == NavTab.SCREEN_TIME && !showSettings,
+                        tab = NavTab.SHOP,
+                        isSelected = currentTab == NavTab.SHOP && !showSettings,
                         onClick = {
                             showSettings = false
                             showActivityTree = false
-                            currentTab = NavTab.SCREEN_TIME
+                            showPersonality = false
+                            currentTab = NavTab.SHOP
                         }
                     )
                     NavTabItem(
@@ -631,10 +649,12 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         isSelected = currentTab == NavTab.TASKS && !showSettings,
                         onClick = {
                             showSettings = false
+                            showPersonality = false
                             showActivityTree = false
                             currentTab = NavTab.TASKS
                         }
                     )
+
                 }
 
                 // 3. Floating FocusGuard button (sits in the arch)

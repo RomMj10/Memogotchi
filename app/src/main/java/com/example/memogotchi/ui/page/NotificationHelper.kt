@@ -42,7 +42,7 @@ fun maybeSendHealthAlert(context: Context, totalMs: Long, dailyLimitMin: Int) {
         else -> return
     }
     val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-        .setSmallIcon(R.drawable.ic_nav_pet)
+        .setSmallIcon(R.drawable.memogotchi_vector)
         .setContentTitle(title)
         .setContentText(message)
         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
