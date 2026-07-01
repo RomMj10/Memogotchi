@@ -48,7 +48,7 @@ suspend fun generateTasksWithGemini(
     val recentSummary = completedHistory.takeLast(10).joinToString(", ") { it.title }.ifBlank { "none yet" }
 
     val prompt = """
-        You are a digital wellbeing assistant for a virtual pet app called Memogotchi.
+        You are a digital wellbeing assistant for a virtual pet app: Memogotchi.
         Current date & time: $dateStr
         Stats: $batteryLevel% battery, ${String.format("%.1f", totalHours)} screen time.
         Top apps:
@@ -72,7 +72,7 @@ suspend fun generateTasksWithGemini(
 
     return@withContext try {
         val model = GenerativeModel(
-            modelName = "gemini-2.5-flash",
+            modelName = "gemini-3.1-flash-lite",
             apiKey = BuildConfig.GEMINI_API_KEY,
             generationConfig = generationConfig { temperature = 0.7f }
         )

@@ -138,8 +138,7 @@ fun PetScreen(
                     hexMenuOpen = false
                     onOpenPersonality()
                 },
-                HexMenuItem(Icons.Outlined.Redeem, "Rewards", enabled = false),
-                HexMenuItem(Icons.Outlined.AccountBox, "Inventory", enabled = false),
+                HexMenuItem(Icons.Outlined.Redeem, "Rewards", enabled = false)
             )
         }
 

@@ -3,6 +3,7 @@ package com.example.memogotchi.ui.page
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -157,7 +158,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
         PersonalityStore.rollupScreenCategoryTallyIfNeeded(context, today)
 
         val screenTimeMs = today?.totalMs ?: 0L
-
+        geminiStatus = "No tasks yet, suggestions are generated the more you use your phone."
         if (screenTimeMs >= THRESHOLD_MIN) {
             val ruleTasks = generateAnalogTasks(context, today, batteryLevel)
             tasks = ruleTasks
@@ -176,6 +177,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
 
                 val completedHistory = TaskStore.getCompletedHistory(context)
                 geminiStatus = "Status: Connecting"
+                Log.d("TasksScreen", "geminiStatus: $geminiStatus")
 
                 var geminiTasks = emptyList<AnalogTask>()
                 try {
@@ -183,6 +185,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
                         generateTasksWithGemini(weekData, batteryLevel, cats, completedHistory)
                 } catch (e: Exception) {
                     geminiStatus = "Status: Failed"
+                    Log.e("TasksScreen", "geminiStatus: $geminiStatus")
                 }
 
                 if (geminiTasks.isNotEmpty()) {
@@ -296,7 +299,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "No tasks yet, suggestions are generated the more you use your phone.",
+                            text = geminiStatus,
                             color    = TextSecondary,
                             fontFamily = GildaDisplay,
                             fontSize = 13.sp,
