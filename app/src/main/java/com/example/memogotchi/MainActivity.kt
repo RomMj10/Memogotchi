@@ -307,6 +307,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
             if (!timerRunning) break
             delay(1000L)
             elapsedSeconds++
+            activeTaskTimer?.let { TaskTimerStore.tick(context, elapsedSeconds) }
         }
     }
 

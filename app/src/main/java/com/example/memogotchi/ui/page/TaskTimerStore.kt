@@ -27,9 +27,34 @@ object TaskTimerStore {
             .putInt(KEY_TARGET, durationMinutes * 60)
             .putString(KEY_DATE, dateKey)
             .apply()
+
+        if (canPostNotifications(context)) {
+            try {
+                showOrUpdateActiveTaskNotification(context, taskTitle, durationMinutes * 60, 0L)
+            } catch (e: SecurityException) {
+                // Permission revoked between check and call — fail silently, no crash
+            }
+        }
     }
+
+    /**
+     * Call this from wherever the timer is ticked (e.g. the LaunchedEffect/coroutine that
+     * increments activeElapsedSeconds) to keep the pinned notification's countdown in sync.
+     */
+    fun tick(context: Context, elapsedSeconds: Long) {
+        val active = load(context) ?: return
+        if (canPostNotifications(context)) {
+            try {
+                showOrUpdateActiveTaskNotification(context, active.taskTitle, active.targetSeconds, elapsedSeconds)
+            } catch (e: SecurityException) {
+                // Permission revoked between check and call — fail silently, no crash
+            }
+        }
+    }
+
     fun clear(context: Context) {
         prefs(context).edit().clear().apply()
+        cancelActiveTaskNotification(context)
     }
 
     fun load(context: Context): ActiveTaskTimer? {
