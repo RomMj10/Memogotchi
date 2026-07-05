@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
+import com.example.memogotchi.AppTheme
 import java.io.File
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -71,16 +72,16 @@ fun PermissionRationaleDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF1F2125),
-        title = { Text(title, color = Color(0xFFE8E6F0), fontWeight = FontWeight.Bold) },
-        text = { Text(message, color = Color(0xFF888888), fontSize = 13.sp) },
+        title = { Text(title, color = AppTheme.current.textPrimary, fontWeight = FontWeight.Bold) },
+        text = { Text(message, color = AppTheme.current.textSecondary, fontSize = 13.sp) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(confirmLabel, color = Color(0xFF77C59D), fontWeight = FontWeight.SemiBold)
+                Text(confirmLabel, color = AppTheme.current.accent, fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Not now", color = Color(0xFF888888))
+                Text("Not now", color = AppTheme.current.textSecondary)
             }
         }
     )
@@ -191,9 +192,9 @@ fun PhotoSourceSheet(
     onCameraClick: () -> Unit,
     onGalleryClick: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Color(0xFF16171C)) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = AppTheme.current.bg) {
         Column(modifier = Modifier.fillMaxWidth().padding(20.dp).padding(bottom = 24.dp)) {
-            Text("Add a photo", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE8E6F0))
+            Text("Add a photo", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary)
             Spacer(Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 PhotoSourceOption(
@@ -221,15 +222,15 @@ private fun PhotoSourceOption(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF1F2125))
-            .border(1.dp, Color(0xFF77C59D).copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+            .background(AppTheme.current.surface)
+            .border(1.dp, AppTheme.current.accent.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(icon, contentDescription = label, tint = Color(0xFF77C59D), modifier = Modifier.size(28.dp))
+        Icon(icon, contentDescription = label, tint = AppTheme.current.accent, modifier = Modifier.size(28.dp))
         Spacer(Modifier.height(8.dp))
-        Text(label, fontSize = 13.sp, color = Color(0xFFE8E6F0))
+        Text(label, fontSize = 13.sp, color = AppTheme.current.textPrimary)
     }
 }
 
@@ -361,7 +362,7 @@ fun VoiceRecorderSheet(
 
     ModalBottomSheet(
         onDismissRequest = { recorder.discard(); onDismiss() },
-        containerColor = Color(0xFF16171C)
+        containerColor = AppTheme.current.bg
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(24.dp).padding(bottom = 24.dp),
@@ -370,7 +371,7 @@ fun VoiceRecorderSheet(
             Text(
                 if (recorder.recordedUri != null) "Recording ready"
                 else if (recorder.isRecording) "Recording..." else "Voice note",
-                fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE8E6F0)
+                fontSize = 18.sp, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary
             )
             Spacer(Modifier.height(16.dp))
 
@@ -379,7 +380,7 @@ fun VoiceRecorderSheet(
             Text(
                 String.format("%02d:%02d", mins, secs),
                 fontSize = 32.sp, fontWeight = FontWeight.Bold,
-                color = if (recorder.isRecording) Color(0xFFD4537E) else Color(0xFF77C59D)
+                color = if (recorder.isRecording) AppTheme.current.textSecondary else AppTheme.current.accent
             )
 
             Spacer(Modifier.height(20.dp))
@@ -388,15 +389,15 @@ fun VoiceRecorderSheet(
                 recorder.recordedUri != null -> {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Box(
-                            modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(Color(0xFF2A2A30))
+                            modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(AppTheme.current.surface)
                                 .clickable { recorder.discard(); recorder.elapsedSeconds = 0 }
                                 .padding(horizontal = 20.dp, vertical = 12.dp)
-                        ) { Text("Discard", fontSize = 13.sp, color = Color(0xFF888888)) }
+                        ) { Text("Discard", fontSize = 13.sp, color = AppTheme.current.textSecondary) }
                         Box(
-                            modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(Color(0xFF77C59D))
+                            modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(AppTheme.current.accent)
                                 .clickable { recorder.recordedUri?.let { onAttach(it) }; onDismiss() }
                                 .padding(horizontal = 20.dp, vertical = 12.dp)
-                        ) { Text("Attach", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF16171C)) }
+                        ) { Text("Attach", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.current.bg) }
                     }
                 }
                 recorder.isRecording -> {
@@ -408,7 +409,7 @@ fun VoiceRecorderSheet(
                 }
                 else -> {
                     Box(
-                        modifier = Modifier.size(64.dp).clip(CircleShape).background(Color(0xFF77C59D))
+                        modifier = Modifier.size(64.dp).clip(CircleShape).background(AppTheme.current.accent)
                             .clickable {
                                 if (hasMicPermission(context)) {
                                     recorder.elapsedSeconds = 0
@@ -418,7 +419,7 @@ fun VoiceRecorderSheet(
                                 }
                             },
                         contentAlignment = Alignment.Center
-                    ) { Icon(Icons.Outlined.Mic, contentDescription = "Record", tint = Color(0xFF16171C), modifier = Modifier.size(28.dp)) }
+                    ) { Icon(Icons.Outlined.Mic, contentDescription = "Record", tint = AppTheme.current.bg, modifier = Modifier.size(28.dp)) }
                 }
             }
         }
@@ -466,7 +467,7 @@ fun DiaryAudioPlayer(audioUri: String, onRemove: (() -> Unit)? = null) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFF77C59D))
+            modifier = Modifier.size(36.dp).clip(CircleShape).background(AppTheme.current.accent)
                 .clickable {
                     if (isPlaying) {
                         player?.pause()
@@ -488,15 +489,15 @@ fun DiaryAudioPlayer(audioUri: String, onRemove: (() -> Unit)? = null) {
             Icon(
                 if (isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
                 contentDescription = if (isPlaying) "Pause" else "Play",
-                tint = Color(0xFF16171C), modifier = Modifier.size(18.dp)
+                tint = AppTheme.current.surface, modifier = Modifier.size(18.dp)
             )
         }
         Spacer(Modifier.width(10.dp))
-        Text("Voice note", fontSize = 12.sp, color = Color(0xFFE8E6F0), modifier = Modifier.weight(1f))
+        Text("Voice note", fontSize = 12.sp, color = AppTheme.current.textPrimary, modifier = Modifier.weight(1f))
         if (onRemove != null) {
             Icon(
                 Icons.Outlined.Close, contentDescription = "Remove voice note",
-                tint = Color(0xFF888888), modifier = Modifier.size(16.dp).clickable(onClick = onRemove)
+                tint = AppTheme.current.textSecondary, modifier = Modifier.size(16.dp).clickable(onClick = onRemove)
             )
         }
     }

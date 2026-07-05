@@ -23,15 +23,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.example.memogotchi.AppTheme
 import com.example.memogotchi.ui.theme.GildaDisplay
 import kotlinx.coroutines.launch
 
-// ── Theme tokens — reused exactly from the rest of the app, not invented here ──
-private val BgColor       = Color(0xFF16171C)
-private val SurfaceColor  = Color(0xFF1F2125)
-private val AccentGreen   = Color(0xFF77C59D)
-private val TextSecondary = Color(0xFF888888)
-private val TextPrimary   = Color(0xFFF2F2F2)
 
 /**
  * One row's worth of UI-friendly app info, resolved once from
@@ -114,13 +109,13 @@ fun AppBlockerScreen(onBack: () -> Unit) {
         return
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(BgColor)) {
+    Box(modifier = Modifier.fillMaxSize().background(AppTheme.current.bg)) {
         Column(modifier = Modifier.fillMaxSize()) {
             ScreenHeader(onBack = onBack)
 
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = AccentGreen)
+                    CircularProgressIndicator(color = AppTheme.current.accent)
                 }
             } else {
                 LazyColumn(
@@ -248,7 +243,7 @@ private fun ScreenHeader(onBack: () -> Unit) {
             .padding(start = 4.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
     ) {
         TextButton(onClick = onBack) {
-            Text("< Back", color = AccentGreen, fontFamily = GildaDisplay, fontSize = 16.sp)
+            Text("< Back", color = AppTheme.current.accent, fontFamily = GildaDisplay, fontSize = 16.sp)
         }
         Spacer(Modifier.weight(1f))
         Text(
@@ -256,7 +251,7 @@ private fun ScreenHeader(onBack: () -> Unit) {
             fontFamily = GildaDisplay,
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
+            color = AppTheme.current.textPrimary
         )
         Spacer(Modifier.weight(1f))
         Spacer(Modifier.width(64.dp)) // balances the back button's width roughly
@@ -280,7 +275,7 @@ private fun AppBlockerRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(SurfaceColor)
+            .background(AppTheme.current.surface)
             .padding(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -288,7 +283,7 @@ private fun AppBlockerRow(
             Spacer(Modifier.width(12.dp))
             Text(
                 text = app.label,
-                color = TextPrimary,
+                color = AppTheme.current.textPrimary,
                 fontFamily = GildaDisplay,
                 fontSize = 15.sp,
                 modifier = Modifier.weight(1f)
@@ -296,7 +291,7 @@ private fun AppBlockerRow(
             Switch(
                 checked = isBlocked,
                 onCheckedChange = onToggleBlocked,
-                colors = SwitchDefaults.colors(checkedTrackColor = AccentGreen)
+                colors = SwitchDefaults.colors(checkedTrackColor = AppTheme.current.accent, checkedThumbColor = AppTheme.current.bg)
             )
         }
 
@@ -349,7 +344,7 @@ private fun HardSoftPicker(isHardBlock: Boolean, onChange: (Boolean) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(BgColor),
+            .background(AppTheme.current.bg),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         SegmentChip(
@@ -372,7 +367,7 @@ private fun UnblockMethodPicker(selected: UnblockMethod, onChange: (UnblockMetho
     Column {
         Text(
             text = "Unblock method",
-            color = TextSecondary,
+            color = AppTheme.current.textSecondary,
             fontSize = 11.sp,
             modifier = Modifier.padding(bottom = 4.dp)
         )
@@ -380,7 +375,7 @@ private fun UnblockMethodPicker(selected: UnblockMethod, onChange: (UnblockMetho
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(BgColor),
+                .background(AppTheme.current.bg),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             SegmentChip("Phrase", selected == UnblockMethod.PHRASE, { onChange(UnblockMethod.PHRASE) }, Modifier.weight(1f))
@@ -395,14 +390,14 @@ private fun SegmentChip(label: String, selected: Boolean, onClick: () -> Unit, m
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(if (selected) AccentGreen else Color.Transparent)
+            .background(if (selected) AppTheme.current.accent else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            color = if (selected) BgColor else TextSecondary,
+            color = if (selected) AppTheme.current.bg else AppTheme.current.textSecondary,
             fontSize = 12.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
         )
@@ -426,7 +421,7 @@ private fun PhraseToneSubConfig(tone: PhraseTone, onChange: (PhraseTone) -> Unit
     Column {
         Text(
             text = "Phrase tone",
-            color = TextSecondary,
+            color = AppTheme.current.textSecondary,
             fontSize = 11.sp,
             modifier = Modifier.padding(bottom = 4.dp)
         )
@@ -434,7 +429,7 @@ private fun PhraseToneSubConfig(tone: PhraseTone, onChange: (PhraseTone) -> Unit
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(BgColor),
+                .background(AppTheme.current.bg),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             SegmentChip("Default", tone != PhraseTone.HARSH, { onChange(PhraseTone.DEFAULT) }, Modifier.weight(1f))
@@ -448,7 +443,7 @@ private fun PhraseToneSubConfig(tone: PhraseTone, onChange: (PhraseTone) -> Unit
         // exists.
         Text(
             text = "Harsh-tone phrasing isn't written yet — falls back to Default for now.",
-            color = TextSecondary,
+            color = AppTheme.current.textSecondary,
             fontSize = 10.sp,
             modifier = Modifier.padding(top = 4.dp)
         )
@@ -481,7 +476,7 @@ private fun DelaySecondsSubConfig(seconds: Int, onChange: (Int) -> Unit) {
     Column {
         Text(
             text = "Delay: $displaySeconds seconds",
-            color = TextSecondary,
+            color = AppTheme.current.textSecondary,
             fontSize = 11.sp,
             modifier = Modifier.padding(bottom = 4.dp)
         )
@@ -489,11 +484,11 @@ private fun DelaySecondsSubConfig(seconds: Int, onChange: (Int) -> Unit) {
             value = displaySeconds.toFloat(),
             onValueChange = { onChange(it.toInt().coerceAtLeast(1)) },
             valueRange = 1f..600f,
-            colors = SliderDefaults.colors(thumbColor = AccentGreen, activeTrackColor = AccentGreen)
+            colors = SliderDefaults.colors(thumbColor = AppTheme.current.accent, activeTrackColor = AppTheme.current.accent)
         )
         Text(
             text = "Suggested range: 15s – 600s (10 min). You can go higher if you want stricter friction.",
-            color = TextSecondary,
+            color = AppTheme.current.textSecondary,
             fontSize = 10.sp
         )
     }
@@ -516,7 +511,7 @@ private fun MathDifficultySubConfig(difficulty: MathDifficulty, onChange: (MathD
     Column {
         Text(
             text = "Math difficulty",
-            color = TextSecondary,
+            color = AppTheme.current.textSecondary,
             fontSize = 11.sp,
             modifier = Modifier.padding(bottom = 4.dp)
         )
@@ -524,7 +519,7 @@ private fun MathDifficultySubConfig(difficulty: MathDifficulty, onChange: (MathD
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(BgColor),
+                .background(AppTheme.current.bg),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             SegmentChip("Easy", difficulty == MathDifficulty.EASY, { onChange(MathDifficulty.EASY) }, Modifier.weight(1f))

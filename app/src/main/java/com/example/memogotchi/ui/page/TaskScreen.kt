@@ -450,8 +450,8 @@ fun TaskCard(
     val cardAlpha = if (status == TaskCardStatus.LOCKED) 0.45f else 1f
     val bgColor by animateColorAsState(
         when (status) {
-            TaskCardStatus.DONE   -> Color(0xFF1A1D1A)
-            TaskCardStatus.ACTIVE -> Color(0xFF1B2A22)
+            TaskCardStatus.DONE   -> AppTheme.current.surface.copy(alpha = 0.5f)
+            TaskCardStatus.ACTIVE -> AppTheme.current.accentDark.copy(alpha = 0.2f)
             else                  -> AppTheme.current.surface
         }, tween(300), label = "taskbg"
     )

@@ -24,15 +24,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.AppTheme
 import com.example.memogotchi.ui.theme.GildaDisplay
 import kotlinx.coroutines.launch
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
-private val BgColor       = Color(0xFF16171C)
-private val SurfaceColor  = Color(0xFF1F2125)
-private val AccentGreen   = Color(0xFF77C59D)
-private val TextSecondary = Color(0xFF888888)
-private val TextPrimary   = Color(0xFFF2F2F2)
 private val WarnRed       = Color(0xFFD4537E)
 
 // ── Limit constants ───────────────────────────────────────────────────────────
@@ -128,12 +124,12 @@ fun AppTimerScreen(onBack: () -> Unit) {
             ?: target.packageName
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
-            containerColor = SurfaceColor,
-            title = { Text("Remove limit?", color = TextPrimary, fontFamily = GildaDisplay) },
+            containerColor = AppTheme.current.surface,
+            title = { Text("Remove limit?", color = AppTheme.current.textPrimary, fontFamily = GildaDisplay) },
             text = {
                 Text(
                     "The daily time limit for $label will be removed.",
-                    color = TextSecondary,
+                    color = AppTheme.current.textSecondary,
                     fontSize = 14.sp
                 )
             },
@@ -148,7 +144,7 @@ fun AppTimerScreen(onBack: () -> Unit) {
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text("Cancel", color = AppTheme.current.textSecondary)
                 }
             }
         )
@@ -177,7 +173,7 @@ fun AppTimerScreen(onBack: () -> Unit) {
     }
 
     // ── Main UI ────────────────────────────────────────────────────────────
-    Box(modifier = Modifier.fillMaxSize().background(BgColor)) {
+    Box(modifier = Modifier.fillMaxSize().background(AppTheme.current.bg)) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
             Row(
@@ -187,7 +183,7 @@ fun AppTimerScreen(onBack: () -> Unit) {
                     .padding(start = 4.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
             ) {
                 TextButton(onClick = onBack) {
-                    Text("< Back", color = AccentGreen, fontFamily = GildaDisplay, fontSize = 16.sp)
+                    Text("< Back", color = AppTheme.current.accent, fontFamily = GildaDisplay, fontSize = 16.sp)
                 }
                 Spacer(Modifier.weight(1f))
                 Text(
@@ -195,7 +191,7 @@ fun AppTimerScreen(onBack: () -> Unit) {
                     fontFamily = GildaDisplay,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    color = AppTheme.current.textPrimary
                 )
                 Spacer(Modifier.weight(1f))
                 Spacer(Modifier.width(64.dp))
@@ -203,18 +199,18 @@ fun AppTimerScreen(onBack: () -> Unit) {
 
             when {
                 isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = AccentGreen)
+                    CircularProgressIndicator(color = AppTheme.current.accent)
                 }
                 timeLimits.isEmpty() -> Box(
                     Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("No limits set", color = TextSecondary, fontSize = 15.sp)
+                        Text("No limits set", color = AppTheme.current.textSecondary, fontSize = 15.sp)
                         Spacer(Modifier.height(6.dp))
                         Text(
                             "Tap + to add a daily limit for an app",
-                            color = TextSecondary,
+                            color = AppTheme.current.textSecondary,
                             fontSize = 12.sp
                         )
                     }
@@ -247,8 +243,8 @@ fun AppTimerScreen(onBack: () -> Unit) {
 
         FloatingActionButton(
             onClick = { showAppPicker = true },
-            containerColor = AccentGreen,
-            contentColor = BgColor,
+            containerColor = AppTheme.current.accent,
+            contentColor = AppTheme.current.bg,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(24.dp)
@@ -277,7 +273,7 @@ private fun TimeLimitRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(SurfaceColor)
+            .background(AppTheme.current.surface)
             .padding(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -295,14 +291,14 @@ private fun TimeLimitRow(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = TimerAppInfo?.label ?: limit.packageName,
-                    color = TextPrimary,
+                    color = AppTheme.current.textPrimary,
                     fontFamily = GildaDisplay,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = "Limit: ${formatMinutes(sliderValue.toInt())} / day",
-                    color = AccentGreen,
+                    color = AppTheme.current.accent,
                     fontSize = 12.sp
                 )
             }
@@ -329,9 +325,9 @@ private fun TimeLimitRow(
             valueRange = LIMIT_MIN.toFloat()..LIMIT_MAX.toFloat(),
             steps = (LIMIT_MAX - LIMIT_MIN) / LIMIT_STEP - 1,
             colors = SliderDefaults.colors(
-                thumbColor = AccentGreen,
-                activeTrackColor = AccentGreen,
-                inactiveTrackColor = TextSecondary.copy(alpha = 0.3f)
+                thumbColor = AppTheme.current.accent,
+                activeTrackColor = AppTheme.current.accent,
+                inactiveTrackColor = AppTheme.current.textSecondary.copy(alpha = 0.3f)
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -340,8 +336,8 @@ private fun TimeLimitRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("${formatMinutes(LIMIT_MIN)}", color = TextSecondary, fontSize = 10.sp)
-            Text("${formatMinutes(LIMIT_MAX)}", color = TextSecondary, fontSize = 10.sp)
+            Text("${formatMinutes(LIMIT_MIN)}", color = AppTheme.current.textSecondary, fontSize = 10.sp)
+            Text("${formatMinutes(LIMIT_MAX)}", color = AppTheme.current.textSecondary, fontSize = 10.sp)
         }
     }
 }
@@ -361,7 +357,7 @@ private fun AppPickerSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = SurfaceColor,
+        containerColor = AppTheme.current.surface,
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
     ) {
@@ -376,22 +372,22 @@ private fun AppPickerSheet(
                     fontFamily = GildaDisplay,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    color = AppTheme.current.textPrimary
                 )
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search apps…", color = TextSecondary, fontSize = 13.sp) },
+                    placeholder = { Text("Search apps…", color = AppTheme.current.textSecondary, fontSize = 13.sp) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AccentGreen,
-                        unfocusedBorderColor = TextSecondary.copy(alpha = 0.4f),
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        cursorColor = AccentGreen
+                        focusedBorderColor = AppTheme.current.accent,
+                        unfocusedBorderColor = AppTheme.current.textSecondary.copy(alpha = 0.4f),
+                        focusedTextColor = AppTheme.current.textPrimary,
+                        unfocusedTextColor = AppTheme.current.textPrimary,
+                        cursorColor = AppTheme.current.accent
                     )
                 )
                 Spacer(Modifier.height(8.dp))
@@ -409,7 +405,7 @@ private fun AppPickerSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
-                            .background(BgColor)
+                            .background(AppTheme.current.bg)
                             .clickable { onPick(app.packageName) }
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -423,7 +419,7 @@ private fun AppPickerSheet(
                                 .clip(RoundedCornerShape(8.dp))
                         )
                         Spacer(Modifier.width(12.dp))
-                        Text(app.label, color = TextPrimary, fontSize = 14.sp)
+                        Text(app.label, color = AppTheme.current.textPrimary, fontSize = 14.sp)
                     }
                 }
             }

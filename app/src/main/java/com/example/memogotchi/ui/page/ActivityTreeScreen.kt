@@ -93,16 +93,16 @@ fun ActivityTreeScreen(
 
         Box(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
             Box(modifier = Modifier.fillMaxWidth().height(totalHeightDp)) {
-                val bgClr = AppTheme.current.bg
+                val AccentClr = AppTheme.current.accent
                 Canvas(modifier = Modifier.matchParentSize()) {
                     val centerX = size.width / 2
                     val bottomY = size.height - 40.dp.toPx()
 
                     drawLine(
-                        color = bgClr,
+                        color = AccentClr,
                         start = Offset(centerX, bottomY),
                         end   = Offset(centerX, bottomY - tasks.size * nodeSpacingPx),
-                        strokeWidth = 10f,
+                        strokeWidth = 18f,
                     )
 
                     tasks.forEachIndexed { i, task ->

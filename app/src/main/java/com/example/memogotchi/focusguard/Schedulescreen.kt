@@ -28,16 +28,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.AppTheme
 import com.example.memogotchi.ui.theme.GildaDisplay
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
-private val BgColor       = Color(0xFF16171C)
-private val SurfaceColor  = Color(0xFF1F2125)
-private val AccentGreen   = Color(0xFF77C59D)
-private val TextSecondary = Color(0xFF888888)
-private val TextPrimary   = Color(0xFFF2F2F2)
 private val WarnRed       = Color(0xFFD4537E)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -186,14 +182,14 @@ fun ScheduleScreen(onBack: () -> Unit) {
     if (deleteTarget != null) {
         AlertDialog(
             onDismissRequest = { deleteTargetId = null },
-            containerColor = SurfaceColor,
+            containerColor = AppTheme.current.surface,
             title = {
-                Text("Delete schedule?", color = TextPrimary, fontFamily = GildaDisplay)
+                Text("Delete schedule?", color = AppTheme.current.textPrimary, fontFamily = GildaDisplay)
             },
             text = {
                 Text(
                     "\"${deleteTarget.name}\" will be removed permanently.",
-                    color = TextSecondary,
+                    color = AppTheme.current.textSecondary,
                     fontSize = 14.sp
                 )
             },
@@ -210,7 +206,7 @@ fun ScheduleScreen(onBack: () -> Unit) {
             },
             dismissButton = {
                 TextButton(onClick = { deleteTargetId = null }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text("Cancel", color = AppTheme.current.textSecondary)
                 }
             }
         )
@@ -236,7 +232,7 @@ fun ScheduleScreen(onBack: () -> Unit) {
     }
 
     // ── List view ──────────────────────────────────────────────────────────
-    Box(modifier = Modifier.fillMaxSize().background(BgColor)) {
+    Box(modifier = Modifier.fillMaxSize().background(AppTheme.current.bg)) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
             Row(
@@ -246,7 +242,7 @@ fun ScheduleScreen(onBack: () -> Unit) {
                     .padding(start = 4.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
             ) {
                 TextButton(onClick = onBack) {
-                    Text("< Back", color = AccentGreen, fontFamily = GildaDisplay, fontSize = 16.sp)
+                    Text("< Back", color = AppTheme.current.accent, fontFamily = GildaDisplay, fontSize = 16.sp)
                 }
                 Spacer(Modifier.weight(1f))
                 Text(
@@ -254,7 +250,7 @@ fun ScheduleScreen(onBack: () -> Unit) {
                     fontFamily = GildaDisplay,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    color = AppTheme.current.textPrimary
                 )
                 Spacer(Modifier.weight(1f))
                 Spacer(Modifier.width(64.dp))
@@ -262,16 +258,16 @@ fun ScheduleScreen(onBack: () -> Unit) {
 
             if (isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = AccentGreen)
+                    CircularProgressIndicator(color = AppTheme.current.accent)
                 }
             } else if (schedules.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("No schedules yet", color = TextSecondary, fontSize = 15.sp)
+                        Text("No schedules yet", color = AppTheme.current.textSecondary, fontSize = 15.sp)
                         Spacer(Modifier.height(8.dp))
                         Text(
                             "Tap + to create a named block schedule",
-                            color = TextSecondary,
+                            color = AppTheme.current.textSecondary,
                             fontSize = 12.sp
                         )
                     }
@@ -305,8 +301,8 @@ fun ScheduleScreen(onBack: () -> Unit) {
         // FAB
         FloatingActionButton(
             onClick = { editingForm = ScheduleFormState() },
-            containerColor = AccentGreen,
-            contentColor = BgColor,
+            containerColor = AppTheme.current.accent,
+            contentColor = AppTheme.current.bg,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(24.dp)
@@ -333,14 +329,14 @@ private fun ScheduleRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(SurfaceColor)
+            .background(AppTheme.current.surface)
             .padding(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = schedule.name,
-                    color = TextPrimary,
+                    color = AppTheme.current.textPrimary,
                     fontFamily = GildaDisplay,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold
@@ -348,19 +344,19 @@ private fun ScheduleRow(
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = "$appCount app${if (appCount != 1) "s" else ""} · $daysSummary",
-                    color = TextSecondary,
+                    color = AppTheme.current.textSecondary,
                     fontSize = 12.sp
                 )
                 Text(
                     text = timeRange,
-                    color = TextSecondary,
+                    color = AppTheme.current.textSecondary,
                     fontSize = 12.sp
                 )
             }
             Switch(
                 checked = schedule.isEnabled,
                 onCheckedChange = onToggleEnabled,
-                colors = SwitchDefaults.colors(checkedTrackColor = AccentGreen)
+                colors = SwitchDefaults.colors(checkedTrackColor = AppTheme.current.accent)
             )
         }
         Spacer(Modifier.height(10.dp))
@@ -369,9 +365,9 @@ private fun ScheduleRow(
             horizontalArrangement = Arrangement.End
         ) {
             TextButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = AccentGreen)
+                Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = AppTheme.current.accent)
                 Spacer(Modifier.width(4.dp))
-                Text("Edit", color = AccentGreen, fontSize = 13.sp)
+                Text("Edit", color = AppTheme.current.accent, fontSize = 13.sp)
             }
             Spacer(Modifier.width(8.dp))
             TextButton(onClick = onDelete) {
@@ -414,7 +410,7 @@ private fun ScheduleFormView(
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(BgColor)) {
+    Box(modifier = Modifier.fillMaxSize().background(AppTheme.current.bg)) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
             Row(
@@ -424,7 +420,7 @@ private fun ScheduleFormView(
                     .padding(start = 4.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
             ) {
                 TextButton(onClick = onBack) {
-                    Text("< Back", color = AccentGreen, fontFamily = GildaDisplay, fontSize = 16.sp)
+                    Text("< Back", color = AppTheme.current.accent, fontFamily = GildaDisplay, fontSize = 16.sp)
                 }
                 Spacer(Modifier.weight(1f))
                 Text(
@@ -432,7 +428,7 @@ private fun ScheduleFormView(
                     fontFamily = GildaDisplay,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    color = AppTheme.current.textPrimary
                 )
                 Spacer(Modifier.weight(1f))
                 Spacer(Modifier.width(64.dp))
@@ -449,16 +445,16 @@ private fun ScheduleFormView(
                 OutlinedTextField(
                     value = form.name,
                     onValueChange = { onFormChange(form.copy(name = it)) },
-                    placeholder = { Text("e.g. Early morning", color = TextSecondary, fontSize = 13.sp) },
+                    placeholder = { Text("e.g. Early morning", color = AppTheme.current.textSecondary, fontSize = 13.sp) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AccentGreen,
-                        unfocusedBorderColor = TextSecondary.copy(alpha = 0.4f),
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        cursorColor = AccentGreen
+                        focusedBorderColor = AppTheme.current.accent,
+                        unfocusedBorderColor = AppTheme.current.textSecondary.copy(alpha = 0.4f),
+                        focusedTextColor = AppTheme.current.textPrimary,
+                        unfocusedTextColor = AppTheme.current.textPrimary,
+                        cursorColor = AppTheme.current.accent
                     )
                 )
                 if (form.name.isBlank()) {
@@ -478,7 +474,7 @@ private fun ScheduleFormView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(SurfaceColor)
+                        .background(AppTheme.current.surface)
                         .clickable { showAppPicker = true }
                         .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -487,11 +483,11 @@ private fun ScheduleFormView(
                     Text(
                         text = if (count == 0) "Tap to choose apps…"
                         else "$count app${if (count != 1) "s" else ""} selected",
-                        color = if (count == 0) TextSecondary else TextPrimary,
+                        color = if (count == 0) AppTheme.current.textSecondary else AppTheme.current.textPrimary,
                         fontSize = 14.sp,
                         modifier = Modifier.weight(1f)
                     )
-                    Text("›", color = AccentGreen, fontSize = 18.sp)
+                    Text("›", color = AppTheme.current.accent, fontSize = 18.sp)
                 }
 
                 Spacer(Modifier.height(20.dp))
@@ -509,7 +505,7 @@ private fun ScheduleFormView(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (selected) AccentGreen else SurfaceColor)
+                                .background(if (selected) AppTheme.current.accent else AppTheme.current.surface)
                                 .clickable {
                                     val newDays = if (selected) form.activeDays - day
                                     else form.activeDays + day
@@ -520,7 +516,7 @@ private fun ScheduleFormView(
                         ) {
                             Text(
                                 text = label,
-                                color = if (selected) BgColor else TextSecondary,
+                                color = if (selected) AppTheme.current.bg else AppTheme.current.textSecondary,
                                 fontSize = 11.sp,
                                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                             )
@@ -538,7 +534,7 @@ private fun ScheduleFormView(
                 SectionLabel("Time Range")
                 Text(
                     "Overnight ranges are supported (e.g. 10 PM → 6 AM).",
-                    color = TextSecondary,
+                    color = AppTheme.current.textSecondary,
                     fontSize = 11.sp,
                     modifier = Modifier.padding(bottom = 10.dp)
                 )
@@ -572,16 +568,16 @@ private fun ScheduleFormView(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(SurfaceColor)
+                            .background(AppTheme.current.surface)
                             .padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Schedule enabled", color = TextPrimary, fontSize = 14.sp,
+                        Text("Schedule enabled", color = AppTheme.current.textPrimary, fontSize = 14.sp,
                             modifier = Modifier.weight(1f))
                         Switch(
                             checked = isEnabled,
                             onCheckedChange = { isEnabled = it },
-                            colors = SwitchDefaults.colors(checkedTrackColor = AccentGreen)
+                            colors = SwitchDefaults.colors(checkedTrackColor = AppTheme.current.accent)
                         )
                     }
                     Spacer(Modifier.height(20.dp))
@@ -596,10 +592,10 @@ private fun ScheduleFormView(
                         .height(50.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = AccentGreen,
-                        contentColor = BgColor,
-                        disabledContainerColor = AccentGreen.copy(alpha = 0.25f),
-                        disabledContentColor = TextSecondary
+                        containerColor = AppTheme.current.accent,
+                        contentColor = AppTheme.current.bg,
+                        disabledContainerColor = AppTheme.current.accent.copy(alpha = 0.25f),
+                        disabledContentColor = AppTheme.current.textSecondary
                     )
                 ) {
                     Text(
@@ -634,7 +630,7 @@ private fun AppPickerSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = SurfaceColor,
+        containerColor = AppTheme.current.surface,
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
     ) {
@@ -650,28 +646,28 @@ private fun AppPickerSheet(
                     fontFamily = GildaDisplay,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    color = AppTheme.current.textPrimary
                 )
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search apps…", color = TextSecondary, fontSize = 13.sp) },
+                    placeholder = { Text("Search apps…", color = AppTheme.current.textSecondary, fontSize = 13.sp) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AccentGreen,
-                        unfocusedBorderColor = TextSecondary.copy(alpha = 0.4f),
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        cursorColor = AccentGreen
+                        focusedBorderColor = AppTheme.current.accent,
+                        unfocusedBorderColor = AppTheme.current.textSecondary.copy(alpha = 0.4f),
+                        focusedTextColor = AppTheme.current.textPrimary,
+                        unfocusedTextColor = AppTheme.current.textPrimary,
+                        cursorColor = AppTheme.current.accent
                     )
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "${draft.size} selected",
-                    color = TextSecondary,
+                    color = AppTheme.current.textSecondary,
                     fontSize = 12.sp
                 )
                 Spacer(Modifier.height(8.dp))
@@ -690,7 +686,7 @@ private fun AppPickerSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
-                            .background(BgColor)
+                            .background(AppTheme.current.bg)
                             .clickable {
                                 draft = if (isChecked) draft - app.packageName
                                 else draft + app.packageName
@@ -707,7 +703,7 @@ private fun AppPickerSheet(
                         Spacer(Modifier.width(12.dp))
                         Text(
                             app.label,
-                            color = TextPrimary,
+                            color = AppTheme.current.textPrimary,
                             fontSize = 14.sp,
                             modifier = Modifier.weight(1f)
                         )
@@ -717,8 +713,8 @@ private fun AppPickerSheet(
                                 draft = if (it) draft + app.packageName else draft - app.packageName
                             },
                             colors = CheckboxDefaults.colors(
-                                checkedColor = AccentGreen,
-                                uncheckedColor = TextSecondary
+                                checkedColor = AppTheme.current.accent,
+                                uncheckedColor = AppTheme.current.textSecondary
                             )
                         )
                     }
@@ -736,7 +732,7 @@ private fun AppPickerSheet(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary)
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AppTheme.current.textSecondary)
                 ) { Text("Cancel") }
 
                 Button(
@@ -744,8 +740,8 @@ private fun AppPickerSheet(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = AccentGreen,
-                        contentColor = BgColor
+                        containerColor = AppTheme.current.accent,
+                        contentColor = AppTheme.current.bg
                     )
                 ) {
                     Text("Confirm", fontFamily = GildaDisplay, fontWeight = FontWeight.SemiBold)
@@ -761,7 +757,7 @@ private fun AppPickerSheet(
 private fun SectionLabel(text: String) {
     Text(
         text = text,
-        color = TextSecondary,
+        color = AppTheme.current.textSecondary,
         fontSize = 11.sp,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 0.5.sp,
@@ -779,14 +775,14 @@ private fun TimeButton(
     onTimePicked: (Int, Int) -> Unit
 ) {
     Column(modifier = modifier) {
-        Text(label, color = TextSecondary, fontSize = 11.sp,
+        Text(label, color = AppTheme.current.textSecondary, fontSize = 11.sp,
             modifier = Modifier.padding(bottom = 4.dp))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(SurfaceColor)
-                .border(1.dp, TextSecondary.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                .background(AppTheme.current.surface)
+                .border(1.dp, AppTheme.current.surface.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
                 .clickable {
                     TimePickerDialog(
                         context,
@@ -801,7 +797,7 @@ private fun TimeButton(
         ) {
             Text(
                 formatTime(hour, minute),
-                color = TextPrimary,
+                color = AppTheme.current.textPrimary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = GildaDisplay

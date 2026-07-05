@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.AppTheme
 
 /**
  * Checks whether FocusGuardAccessibilityService is currently enabled by the
@@ -50,12 +51,6 @@ fun Context.isFocusGuardAccessibilityServiceEnabled(): Boolean {
     return false
 }
 
-private val BgColor       = Color(0xFF16171C)
-private val SurfaceColor  = Color(0xFF1F2125)
-private val AccentGreen   = Color(0xFF77C59D)
-private val TextPrimary   = Color(0xFFF2F2F2)
-private val TextSecondary = Color(0xFF888888)
-
 /**
  * Walks the user to Android's Accessibility settings so they can manually
  * enable FocusGuardAccessibilityService. This is required because hard
@@ -80,7 +75,7 @@ fun AccessibilitySetupScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgColor)
+            .background(AppTheme.current.bg)
             .padding(horizontal = 28.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -90,7 +85,7 @@ fun AccessibilitySetupScreen(
                 else "One more step to enable blocking",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = TextPrimary,
+                color = AppTheme.current.textPrimary,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
@@ -104,19 +99,19 @@ fun AccessibilitySetupScreen(
                             "access. This lets it detect when a blocked app opens and show " +
                             "you the friction screen before you get in.",
                 fontSize = 14.sp,
-                color = TextSecondary,
+                color = AppTheme.current.textSecondary,
                 modifier = Modifier.padding(bottom = 28.dp)
             )
 
             Box(
                 modifier = Modifier
-                    .background(SurfaceColor, RoundedCornerShape(14.dp))
+                    .background(AppTheme.current.surface, RoundedCornerShape(14.dp))
                     .padding(16.dp)
             ) {
                 Text(
                     text = "Settings → Accessibility → Memogotchi → Focus Guard → On",
                     fontSize = 13.sp,
-                    color = TextSecondary
+                    color = AppTheme.current.textSecondary
                 )
             }
 
@@ -127,11 +122,11 @@ fun AccessibilitySetupScreen(
                     val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                     context.startActivity(intent)
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = AccentGreen),
+                colors = ButtonDefaults.buttonColors(containerColor = AppTheme.current.accent),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
-                Text("Open Accessibility Settings", color = BgColor, fontSize = 15.sp)
+                Text("Open Accessibility Settings", color = AppTheme.current.bg, fontSize = 15.sp)
             }
 
             Spacer(Modifier.height(12.dp))
@@ -143,7 +138,7 @@ fun AccessibilitySetupScreen(
                 Text(
                     if (isHardBlock) "Not now, use soft block instead"
                     else "Cancel",
-                    color = TextSecondary,
+                    color = AppTheme.current.textSecondary,
                     fontSize = 14.sp
                 )
             }

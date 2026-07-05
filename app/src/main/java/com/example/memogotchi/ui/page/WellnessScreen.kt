@@ -1209,7 +1209,7 @@ fun DiaryEntryScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF3D1A1A))
+                    .background(Color(0xFFB67D7D))
                     .padding(horizontal = 20.dp, vertical = 10.dp)
             ) {
                 Text(
@@ -1353,9 +1353,7 @@ fun DiaryEntryScreen(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
                 .background(
-                    if (entryText.isNotBlank() || photoUri != null || audioUri != null) AppTheme.current.accent else Color(
-                        0xFF2A2A30
-                    )
+                    if (entryText.isNotBlank() || photoUri != null || audioUri != null) AppTheme.current.accent else AppTheme.current.textSecondary.copy(alpha = 0.55f)
                 )
                 .clickable {
                     if (entryText.isNotBlank() || photoUri != null || audioUri != null) onSubmit(
@@ -1407,8 +1405,8 @@ private fun AttachButton(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF1F2125))
-            .border(1.dp, Color(0xFF888888).copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+            .background(AppTheme.current.accent)
+            .border(1.dp, AppTheme.current.textSecondary.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.Center,
@@ -1417,11 +1415,11 @@ private fun AttachButton(
         Icon(
             icon,
             contentDescription = label,
-            tint = Color(0xFF77C59D),
+            tint = AppTheme.current.bg,
             modifier = Modifier.size(16.dp)
         )
         Spacer(Modifier.width(6.dp))
-        Text(label, fontSize = 12.sp, color = Color(0xFFE8E6F0))
+        Text(label, fontSize = 12.sp, color = AppTheme.current.bg)
     }
 }
 
@@ -1508,7 +1506,7 @@ private fun DiaryEntryTopBar(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .clip(RoundedCornerShape(10.dp))
-                .background(if (entryText.isNotBlank()) AppTheme.current.accent else Color(0xFF2A2A30))
+                .background(if (entryText.isNotBlank()) AppTheme.current.accent else AppTheme.current.textSecondary.copy(alpha = 0.55f))
                 .clickable(onClick = onSubmit)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
@@ -1651,7 +1649,7 @@ fun VerticalSlider(
             .width(40.dp)
             .height(trackHeight)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF13111A))
+            .background(AppTheme.current.bg)
             .pointerInput(Unit) {
                 detectVerticalDragGestures { _, dragAmount ->
                     val delta = -(dragAmount / trackHeightPx) * 100f
