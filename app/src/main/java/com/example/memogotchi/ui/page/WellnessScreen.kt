@@ -323,11 +323,27 @@ private fun handleDiarySubmit(
         states[i] = states[i].copy(value = v)
         sliderValues[i] = v
     }
+
+    val actualDateLabel = when (finalDateLabel) {
+        "Today" -> {
+            SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).format(Date())
+        }
+
+        "Yesterday" -> {
+            val calendar = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, -1)
+            }
+            SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).format(calendar.time)
+        }
+
+        else -> finalDateLabel
+    }
+
     val newEntry = DiaryEntry(
         id = editingEntry?.id ?: UUID.randomUUID().toString(),
-        dateLabel = finalDateLabel,
-        dayLabel = dayOfWeekForLabel(finalDateLabel),
-        sortKey = sortKeyForLabel(finalDateLabel),
+        dateLabel = actualDateLabel,
+        dayLabel = dayOfWeekForLabel(actualDateLabel),
+        sortKey = sortKeyForLabel(actualDateLabel),
         text = text,
         categories = cats,
         sliderSnapshot = updatedSliders,
@@ -369,11 +385,12 @@ private fun handleBatterySubmit(
 
     // Always create a NEW state log entry — never overwrite an existing one.
     // Each tap of the submit button is a distinct moment-in-time snapshot.
+    val today = SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).format(Date())
     diaryEntries.add(
         DiaryEntry(
-            dateLabel = "Today",
-            dayLabel = dayOfWeekForLabel("Today"),
-            sortKey = sortKeyForLabel("Today"),
+            dateLabel = today,
+            dayLabel = dayOfWeekForLabel(today),
+            sortKey = sortKeyForLabel(today),
             text = "",
             categories = emptyList(),
             sliderSnapshot = snapshot,

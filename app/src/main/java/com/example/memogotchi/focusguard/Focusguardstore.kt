@@ -73,6 +73,37 @@ object FocusGuardStore {
         return buildActiveRules(config)
     }
 
+    /**
+     * Resolved (icon + label) apps covered by any enabled schedule — used
+     * for the "Scheduled Block" summary card on PetScreen. Deliberately
+     * reuses ui.page.AppUsageInfo (totalTimeMs unused, set to 0L here)
+     * rather than defining a new type, so the existing AppIcon composable
+     * works with it unchanged. Counts schedule membership only, not
+     * one-off direct blocked_apps entries.
+     */
+    suspend fun getScheduledBlockedApps(context: Context): List<com.example.memogotchi.ui.page.AppUsageInfo> =
+        kotlinx.coroutines.withContext(Dispatchers.IO) {
+            val config = loadConfig(context)
+            val packages = config.schedulesList
+                .filter { it.isEnabled }
+                .flatMap { it.packageNamesList }
+                .distinct()
+            val pm = context.packageManager
+            packages.mapNotNull { pkg ->
+                try {
+                    val info = pm.getApplicationInfo(pkg, 0)
+                    com.example.memogotchi.ui.page.AppUsageInfo(
+                        packageName = pkg,
+                        appName = pm.getApplicationLabel(info).toString(),
+                        icon = pm.getApplicationIcon(pkg),
+                        totalTimeMs = 0L,
+                    )
+                } catch (e: android.content.pm.PackageManager.NameNotFoundException) {
+                    null
+                }
+            }
+        }
+
     // ── Writes: Blocked Apps ─────────────────────────────────────────────
 
     suspend fun upsertBlockedApp(context: Context, app: BlockedApp) {

@@ -48,6 +48,7 @@ import com.example.memogotchi.ui.page.AnalogTask
 import com.example.memogotchi.ui.page.AppSettings
 import com.example.memogotchi.ui.page.BatteryState
 import com.example.memogotchi.ui.page.DayData
+import com.example.memogotchi.ui.page.AppUsageInfo
 import com.example.memogotchi.ui.page.DiaryEntry
 import com.example.memogotchi.ui.page.PetScreen
 import com.example.memogotchi.ui.page.PomodoroStore
@@ -80,6 +81,7 @@ import com.example.memogotchi.ui.page.FocusGuardAction
 import com.example.memogotchi.focusguard.AppBlockerScreen
 import com.example.memogotchi.focusguard.AppTimerScreen
 import com.example.memogotchi.focusguard.ScheduleScreen
+import com.example.memogotchi.focusguard.FocusGuardStore
 import com.example.memogotchi.ui.page.XpStore
 import androidx.compose.ui.graphics.Path
 import androidx.compose.foundation.Canvas
@@ -253,10 +255,12 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
             .format(java.util.Date())
     }
     var activeTaskTimer by remember { mutableStateOf(TaskTimerStore.load(context)) }
+    var scheduledBlockedApps by remember { mutableStateOf<List<AppUsageInfo>>(emptyList()) }
 
     var isFirstDialogue by remember { mutableStateOf(true) }
     val hourNow = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
     val today = weekData.lastOrNull()
+    val yesterdayTotalMs = remember(weekData) { weekData.getOrNull(weekData.size - 2)?.totalMs }
     LaunchedEffect(today) {
         PersonalityStore.rollupScreenCategoryTallyIfNeeded(
             context,
@@ -307,6 +311,13 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
             if (!timerRunning) break
             delay(1000L)
             elapsedSeconds++
+            activeTaskTimer?.let { TaskTimerStore.tick(context, elapsedSeconds) }
+        }
+    }
+
+    LaunchedEffect(showSchedule) {
+        if (!showSchedule) {
+            scheduledBlockedApps = FocusGuardStore.getScheduledBlockedApps(context)
         }
     }
 
@@ -458,7 +469,12 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                                 showPersonality = true
                             },
                             taskAnnouncement = taskAnnouncement,
-                            onTaskAnnouncementConsumed = { taskAnnouncement = null }
+                            onTaskAnnouncementConsumed = { taskAnnouncement = null },
+                            yesterdayTotalMs = yesterdayTotalMs,
+                            scheduledBlockedApps = scheduledBlockedApps,
+                            onScheduledBlockClick = {
+                                showSchedule = true
+                            }
 
                         )
 
@@ -696,9 +712,9 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     }
 }
 
-    @Preview
-    @RequiresApi(Build.VERSION_CODES.Q)
-    @Composable
-    fun PreviewPage(modifier: Modifier = Modifier) {
-        PetScreen()
-    }
+@Preview
+@RequiresApi(Build.VERSION_CODES.Q)
+@Composable
+fun PreviewPage(modifier: Modifier = Modifier) {
+    PetScreen()
+}

@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,10 +35,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -110,6 +113,9 @@ fun PetScreen(
     personalityUnlocked: Boolean = false,
     personalityDirty: Boolean = false,
     onOpenPersonality: () -> Unit = {},
+    yesterdayTotalMs: Long? = null,
+    scheduledBlockedApps: List<AppUsageInfo> = emptyList(),
+    onScheduledBlockClick: () -> Unit = {},
 ) {
     var hexMenuOpen by remember { mutableStateOf(false) }
     var showTaskPanel by remember { mutableStateOf(false) }
@@ -254,6 +260,16 @@ fun PetScreen(
                 onReset = onReset,
             )
 
+            Spacer(Modifier.height(18.dp))
+
+            // ── Screen time summary cards (below pet, above stats bar) ────
+            ScreenTimeSummaryRow(
+                today = today,
+                yesterdayTotalMs = yesterdayTotalMs,
+                scheduledBlockedApps = scheduledBlockedApps,
+                onScheduledBlockClick = onScheduledBlockClick,
+            )
+
             Spacer(Modifier.weight(1f))
 
             StatsBar(
@@ -292,7 +308,7 @@ fun TopBar(
     personalityDirty: Boolean = false,
     onOpenPersonality: () -> Unit = {},
 
-) {
+    ) {
 
     Box(
         modifier = Modifier
@@ -575,6 +591,213 @@ fun TimerDisplay(
                             listOf(Accent, Color(0xFF263630))
                         )
                     )
+            )
+        }
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SCREEN TIME SUMMARY ROW
+// ════════════════════════════════════════════════════════════════════════════
+
+@Composable
+fun ScreenTimeSummaryRow(
+    today: DayData?,
+    yesterdayTotalMs: Long? = null,
+    scheduledBlockedApps: List<AppUsageInfo> = emptyList(),
+    onScheduledBlockClick: () -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
+    val totalMs = today?.totalMs ?: 0L
+    val hours = totalMs / 3_600_000
+    val minutes = (totalMs % 3_600_000) / 60_000
+    val topApp = today?.apps?.firstOrNull()
+
+    // true = higher than yesterday (up arrow), false = lower (down arrow), null = no change/no data
+    val trendUp: Boolean? = yesterdayTotalMs?.let {
+        when {
+            totalMs > it -> true
+            totalMs < it -> false
+            else -> null
+        }
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        SummaryCard(
+            modifier = Modifier.weight(1f),
+            containerColor = AccentGreen,
+            labelColor = BgColor.copy(alpha = 0.7f),
+            label = "SCREEN TIME",
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "${hours}h ${minutes}m",
+                    fontFamily = GildaDisplay,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BgColor,
+                )
+                if (trendUp != null) {
+                    Spacer(Modifier.width(5.dp))
+                    TrendTriangle(
+                        pointingUp = trendUp,
+                        color = BgColor,
+                        modifier = Modifier.size(9.dp),
+                    )
+                }
+            }
+        }
+
+        SummaryCard(
+            modifier = Modifier.weight(1f),
+            containerColor = SurfaceColor,
+            labelColor = TextLight,
+            label = "MOST USED",
+        ) {
+            if (topApp != null) {
+                AppIcon(topApp.icon, 20)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = topApp.appName,
+                    fontFamily = Comfortaa,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = formatMs(topApp.totalTimeMs),
+                    fontFamily = Comfortaa,
+                    fontSize = 9.sp,
+                    color = TextSecondary,
+                )
+            } else {
+                Text(
+                    text = "No data yet",
+                    fontFamily = Comfortaa,
+                    fontSize = 11.sp,
+                    color = TextSecondary,
+                )
+            }
+        }
+
+        SummaryCard(
+            modifier = Modifier.weight(1f),
+            containerColor = SurfaceColor,
+            labelColor = TextLight,
+            label = "SCHEDULED BLOCK",
+            onClick = onScheduledBlockClick, // TODO(user): wire to open ScheduleScreen
+        ) {
+            if (scheduledBlockedApps.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    scheduledBlockedApps.take(3).forEach { app ->
+                        AppIcon(app.icon, 20)
+                    }
+                    val overflow = scheduledBlockedApps.size - 3
+                    if (overflow > 0) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFF2C2E34)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text("+$overflow", fontSize = 8.sp, color = Color.White, fontFamily = Comfortaa)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "${scheduledBlockedApps.size} app${if (scheduledBlockedApps.size == 1) "" else "s"}",
+                    fontFamily = Comfortaa,
+                    fontSize = 9.sp,
+                    color = TextSecondary,
+                )
+            } else {
+                Text(
+                    text = "None set",
+                    fontFamily = Comfortaa,
+                    fontSize = 11.sp,
+                    color = TextSecondary,
+                )
+            }
+        }
+    }
+}
+
+/** Simple filled triangle used as an up/down trend indicator. */
+@Composable
+fun TrendTriangle(pointingUp: Boolean, color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val path = Path().apply {
+            if (pointingUp) {
+                moveTo(size.width / 2f, 0f)
+                lineTo(size.width, size.height)
+                lineTo(0f, size.height)
+            } else {
+                moveTo(0f, 0f)
+                lineTo(size.width, 0f)
+                lineTo(size.width / 2f, size.height)
+            }
+            close()
+        }
+        drawPath(path, color = color)
+    }
+}
+
+@Composable
+private fun SummaryCard(
+    modifier: Modifier = Modifier,
+    containerColor: Color,
+    labelColor: Color,
+    label: String,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val innerContent: @Composable ColumnScope.() -> Unit = {
+        content()
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text = label,
+            fontFamily = Comfortaa,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Medium,
+            color = labelColor,
+            letterSpacing = 1.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+
+    if (onClick != null) {
+        Card(
+            onClick = onClick,
+            modifier = modifier.height(86.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(10.dp),
+                verticalArrangement = Arrangement.Center,
+                content = innerContent,
+            )
+        }
+    } else {
+        Card(
+            modifier = modifier.height(86.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(10.dp),
+                verticalArrangement = Arrangement.Center,
+                content = innerContent,
             )
         }
     }
