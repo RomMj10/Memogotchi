@@ -442,7 +442,7 @@ fun SpeechBubble(text: String, modifier: Modifier = Modifier) {
             fontSize = 12.sp,
             fontFamily = Comfortaa,
             fontWeight = FontWeight.Medium,
-            color = AppTheme.current.bg,
+            color = Color(0xFF232222),
             modifier = Modifier.padding(12.dp)
         )
     }

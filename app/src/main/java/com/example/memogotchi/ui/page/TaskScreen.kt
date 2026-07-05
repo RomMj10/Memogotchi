@@ -365,7 +365,7 @@ fun HeaderCard(taskCount: Int, totalFocusLabel: String, batteryLevel: Int) {
             .fillMaxWidth()
             .padding(horizontal = 0.dp, vertical = 16.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF0D0E11))
+            .background(AppTheme.current.surface)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(

@@ -143,7 +143,7 @@ private fun RowScope.NavTabItem(
             painter = rememberVectorPainter(ImageVector.vectorResource(tab.iconRes)),
             contentDescription = tab.label,
             modifier = Modifier.size(22.dp),
-            colorFilter = if (isSelected) ColorFilter.tint(AppTheme.current.accent) else null
+            colorFilter = if (isSelected) ColorFilter.tint(AppTheme.current.accent) else ColorFilter.tint(AppTheme.current.textSecondary)
         )
         Spacer(Modifier.height(2.dp))
         Text(

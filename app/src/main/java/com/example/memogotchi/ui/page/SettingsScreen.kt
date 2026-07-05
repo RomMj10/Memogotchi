@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
@@ -461,7 +462,8 @@ fun SettingsRow(
         Image(
             painter = rememberVectorPainter(ImageVector.vectorResource(icon)),
             contentDescription = title,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(20.dp),
+            colorFilter = ColorFilter.tint(Ncolors.current.textPrimary)
         )
         when {
             columnStyle == false -> {
@@ -520,7 +522,7 @@ fun SettingsSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
             checkedThumbColor   = Color.White,
             checkedTrackColor   = colors.accent,
             uncheckedThumbColor = Color.White,
-            uncheckedTrackColor = Color(0xFF44464C),
+            uncheckedTrackColor = colors.accentDark.copy(alpha = 0.55f, red = 0.3f, green = 0.3f, blue = 0.3f),
             uncheckedBorderColor = Color.Transparent,
             checkedBorderColor   = Color.Transparent,
         )
