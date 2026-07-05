@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 enum class TextSizeOption(val label: String, val scale: Float) {
-    SMALL("Small", 0.9f),
+    SMALL("Small", 0.75f),
     NORMAL("Normal", 1.0f),
     LARGE("Large", 1.2f),
 }

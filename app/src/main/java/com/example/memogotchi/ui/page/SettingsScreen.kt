@@ -158,6 +158,7 @@ fun SettingsScreen(today: DayData? = null,
                     icon     = R.drawable.outline_format_size_icon,
                     title    = "Text Size",
                     subtitle = "",
+                    columnStyle = true,
                     trailing = {
                         TextSizeSelector(
                             currentSize = textSize,
@@ -418,6 +419,7 @@ fun SettingsRow(
     subtitle: String?,
     titleColor: Color = TextPrimary,
     showChevron: Boolean = false,
+    columnStyle: Boolean = false,
     onClick: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
@@ -434,18 +436,47 @@ fun SettingsRow(
             contentDescription = title,
             modifier = Modifier.size(20.dp)
         )
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 14.sp, fontFamily = Comfortaa, fontWeight = FontWeight.Medium, color = titleColor)
-            if (subtitle != null) {
-                Spacer(Modifier.height(2.dp))
-                Text(subtitle, fontSize = 11.sp, fontFamily = Comfortaa, color = TextSecondary)
-            }
-        }
-
         when {
-            trailing != null -> trailing()
-            showChevron       -> Text("›", fontSize = 20.sp, color = TextSecondary)
+            columnStyle == false -> {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        title,
+                        fontSize = 14.sp,
+                        fontFamily = Comfortaa,
+                        fontWeight = FontWeight.Medium,
+                        color = titleColor
+                    )
+                    if (subtitle != null) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            subtitle,
+                            fontSize = 11.sp,
+                            fontFamily = Comfortaa,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                when {
+                    trailing != null -> trailing()
+                    showChevron -> Text("›", fontSize = 20.sp, color = TextSecondary)
+                }
+            }
+            columnStyle == true -> {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        title,
+                        fontSize = 14.sp,
+                        fontFamily = Comfortaa,
+                        fontWeight = FontWeight.Medium,
+                        color = titleColor
+                    )
+                    when {
+                        trailing != null -> trailing()
+                        showChevron -> Text("›", fontSize = 20.sp, color = TextSecondary)
+                    }
+                }
+            }
         }
     }
 }

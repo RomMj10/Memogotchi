@@ -13,8 +13,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBox
 import androidx.compose.material.icons.outlined.AccountTree
@@ -188,7 +190,8 @@ fun PetScreen(
             .background(BgColor)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize()
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
 
@@ -268,9 +271,10 @@ fun PetScreen(
                 yesterdayTotalMs = yesterdayTotalMs,
                 scheduledBlockedApps = scheduledBlockedApps,
                 onScheduledBlockClick = onScheduledBlockClick,
+                onOpenScreenTime = onOpenScreenTime
             )
 
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.height(24.dp))
 
             StatsBar(
                 xpEarned = xpEarned,
@@ -278,7 +282,7 @@ fun PetScreen(
                 batterylvl = batteryLevel
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(56.dp))
         }
         if (showTaskPanel) {
             MiniTaskPanel(
@@ -604,6 +608,7 @@ fun TimerDisplay(
 fun ScreenTimeSummaryRow(
     today: DayData?,
     yesterdayTotalMs: Long? = null,
+    onOpenScreenTime: () -> Unit,
     scheduledBlockedApps: List<AppUsageInfo> = emptyList(),
     onScheduledBlockClick: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -633,6 +638,7 @@ fun ScreenTimeSummaryRow(
             containerColor = AccentGreen,
             labelColor = BgColor.copy(alpha = 0.7f),
             label = "SCREEN TIME",
+            onClick = onOpenScreenTime
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
