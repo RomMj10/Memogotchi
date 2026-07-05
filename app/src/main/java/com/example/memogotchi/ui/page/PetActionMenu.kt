@@ -24,16 +24,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.AppTheme
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
 import kotlin.math.cos
 import kotlin.math.sin
 
-private val BgColorHex      = Color(0xFF16171C)
-private val SurfaceColorHex = Color(0xFF1F2125)
-private val AccentHex       = Color(0xFF77C59D)
-private val TextLightHex    = Color(0xFF98ABA0)
-private val TextDimHex      = Color(0xFF68736C)
 
 data class HexMenuItem(
     val icon: ImageVector,
@@ -41,7 +37,6 @@ data class HexMenuItem(
     val enabled: Boolean = true,
     val onClick: () -> Unit = {},
 )
-
 
 @Composable
 fun PetHexFabMenu(
@@ -94,10 +89,10 @@ fun PetHexFabMenu(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(SurfaceColorHex)
+                        .background(AppTheme.current.surface)
                         .border(
                             width = 1.dp,
-                            color = if (item.enabled) AccentHex.copy(alpha = 0.55f) else TextDimHex,
+                            color = if (item.enabled) AppTheme.current.accent.copy(alpha = 0.55f) else AppTheme.current.textSecondary,
                             shape = CircleShape
                         )
                         .clickable(enabled = item.enabled && expanded) { item.onClick() },
@@ -106,7 +101,7 @@ fun PetHexFabMenu(
                     Icon(
                         imageVector = item.icon,
                         contentDescription = item.label,
-                        tint = if (item.enabled) AccentHex else TextDimHex,
+                        tint = if (item.enabled) AppTheme.current.accent else AppTheme.current.textSecondary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -115,7 +110,7 @@ fun PetHexFabMenu(
                     text = item.label,
                     fontSize = 9.sp,
                     fontFamily = Comfortaa,
-                    color = if (item.enabled) TextLightHex else TextDimHex,
+                    color = if (item.enabled) AppTheme.current.textPrimary else AppTheme.current.textSecondary,
                 )
             }
         }
@@ -143,7 +138,7 @@ fun MiniTaskPanel(
                 .align(Alignment.Center)
                 .padding(horizontal = 28.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(SurfaceColorHex)
+                .background(AppTheme.current.surface)
                 .clickable(enabled = false) {}
                 .padding(20.dp)
         ) {
@@ -169,7 +164,7 @@ fun MiniTaskPanel(
                         "No tasks yet — check back after a bit more screen time.",
                         fontFamily = Comfortaa,
                         fontSize = 12.sp,
-                        color = TextLightHex,
+                        color = AppTheme.current.textPrimary,
                         lineHeight = 17.sp,
                     )
                 } else {
@@ -189,13 +184,13 @@ fun MiniTaskPanel(
                                     fontFamily = Comfortaa,
                                     fontWeight = FontWeight.Medium,
                                     textDecoration = if (task.isDone) TextDecoration.LineThrough else null,
-                                    color = if (task.isDone) TextLightHex else Color(0xFFE6FCFF)
+                                    color = if (task.isDone) AppTheme.current.textPrimary else Color(0xFFE6FCFF)
                                 )
                                 Text(
                                     "${task.durationMinutes} min · ${task.triggerReason}",
                                     fontSize = 10.sp,
                                     fontFamily = Comfortaa,
-                                    color = TextLightHex,
+                                    color = AppTheme.current.textPrimary,
                                     maxLines = 1,
                                 )
                             }
@@ -209,7 +204,7 @@ fun MiniTaskPanel(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(AccentHex)
+                        .background(AppTheme.current.accent)
                         .clickable { onViewAll() }
                         .padding(vertical = 11.dp),
                     contentAlignment = Alignment.Center
@@ -218,7 +213,7 @@ fun MiniTaskPanel(
                         "View all tasks",
                         fontFamily = Comfortaa,
                         fontWeight = FontWeight.SemiBold,
-                        color = BgColorHex,
+                        color = AppTheme.current.bg,
                         fontSize = 13.sp
                     )
                 }

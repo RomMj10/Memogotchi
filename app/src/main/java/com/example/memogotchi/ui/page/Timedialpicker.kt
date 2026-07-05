@@ -16,16 +16,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.AppTheme
 import com.example.memogotchi.ui.theme.GildaDisplay
+import com.example.memogotchi.ui.theme.LocalAppColors
 import kotlinx.coroutines.delay
 
 // ════════════════════════════════════════════════════════════════════════════
 //  TIME DIAL PICKER — smooth snapping scroll wheel for HH:MM
 // ════════════════════════════════════════════════════════════════════════════
-
-private val DialBg     = Color(0xFF13111A)
-private val DialAccent = Color(0xFF77C59D)
-private val DialDim    = Color(0xFF888888)
 
 private const val ITEM_HEIGHT_DP = 40
 private const val VISIBLE_COUNT = 3 // must be odd
@@ -42,7 +40,7 @@ fun TimeDialPicker(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(DialBg)
+            .background(AppTheme.current.bg)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -141,7 +139,7 @@ private fun WheelColumn(
                             text = (range.first + index).toString().padStart(2, '0'),
                             fontSize = if (isCentered) 26.sp else 16.sp,
                             fontWeight = if (isCentered) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isCentered) DialAccent else DialDim.copy(alpha = 0.5f),
+                            color = if (isCentered) AppTheme.current.accent else AppTheme.current.textSecondary.copy(alpha = 0.5f),
                             fontFamily = GildaDisplay,
                         )
                     }
@@ -154,17 +152,17 @@ private fun WheelColumn(
                     .fillMaxWidth()
                     .height((ITEM_HEIGHT_DP).dp)
                     .align(Alignment.TopCenter)
-                    .background(Brush.verticalGradient(listOf(DialBg, DialBg.copy(alpha = 0f))))
+                    .background(Brush.verticalGradient(listOf(AppTheme.current.bg, AppTheme.current.bg.copy(alpha = 0f))))
             )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height((ITEM_HEIGHT_DP).dp)
                     .align(Alignment.BottomCenter)
-                    .background(Brush.verticalGradient(listOf(DialBg.copy(alpha = 0f), DialBg)))
+                    .background(Brush.verticalGradient(listOf(AppTheme.current.bg.copy(alpha = 0f), AppTheme.current.bg)))
             )
         }
         Spacer(Modifier.height(2.dp))
-        Text(label, fontSize = 9.sp, color = DialDim, fontWeight = FontWeight.Medium)
+        Text(label, fontSize = 9.sp, color = AppTheme.current.textSecondary, fontWeight = FontWeight.Medium)
     }
 }

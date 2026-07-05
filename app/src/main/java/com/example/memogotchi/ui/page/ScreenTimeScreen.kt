@@ -42,6 +42,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.example.memogotchi.AppTheme
 import com.example.memogotchi.R
 import com.example.memogotchi.ui.data.DialogueCategory
 import com.example.memogotchi.ui.data.DialoguePool
@@ -82,17 +83,6 @@ fun petStateFromScreenTime(totalMs: Long, hourOfDay: Int, isFirstOpen: Boolean =
     }
     return PetState(mood = mood, speechBubble = line?.fillTemplate("hours" to hoursLbl, "name" to petName))
 }
-
-// ════════════════════════════════════════════════════════════════════════════
-//  PALETTE
-// ════════════════════════════════════════════════════════════════════════════
-
-private val BgColor       = Color(0xFF16171C)
-private val SurfaceColor  = Color(0xFF1F2125)
-private val TrackColor    = Color(0xFF536257)
-private val AccentGreen   = Color(0xFF77C59D)
-private val TextPrimary   = Color(0xFFFFFFFF)
-private val TextSecondary = Color(0xFF888888)
 
 // ════════════════════════════════════════════════════════════════════════════
 //  MODELS & HELPERS
@@ -210,10 +200,10 @@ fun ScreenTimeScreen(
     val isWide      = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Expanded
 
 
-    Box(modifier = Modifier.fillMaxSize().background(BgColor)) {
+    Box(modifier = Modifier.fillMaxSize().background(AppTheme.current.bg)) {
 
         when {
-            isLoading -> CircularProgressIndicator(color = AccentGreen, modifier = Modifier.align(Alignment.Center))
+            isLoading -> CircularProgressIndicator(color = AppTheme.current.accent, modifier = Modifier.align(Alignment.Center))
             isWide    -> TabletLayout(weekData = weekData, petState = petState)
             else      -> PhoneLayout(weekData = weekData, petState = petState)
         }
@@ -250,7 +240,7 @@ fun PhoneLayout(weekData: List<DayData>, petState: PetState) {
             modifier = Modifier
                 .padding(horizontal = 20.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(SurfaceColor)
+                .background(AppTheme.current.surface)
                 .padding(4.dp),
         ) {
             TabBtn("App Usage",     selectedTab == 0) { selectedTab = 0 }
@@ -287,7 +277,7 @@ fun TabletLayout(weekData: List<DayData>, petState: PetState) {
     Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
 
         // ── Header ────────────────────────────────────────────────────────────
-        Text("Memogotchi", fontSize = 22.sp, fontFamily = GildaDisplay, fontWeight = FontWeight.Bold, color = TextPrimary)
+        Text("Memogotchi", fontSize = 22.sp, fontFamily = GildaDisplay, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary)
         Spacer(modifier = Modifier.height(16.dp))
 
         // ── Pet (smaller, centered) ───────────────────────────────────────────
@@ -355,7 +345,7 @@ fun PetPlaceholder(petState: PetState, modifier: Modifier = Modifier) {
                 text  = petState.mood.name.lowercase().replaceFirstChar { it.uppercase() },
                 fontSize = 16.sp,
                 fontFamily = Comfortaa,
-                color = TextSecondary
+                color = AppTheme.current.textSecondary
             )
         }
     }
@@ -379,26 +369,26 @@ fun ChartPanel(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item {
-            Surface(shape = RoundedCornerShape(20.dp), color = SurfaceColor, modifier = Modifier.fillMaxWidth()) {
+            Surface(shape = RoundedCornerShape(20.dp), color = AppTheme.current.surface, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Screen Time", fontSize = 13.sp, color = TextSecondary, fontFamily = Comfortaa, fontWeight = FontWeight.Medium)
+                    Text("Screen Time", fontSize = 13.sp, color = AppTheme.current.textSecondary, fontFamily = Comfortaa, fontWeight = FontWeight.Medium)
                     Spacer(Modifier.height(2.dp))
                     Text(
                         if (day != null) formatMs(day.totalMs) else "—",
                         fontSize = if (compact) 28.sp else 34.sp,
                         fontFamily = Comfortaa,
                         fontWeight = FontWeight.Bold,
-                        color = if ((day?.totalMs ?: 0) >= 12 * 3_600_000) Color(0xFFE87573) else TextPrimary
+                        color = if ((day?.totalMs ?: 0) >= 12 * 3_600_000) Color(0xFFE87573) else AppTheme.current.textPrimary
                     )
-                    Text(day?.fullLabel ?: "", fontSize = 12.sp, fontFamily = Comfortaa, color = TextSecondary)
+                    Text(day?.fullLabel ?: "", fontSize = 12.sp, fontFamily = Comfortaa, color = AppTheme.current.textSecondary)
                 }
             }
         }
 
         item {
-            Surface(shape = RoundedCornerShape(20.dp), color = SurfaceColor, modifier = Modifier.fillMaxWidth()) {
+            Surface(shape = RoundedCornerShape(20.dp), color = AppTheme.current.surface, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Last 7 days", fontSize = 12.sp, fontFamily = Comfortaa, color = TextSecondary)
+                    Text("Last 7 days", fontSize = 12.sp, fontFamily = Comfortaa, color = AppTheme.current.textSecondary)
                     Spacer(Modifier.height(12.dp))
                     WeekBarChart(weekData = weekData, selectedDay = selectedDay, onDaySelect = onDaySelect)
                 }
@@ -407,9 +397,9 @@ fun ChartPanel(
 
         if (day != null && day.apps.isNotEmpty()) {
             item {
-                Surface(shape = RoundedCornerShape(20.dp), color = SurfaceColor, modifier = Modifier.fillMaxWidth()) {
+                Surface(shape = RoundedCornerShape(20.dp), color = AppTheme.current.surface, modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Top apps", fontSize = 12.sp, fontFamily = Comfortaa, color = TextSecondary)
+                        Text("Top apps", fontSize = 12.sp, fontFamily = Comfortaa, color = AppTheme.current.textSecondary)
                         Spacer(Modifier.height(10.dp))
                         day.apps.take(3).forEach { app ->
                             MiniAppRow(app = app, totalMs = day.totalMs)
@@ -433,8 +423,8 @@ fun WeekBarChart(weekData: List<DayData>, selectedDay: Int, onDaySelect: (Int) -
         weekData.forEachIndexed { i, day ->
             val frac   = if (maxMs > 0) day.totalMs.toFloat() / maxMs else 0f
             val isSel  = i == selectedDay
-            val barClr by animateColorAsState(if (isSel) AccentGreen else TrackColor, tween(200), label = "b$i")
-            val lblClr by animateColorAsState(if (isSel) AccentGreen else TextSecondary, tween(200), label = "l$i")
+            val barClr by animateColorAsState(if (isSel) AppTheme.current.accent else AppTheme.current.textSecondary, tween(200), label = "b$i")
+            val lblClr by animateColorAsState(if (isSel) AppTheme.current.accent else AppTheme.current.textSecondary, tween(200), label = "l$i")
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Bottom,
@@ -460,12 +450,12 @@ fun MiniAppRow(app: AppUsageInfo, totalMs: Long) {
         AppIcon(app.icon, 30)
         Column(Modifier.weight(1f)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(app.appName, fontSize = 12.sp, color = TextPrimary, fontFamily = Comfortaa, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                Text(formatMs(app.totalTimeMs), fontSize = 11.sp, fontFamily = Comfortaa, color = TextSecondary)
+                Text(app.appName, fontSize = 12.sp, color = AppTheme.current.textPrimary, fontFamily = Comfortaa, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Text(formatMs(app.totalTimeMs), fontSize = 11.sp, fontFamily = Comfortaa, color = AppTheme.current.textSecondary)
             }
             Spacer(Modifier.height(4.dp))
-            Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(TrackColor)) {
-                Box(Modifier.fillMaxWidth(frac.coerceIn(0f,1f)).fillMaxHeight().background(AccentGreen))
+            Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(AppTheme.current.textSecondary)) {
+                Box(Modifier.fillMaxWidth(frac.coerceIn(0f,1f)).fillMaxHeight().background(AppTheme.current.accent))
             }
         }
     }
@@ -479,7 +469,7 @@ fun MiniAppRow(app: AppUsageInfo, totalMs: Long) {
 fun AppListPanel(day: DayData?, showDayHeader: Boolean) {
     if (day == null || day.apps.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No data for this day", fontFamily = Comfortaa, color = TextSecondary, fontSize = 14.sp)
+            Text("No data for this day", fontFamily = Comfortaa, color = AppTheme.current.textSecondary, fontSize = 14.sp)
         }
         return
     }
@@ -490,8 +480,8 @@ fun AppListPanel(day: DayData?, showDayHeader: Boolean) {
         if (showDayHeader) {
             item {
                 Row(Modifier.fillMaxWidth().padding(bottom = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(day.fullLabel, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, fontFamily = Comfortaa, color = TextPrimary)
-                    Text(formatMs(day.totalMs), fontSize = 13.sp, fontFamily = Comfortaa, color = AccentGreen)
+                    Text(day.fullLabel, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, fontFamily = Comfortaa, color = AppTheme.current.textPrimary)
+                    Text(formatMs(day.totalMs), fontSize = 13.sp, fontFamily = Comfortaa, color = AppTheme.current.accent)
                 }
             }
         }
@@ -506,18 +496,18 @@ fun AppListPanel(day: DayData?, showDayHeader: Boolean) {
 fun AppListRow(app: AppUsageInfo, totalMs: Long) {
     val frac    = if (totalMs > 0) app.totalTimeMs.toFloat() / totalMs else 0f
     val percent = (frac * 100).toInt()
-    Surface(shape = RoundedCornerShape(16.dp), color = SurfaceColor, modifier = Modifier.fillMaxWidth()) {
+    Surface(shape = RoundedCornerShape(16.dp), color = AppTheme.current.surface, modifier = Modifier.fillMaxWidth()) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             AppIcon(app.icon, 44)
             Column(Modifier.weight(1f)) {
-                Text(app.appName, fontSize = 14.sp, fontWeight = FontWeight.Medium, fontFamily = Comfortaa, color = TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("Screentime: ${formatMs(app.totalTimeMs)}", fontFamily = Comfortaa, fontSize = 11.sp, color = TextSecondary)
+                Text(app.appName, fontSize = 14.sp, fontWeight = FontWeight.Medium, fontFamily = Comfortaa, color = AppTheme.current.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("Screentime: ${formatMs(app.totalTimeMs)}", fontFamily = Comfortaa, fontSize = 11.sp, color = AppTheme.current.textSecondary)
                 Spacer(Modifier.height(5.dp))
-                Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(TrackColor)) {
-                    Box(Modifier.fillMaxWidth(frac.coerceIn(0f,1f)).fillMaxHeight().background(AccentGreen))
+                Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(AppTheme.current.textSecondary)) {
+                    Box(Modifier.fillMaxWidth(frac.coerceIn(0f,1f)).fillMaxHeight().background(AppTheme.current.accent))
                 }
             }
-            Text("$percent%", fontFamily = GildaDisplay, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+            Text("$percent%", fontFamily = GildaDisplay, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.current.textPrimary)
         }
     }
 }
@@ -530,7 +520,7 @@ fun AppIcon(drawable: Drawable?, sizeDp: Int) {
         val bmp = remember(drawable) { drawable.toBitmap(sizeDp * 2, sizeDp * 2).asImageBitmap() }
         Image(bitmap = bmp, contentDescription = null, modifier = Modifier.size(sizeDp.dp).clip(RoundedCornerShape(10.dp)))
     } else {
-        Box(Modifier.size(sizeDp.dp).clip(RoundedCornerShape(10.dp)).background(TrackColor))
+        Box(Modifier.size(sizeDp.dp).clip(RoundedCornerShape(10.dp)).background(AppTheme.current.textSecondary))
     }
 }
 
@@ -538,8 +528,8 @@ fun AppIcon(drawable: Drawable?, sizeDp: Int) {
 
 @Composable
 fun RowScope.TabBtn(label: String, selected: Boolean, onClick: () -> Unit) {
-    val bg  by animateColorAsState(if (selected) AccentGreen else Color.Transparent, tween(200), label = "tb")
-    val clr by animateColorAsState(if (selected) Color.White else TextSecondary, tween(200), label = "tc")
+    val bg  by animateColorAsState(if (selected) AppTheme.current.accent else Color.Transparent, tween(200), label = "tb")
+    val clr by animateColorAsState(if (selected) Color.White else AppTheme.current.textSecondary, tween(200), label = "tc")
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(bg).clickable(onClick = onClick).padding(vertical = 8.dp, horizontal = 4.dp)
@@ -576,15 +566,15 @@ fun PermissionScreen(onGrant: () -> Unit, onRefresh: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center
             ) {
                 Spacer(Modifier.height(20.dp))
-                Text("Usage access needed", fontFamily = GildaDisplay, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text("Usage access needed", fontFamily = GildaDisplay, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary)
                 Spacer(Modifier.height(10.dp))
-                Text("Memogotchi needs permission to read app usage data.", fontFamily = Comfortaa, fontSize = 14.sp, color = TextSecondary, lineHeight = 20.sp)
+                Text("Memogotchi needs permission to read app usage data.", fontFamily = Comfortaa, fontSize = 14.sp, color = AppTheme.current.textSecondary, lineHeight = 20.sp)
                 Spacer(Modifier.height(28.dp))
-                Button(onClick = onGrant, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.buttonColors(containerColor = AccentGreen)) {
+                Button(onClick = onGrant, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.buttonColors(containerColor = AppTheme.current.accent)) {
                     Text("Grant access", fontFamily = Comfortaa, fontWeight = FontWeight.SemiBold, color = Color.White)
                 }
                 Spacer(Modifier.height(10.dp))
-                TextButton(onClick = onRefresh) { Text("I already granted it — refresh", color = TextSecondary, fontFamily = Comfortaa, fontSize = 13.sp) }
+                TextButton(onClick = onRefresh) { Text("I already granted it — refresh", color = AppTheme.current.textSecondary, fontFamily = Comfortaa, fontSize = 13.sp) }
             }
 
         }

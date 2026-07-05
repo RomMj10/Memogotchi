@@ -39,6 +39,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.alpha
 import androidx.core.content.ContextCompat
+import com.example.memogotchi.AppTheme
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
 
@@ -48,17 +49,8 @@ enum class TaskCardStatus {
     LOCKED,
     DONE
 }
-// ── Palette (matches ScreenTimeScreen) ───────────────────────────────────────
-private val BgColor        = Color(0xFF16171C)
-private val SurfaceColor   = Color(0xFF1F2125)
-private val AccentGreen    = Color(0xFF77C59D)
-private val AccentOrange   = Color(0xFFE8925A)
-private val AccentBlue     = Color(0xFF6B9FD4)
-private val AccentPurple   = Color(0xFFB07FD4)
-private val TextPrimary    = Color(0xFFFFFFFF)
-private val TextSecondary  = Color(0xFF888888)
+// ── Palette ───────────────────────────────────────
 private val TrackColor     = Color(0xFF2C2E34)
-private val LockedColor    = Color(0xFF2A2B30)
 
 // ── Category accent colours ───────────────────────────────────────────────────
 private fun categoryColor(cat: AppCategory) = when (cat) {
@@ -202,7 +194,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
     Box(modifier = Modifier.fillMaxSize()) {
 
         LazyColumn(
-            modifier            = Modifier.fillMaxSize().background(BgColor),
+            modifier            = Modifier.fillMaxSize().background(AppTheme.current.bg),
             contentPadding      = PaddingValues(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
@@ -230,7 +222,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
                     ) {
                         Text(
                             "No goals yet. Tap \"Add Goal\" to set one.",
-                            color = TextSecondary, fontFamily = GildaDisplay, fontSize = 13.sp
+                            color = AppTheme.current.textSecondary, fontFamily = GildaDisplay, fontSize = 13.sp
                         )
                     }
                 }
@@ -277,7 +269,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
                     item {
                         Text(
                             "Completed", fontFamily = GildaDisplay, fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold, color = TextSecondary,
+                            fontWeight = FontWeight.SemiBold, color = AppTheme.current.textSecondary,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                         )
                     }
@@ -300,7 +292,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
                     ) {
                         Text(
                             text = geminiStatus,
-                            color    = TextSecondary,
+                            color    = AppTheme.current.textSecondary,
                             fontFamily = GildaDisplay,
                             fontSize = 13.sp,
                             lineHeight = 20.sp,
@@ -381,7 +373,7 @@ fun HeaderCard(taskCount: Int, totalFocusLabel: String, batteryLevel: Int) {
                 fontFamily = GildaDisplay,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Medium,
-                color = TextPrimary,
+                color = AppTheme.current.textPrimary,
             )
             Row(
                 modifier            = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(top = 24.dp),
@@ -394,9 +386,9 @@ fun HeaderCard(taskCount: Int, totalFocusLabel: String, batteryLevel: Int) {
                         fontFamily = GildaDisplay,
                         fontSize   = 36.sp,
                         fontWeight = FontWeight.Bold,
-                        color      = TextPrimary,
+                        color      = AppTheme.current.textPrimary,
                     )
-                    Text("Tasks Found", fontFamily = GildaDisplay, fontSize = 11.sp, color = TextSecondary)
+                    Text("Tasks Found", fontFamily = GildaDisplay, fontSize = 11.sp, color = AppTheme.current.textSecondary)
                 }
 
                 Box(
@@ -412,9 +404,9 @@ fun HeaderCard(taskCount: Int, totalFocusLabel: String, batteryLevel: Int) {
                         fontFamily = GildaDisplay,
                         fontSize   = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color      = AccentGreen,
+                        color      = AppTheme.current.accent,
                     )
-                    Text("Total Focus",fontFamily = GildaDisplay, fontSize = 11.sp, color = TextSecondary)
+                    Text("Total Focus",fontFamily = GildaDisplay, fontSize = 11.sp, color = AppTheme.current.textSecondary)
                 }
             }
             Spacer(Modifier.height(16.dp))
@@ -434,7 +426,7 @@ fun SectionHeader(title: String) {
         fontFamily = GildaDisplay,
         fontSize   = 16.sp,
         fontWeight = FontWeight.Bold,
-        color      = TextPrimary,
+        color      = AppTheme.current.textPrimary,
         modifier   = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
     )
 }
@@ -460,7 +452,7 @@ fun TaskCard(
         when (status) {
             TaskCardStatus.DONE   -> Color(0xFF1A1D1A)
             TaskCardStatus.ACTIVE -> Color(0xFF1B2A22)
-            else                  -> SurfaceColor
+            else                  -> AppTheme.current.surface
         }, tween(300), label = "taskbg"
     )
     var showQuickMenu by remember { mutableStateOf(false) }
@@ -474,7 +466,7 @@ fun TaskCard(
             .alpha(cardAlpha)
             .then(
                 if (status == TaskCardStatus.ACTIVE)
-                    Modifier.border(1.5.dp, AccentGreen.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                    Modifier.border(1.5.dp, AppTheme.current.accent.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
                 else Modifier
             )
     ) {
@@ -501,21 +493,21 @@ fun TaskCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = task.title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                        color = if (status == TaskCardStatus.DONE) TextSecondary else TextPrimary,
+                        color = if (status == TaskCardStatus.DONE) AppTheme.current.textSecondary else AppTheme.current.textPrimary,
                         textDecoration = if (status == TaskCardStatus.DONE) TextDecoration.LineThrough else null,
                     )
                     Spacer(Modifier.height(2.dp))
-                    Text(task.description, fontSize = 12.sp, color = TextSecondary, lineHeight = 17.sp)
+                    Text(task.description, fontSize = 12.sp, color = AppTheme.current.textSecondary, lineHeight = 17.sp)
                     Spacer(Modifier.height(8.dp))
                     Column(horizontalAlignment = Alignment.End) {
                         Pill(text = task.triggerReason, color = accent)
-                        Pill(text = "${task.durationMinutes} min", color = TextSecondary)
+                        Pill(text = "${task.durationMinutes} min", color = AppTheme.current.textSecondary)
                     }
                 }
 
                 when (status) {
                     TaskCardStatus.DONE -> Box(
-                        modifier = Modifier.size(24.dp).clip(CircleShape).background(AccentGreen),
+                        modifier = Modifier.size(24.dp).clip(CircleShape).background(AppTheme.current.accent),
                         contentAlignment = Alignment.Center
                     ) { Text("✓", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold) }
 
@@ -523,14 +515,14 @@ fun TaskCard(
                         val m = remainingSeconds / 60
                         val s = remainingSeconds % 60
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(String.format("%02d:%02d", m, s), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AccentGreen)
-                            Text("left", fontSize = 8.sp, color = TextSecondary)
+                            Text(String.format("%02d:%02d", m, s), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AppTheme.current.accent)
+                            Text("left", fontSize = 8.sp, color = AppTheme.current.textSecondary)
                         }
                     }
 
                     TaskCardStatus.LOCKED -> Icon(
                         Icons.Outlined.Lock, contentDescription = "Locked",
-                        tint = TextSecondary, modifier = Modifier.size(18.dp)
+                        tint = AppTheme.current.textSecondary, modifier = Modifier.size(18.dp)
                     )
 
                     TaskCardStatus.IDLE -> Box(

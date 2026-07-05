@@ -86,8 +86,10 @@ import com.example.memogotchi.ui.page.XpStore
 import androidx.compose.ui.graphics.Path
 import androidx.compose.foundation.Canvas
 import com.example.memogotchi.ui.page.ShopScreen
+import com.example.memogotchi.ui.theme.LocalAppColors
 import kotlinx.coroutines.delay
 
+val AppTheme = LocalAppColors
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -102,6 +104,10 @@ class MainActivity : ComponentActivity() {
         createGoalNotificationChannels(this)
 
         setContent {
+            val appColors = remember(AppSettings.bgIndex, AppSettings.surfaceIndex, AppSettings.accentIndex,
+                AppSettings.textPrimaryIndex, AppSettings.textSecondaryIndex) {
+                AppSettings.currentAppColors()
+            }
             val windowSizeClass = calculateWindowSizeClass(this)
             val baseDensity = LocalDensity.current
             val scaledDensity = remember(AppSettings.textSize, baseDensity) {
@@ -111,7 +117,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
             MemogotchiTheme {
-                CompositionLocalProvider(LocalDensity provides scaledDensity) {
+                CompositionLocalProvider(LocalDensity provides scaledDensity, LocalAppColors provides appColors) {
                     MainShell(windowSizeClass)
                 }
             }
@@ -137,7 +143,7 @@ private fun RowScope.NavTabItem(
             painter = rememberVectorPainter(ImageVector.vectorResource(tab.iconRes)),
             contentDescription = tab.label,
             modifier = Modifier.size(22.dp),
-            colorFilter = if (isSelected) ColorFilter.tint(AccentGreen) else null
+            colorFilter = if (isSelected) ColorFilter.tint(AppTheme.current.accent) else null
         )
         Spacer(Modifier.height(2.dp))
         Text(
@@ -145,15 +151,11 @@ private fun RowScope.NavTabItem(
             fontFamily = GildaDisplay,
             fontSize = 10.sp,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isSelected) AccentGreen else TextSecondary
+            color = if (isSelected) AppTheme.current.accentLight else AppTheme.current.textSecondary
         )
     }
 }
 
-private val BgColor = Color(0xFF16171C)
-private val SurfaceColor = Color(0xFF1F2125)
-private val AccentGreen = Color(0xFF77C59D)
-private val TextSecondary = Color(0xFF888888)
 
 enum class NavTab(val label: String, val iconRes: Int) {
     PET("Pet", R.drawable.memogotchi_vector),
@@ -361,7 +363,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BgColor)
+                .background(AppTheme.current.bg)
                 .then(if (showFocusGuardMenu) Modifier.blur(18.dp) else Modifier)
         ) {
             if (petName.isNullOrBlank()) {
@@ -384,7 +386,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BgColor)
+                .background(AppTheme.current.bg)
         ) {
 
             Box(
@@ -545,7 +547,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 ) {
                     Icon(
                         Icons.Outlined.Settings, contentDescription = "Settings",
-                        tint = TextSecondary, modifier = Modifier
+                        tint = AppTheme.current.textSecondary, modifier = Modifier
                             .size(22.dp)
 
                     )
@@ -563,7 +565,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 ) {
                     Text(
                         "< Back",
-                        color = AccentGreen,
+                        color = AppTheme.current.accent,
                         fontFamily = GildaDisplay,
                         fontSize = 16.sp
                     )
@@ -578,7 +580,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 contentAlignment = Alignment.BottomCenter
             ) {
                 // 1. Custom curved background drawn on canvas
-                val barColor = SurfaceColor
+                val barColor = AppTheme.current.surface
                 Canvas(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -678,7 +680,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                     modifier = Modifier
                         .size(60.dp)
                         .offset(y = (-14).dp)
-                        .background(color = Color(0xFF77C59D), shape = CircleShape)
+                        .background(color = AppTheme.current.accent, shape = CircleShape)
                         .clip(CircleShape)
                         .clickable { showFocusGuardMenu = true },
                     contentAlignment = Alignment.Center

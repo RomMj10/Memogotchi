@@ -27,18 +27,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.AppTheme
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private val BgColor       = Color(0xFF16171C)
-private val SurfaceColor  = Color(0xFF1F2125)
-private val AccentGreen   = Color(0xFF77C59D)
-private val TrunkColor    = Color(0xFF44503F)
-private val TextPrimary   = Color(0xFFFFFFFF)
-private val TextSecondary = Color(0xFF888888)
 
 private fun branchColor(cat: AppCategory) = when (cat) {
     AppCategory.SOCIAL        -> Color(0xFF6B9FD4)
@@ -46,7 +41,7 @@ private fun branchColor(cat: AppCategory) = when (cat) {
     AppCategory.ENTERTAINMENT -> Color(0xFFE8925A)
     AppCategory.BROWSER       -> Color(0xFF77C59D)
     AppCategory.PRODUCTIVITY  -> Color(0xFFD4C56B)
-    AppCategory.OTHER         -> AccentGreen
+    AppCategory.OTHER         -> Color(0xFF77C59D)
 }
 
 private const val NODE_SPACING_DP = 110
@@ -63,19 +58,19 @@ fun ActivityTreeScreen(
     val sideOffsetPx  = with(density) { SIDE_OFFSET_DP.dp.toPx() }
     val scrollState = rememberScrollState()
 
-    Column(modifier = Modifier.fillMaxSize().background(BgColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(AppTheme.current.bg)) {
 
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Outlined.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                Icon(Icons.Outlined.ArrowBack, contentDescription = "Back", tint = AppTheme.current.textPrimary)
             }
             Spacer(Modifier.width(4.dp))
             Column {
-                Text("Activity Tree", fontFamily = GildaDisplay, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                Text("${tasks.size} completed tasks", fontFamily = Comfortaa, fontSize = 11.sp, color = TextSecondary)
+                Text("Activity Tree", fontFamily = GildaDisplay, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary)
+                Text("${tasks.size} completed tasks", fontFamily = Comfortaa, fontSize = 11.sp, color = AppTheme.current.textSecondary)
             }
         }
 
@@ -83,8 +78,8 @@ fun ActivityTreeScreen(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Spacer(Modifier.height(48.dp))
-                    Text("Your tree hasn't sprouted yet", fontFamily = Comfortaa, fontSize = 13.sp, color = TextSecondary)
-                    Text("Complete analog tasks to grow it", fontFamily = Comfortaa, fontSize = 12.sp, color = TextSecondary)
+                    Text("Your tree hasn't sprouted yet", fontFamily = Comfortaa, fontSize = 13.sp, color = AppTheme.current.textSecondary)
+                    Text("Complete analog tasks to grow it", fontFamily = Comfortaa, fontSize = 12.sp, color = AppTheme.current.textSecondary)
                 }
             }
             return
@@ -98,13 +93,13 @@ fun ActivityTreeScreen(
 
         Box(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
             Box(modifier = Modifier.fillMaxWidth().height(totalHeightDp)) {
-
+                val bgClr = AppTheme.current.bg
                 Canvas(modifier = Modifier.matchParentSize()) {
                     val centerX = size.width / 2
                     val bottomY = size.height - 40.dp.toPx()
 
                     drawLine(
-                        color = TrunkColor,
+                        color = bgClr,
                         start = Offset(centerX, bottomY),
                         end   = Offset(centerX, bottomY - tasks.size * nodeSpacingPx),
                         strokeWidth = 10f,
@@ -138,7 +133,7 @@ fun ActivityTreeScreen(
                             .border(2.dp, branchColor(task.category), RoundedCornerShape(14.dp))
                             .widthIn(max = 150.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(SurfaceColor)
+                            .background(AppTheme.current.surface)
                             .padding(horizontal = 10.dp, vertical = 8.dp)
                     ) {
                         Column {
@@ -149,7 +144,7 @@ fun ActivityTreeScreen(
                                     task.title,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary,
+                                    color = AppTheme.current.textPrimary,
                                     fontFamily = GildaDisplay
                                 )
                             }
@@ -159,7 +154,7 @@ fun ActivityTreeScreen(
                                     "MMM d",
                                     Locale.ENGLISH
                                 ).format(Date(task.completedAtMs)),
-                                fontSize = 9.sp, color = TextSecondary
+                                fontSize = 9.sp, color = AppTheme.current.textSecondary
                             )
                         }
                     }
@@ -172,12 +167,12 @@ fun ActivityTreeScreen(
                         .padding(bottom = 4.dp)
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(AccentGreen)
+                        .background(AppTheme.current.accent)
                 ) {
                     Icon(
                         Icons.Outlined.PersonOutline,
                         contentDescription = "Sprout",
-                        tint = TextPrimary,
+                        tint = AppTheme.current.textPrimary,
                         modifier = Modifier.size(32.dp).align(Alignment.Center)
                     )
                 }

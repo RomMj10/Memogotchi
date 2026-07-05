@@ -30,18 +30,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.AppTheme
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
 import java.text.SimpleDateFormat
 import java.util.*
 
 // ── Palette (matches TasksScreen) ─────────────────────────────────────────────
-private val BgColor       = Color(0xFF16171C)
-private val SurfaceColor  = Color(0xFF1F2125)
-private val AccentGreen   = Color(0xFF77C59D)
-private val AccentOrange  = Color(0xFFE8925A)
-private val TextPrimary   = Color(0xFFFFFFFF)
-private val TextSecondary = Color(0xFF888888)
 private val TrackColor    = Color(0xFF2C2E34)
 
 private fun goalCategoryColor(cat: AppCategory?) = when (cat) {
@@ -50,7 +45,7 @@ private fun goalCategoryColor(cat: AppCategory?) = when (cat) {
     AppCategory.ENTERTAINMENT -> Color(0xFFE8925A)
     AppCategory.BROWSER       -> Color(0xFF77C59D)
     AppCategory.PRODUCTIVITY  -> Color(0xFFD4C56B)
-    AppCategory.OTHER, null   -> AccentGreen
+    AppCategory.OTHER, null   -> Color(0xFF77C59D)
 }
 
 // Goal tags now use the shared `tagCategories` grouping from TagCategories.kt
@@ -66,19 +61,19 @@ fun GoalsSectionHeader(onAddGoal: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Goals", fontFamily = GildaDisplay, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+        Text("Goals", fontFamily = GildaDisplay, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary)
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(20.dp))
-                .background(AccentGreen.copy(alpha = 0.15f))
-                .border(1.dp, AccentGreen.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
+                .background(AppTheme.current.accent.copy(alpha = 0.15f))
+                .border(1.dp, AppTheme.current.accent.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
                 .clickable { onAddGoal() }
                 .padding(horizontal = 12.dp, vertical = 6.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.Add, contentDescription = "Add goal", tint = AccentGreen, modifier = Modifier.size(14.dp))
+                Icon(Icons.Outlined.Add, contentDescription = "Add goal", tint = AppTheme.current.accent, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Add Goal", fontSize = 11.sp, color = AccentGreen, fontWeight = FontWeight.Medium)
+                Text("Add Goal", fontSize = 11.sp, color = AppTheme.current.accent, fontWeight = FontWeight.Medium)
             }
         }
     }
@@ -103,7 +98,7 @@ fun GoalCard(
 
     Surface(
         shape    = RoundedCornerShape(16.dp),
-        color    = if (isDone) Color(0xFF1A1D1A) else SurfaceColor,
+        color    = if (isDone) Color(0xFF1A1D1A) else AppTheme.current.surface,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 5.dp)
@@ -135,7 +130,7 @@ fun GoalCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = goal.title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                            color = if (isDone) TextSecondary else TextPrimary,
+                            color = if (isDone) AppTheme.current.textSecondary else AppTheme.current.textPrimary,
                             textDecoration = if (isDone) TextDecoration.LineThrough else null,
                         )
                         if (goal.isMajor) {
@@ -151,7 +146,7 @@ fun GoalCard(
                     }
                     if (goal.description.isNotBlank()) {
                         Spacer(Modifier.height(2.dp))
-                        Text(goal.description, fontSize = 12.sp, color = TextSecondary, lineHeight = 17.sp)
+                        Text(goal.description, fontSize = 12.sp, color = AppTheme.current.textSecondary, lineHeight = 17.sp)
                     }
 
                     // Tags
@@ -196,7 +191,7 @@ fun GoalCard(
                             val targetM = target % 60
                             Text(
                                 "${usedH}h${usedM}m / ${targetH}h${targetM}m",
-                                fontSize = 10.sp, color = TextSecondary
+                                fontSize = 10.sp, color = AppTheme.current.textSecondary
                             )
                         }
                         Spacer(Modifier.height(8.dp))
@@ -217,7 +212,7 @@ fun GoalCard(
                             )
                             Icon(
                                 Icons.Outlined.ExpandMore, contentDescription = "Expand",
-                                tint = TextSecondary, modifier = Modifier.size(16.dp).rotate(rotation)
+                                tint = AppTheme.current.textSecondary, modifier = Modifier.size(16.dp).rotate(rotation)
                             )
                         }
 
@@ -239,7 +234,7 @@ fun GoalCard(
                                         Spacer(Modifier.width(8.dp))
                                         Text(
                                             item.text, fontSize = 12.sp,
-                                            color = if (item.isDone) TextSecondary else TextPrimary,
+                                            color = if (item.isDone) AppTheme.current.textSecondary else AppTheme.current.textPrimary,
                                             textDecoration = if (item.isDone) TextDecoration.LineThrough else null,
                                         )
                                     }
@@ -254,10 +249,10 @@ fun GoalCard(
                         val deadlineStr = SimpleDateFormat("MMM d", Locale.ENGLISH).format(Date(goal.deadlineMs))
                         Box(
                             modifier = Modifier.clip(RoundedCornerShape(20.dp))
-                                .background(TextSecondary.copy(alpha = 0.12f))
+                                .background(AppTheme.current.textSecondary.copy(alpha = 0.12f))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
-                            Text("Due $deadlineStr", fontSize = 10.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
+                            Text("Due $deadlineStr", fontSize = 10.sp, color = AppTheme.current.textSecondary, fontWeight = FontWeight.Medium)
                         }
                     }
                 }
@@ -272,13 +267,13 @@ fun GoalCard(
                         Icon(
                             Icons.Outlined.DeleteOutline,
                             contentDescription = "Delete goal",
-                            tint = TextSecondary,
+                            tint = AppTheme.current.textSecondary,
                             modifier = Modifier.size(15.dp).clickable { onDelete() }
                         )
                         Icon(
                             Icons.Outlined.Edit,
                             contentDescription = "Edit goal",
-                            tint = TextSecondary,
+                            tint = AppTheme.current.textSecondary,
                             modifier = Modifier.size(15.dp).clickable { onEdit() }
                         )
                         if (goal.reminderMode == GoalReminderMode.PINNED) {
@@ -298,7 +293,7 @@ fun GoalCard(
                             Icon(
                                 Icons.Outlined.PushPin,
                                 contentDescription = "Pin reminder",
-                                tint = TextSecondary.copy(alpha = 0.5f),
+                                tint = AppTheme.current.textSecondary.copy(alpha = 0.5f),
                                 modifier = Modifier.size(15.dp)
                                     .clickable { onRepin() }
                             )
@@ -310,7 +305,7 @@ fun GoalCard(
                     if (!goal.hasChecklist) {
                         Box(
                             modifier = Modifier.size(24.dp).clip(CircleShape)
-                                .background(if (goal.isDone) AccentGreen else TrackColor)
+                                .background(if (goal.isDone) AppTheme.current.accent else TrackColor)
                                 .clickable { onToggleDone() },
                             contentAlignment = Alignment.Center
                         ) {
@@ -319,7 +314,7 @@ fun GoalCard(
                     } else {
                         Box(
                             modifier = Modifier.size(24.dp).clip(CircleShape)
-                                .background(if (isDone) AccentGreen else TrackColor),
+                                .background(if (isDone) AppTheme.current.accent else TrackColor),
                             contentAlignment = Alignment.Center
                         ) {
                             if (isDone) Text("✓", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
@@ -352,18 +347,18 @@ fun CompletedGoalRow(goal: Goal, onDelete: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
-                modifier = Modifier.size(32.dp).clip(CircleShape).background(AccentGreen.copy(alpha = 0.15f)),
+                modifier = Modifier.size(32.dp).clip(CircleShape).background(AppTheme.current.accent.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Outlined.Check, contentDescription = null, tint = AccentGreen, modifier = Modifier.size(16.dp))
+                Icon(Icons.Outlined.Check, contentDescription = null, tint = AppTheme.current.accent, modifier = Modifier.size(16.dp))
             }
             Text(
-                goal.title, fontSize = 13.sp, color = TextSecondary,
+                goal.title, fontSize = 13.sp, color = AppTheme.current.textSecondary,
                 textDecoration = TextDecoration.LineThrough, modifier = Modifier.weight(1f)
             )
             Icon(
                 Icons.Outlined.DeleteOutline, contentDescription = "Delete",
-                tint = TextSecondary, modifier = Modifier.size(18.dp).clickable { onDelete() }
+                tint = AppTheme.current.textSecondary, modifier = Modifier.size(18.dp).clickable { onDelete() }
             )
         }
     }
@@ -405,7 +400,7 @@ fun AddGoalSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = BgColor,
+        containerColor = AppTheme.current.bg,
     ) {
         Column(
             modifier = Modifier
@@ -416,18 +411,18 @@ fun AddGoalSheet(
         ) {
             Text(
                 if (existingGoal != null) "Edit Goal" else "New Goal",
-                fontFamily = GildaDisplay, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimary
+                fontFamily = GildaDisplay, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary
             )
             Spacer(Modifier.height(16.dp))
 
             // Title
             TextField(
                 value = title, onValueChange = { title = it },
-                placeholder = { Text("What's the goal?", color = TextSecondary) },
+                placeholder = { Text("What's the goal?", color = AppTheme.current.textSecondary) },
                 modifier = Modifier.fillMaxWidth(),
-                textStyle = TextStyle(fontSize = 15.sp, color = TextPrimary),
+                textStyle = TextStyle(fontSize = 15.sp, color = AppTheme.current.textPrimary),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = SurfaceColor, unfocusedContainerColor = SurfaceColor,
+                    focusedContainerColor = AppTheme.current.surface, unfocusedContainerColor = AppTheme.current.surface,
                     focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
                 ),
                 shape = RoundedCornerShape(12.dp),
@@ -438,11 +433,11 @@ fun AddGoalSheet(
             // Description
             TextField(
                 value = description, onValueChange = { description = it },
-                placeholder = { Text("Add a note (optional)", color = TextSecondary) },
+                placeholder = { Text("Add a note (optional)", color = AppTheme.current.textSecondary) },
                 modifier = Modifier.fillMaxWidth(),
-                textStyle = TextStyle(fontSize = 13.sp, color = TextPrimary),
+                textStyle = TextStyle(fontSize = 13.sp, color = AppTheme.current.textPrimary),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = SurfaceColor, unfocusedContainerColor = SurfaceColor,
+                    focusedContainerColor = AppTheme.current.surface, unfocusedContainerColor = AppTheme.current.surface,
                     focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
                 ),
                 shape = RoundedCornerShape(12.dp),
@@ -460,21 +455,21 @@ fun AddGoalSheet(
             Spacer(Modifier.height(16.dp))
 
             // Tags (same set as diary entries — feeds Memo's tag tally)
-            Text("Tags (optional)", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
+            Text("Tags (optional)", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = AppTheme.current.textPrimary)
             Spacer(Modifier.height(8.dp))
             GroupedTagPicker(
                 selectedTags = selectedTags,
                 onToggleTag = { tag ->
                     if (tag in selectedTags) selectedTags.remove(tag) else selectedTags.add(tag)
                 },
-                accentColor = AccentGreen,
-                textSecondaryColor = TextSecondary,
+                accentColor = AppTheme.current.accent,
+                textSecondaryColor = AppTheme.current.textSecondary,
             )
 
             Spacer(Modifier.height(8.dp))
 
             // Reminder mode
-            Text("Remind me", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
+            Text("Remind me", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = AppTheme.current.textPrimary)
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ReminderModeChip(
@@ -501,7 +496,7 @@ fun AddGoalSheet(
                 Spacer(Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                        .background(SurfaceColor)
+                        .background(AppTheme.current.surface)
                         .clickable { showScheduleDialog = true }
                         .padding(horizontal = 14.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -510,8 +505,8 @@ fun AddGoalSheet(
                     val timeStr = String.format("%02d:%02d", scheduleHour, scheduleMinute)
                     val daysStr = if (scheduleDays.isEmpty()) "Every day"
                     else scheduleDays.sorted().joinToString(", ") { dayOfWeekShortName(it) }
-                    Text("$timeStr · $daysStr", fontSize = 13.sp, color = TextPrimary)
-                    Text("Schedule", fontSize = 12.sp, color = AccentGreen, fontWeight = FontWeight.Medium)
+                    Text("$timeStr · $daysStr", fontSize = 13.sp, color = AppTheme.current.textPrimary)
+                    Text("Schedule", fontSize = 12.sp, color = AppTheme.current.accent, fontWeight = FontWeight.Medium)
                 }
             }
 
@@ -522,7 +517,7 @@ fun AddGoalSheet(
                         "This goal has a checklist — open the app to check items off."
                     else
                         "You'll get a notification for this goal.",
-                    fontSize = 10.sp, color = TextSecondary
+                    fontSize = 10.sp, color = AppTheme.current.textSecondary
                 )
             }
 
@@ -542,17 +537,17 @@ fun AddGoalSheet(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
-                                    .background(if (selected) AccentGreen.copy(alpha = 0.2f) else SurfaceColor)
-                                    .border(1.dp, if (selected) AccentGreen else TextSecondary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                                    .background(if (selected) AppTheme.current.accent.copy(alpha = 0.2f) else AppTheme.current.surface)
+                                    .border(1.dp, if (selected) AppTheme.current.accent else AppTheme.current.textSecondary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
                                     .clickable { selectedCategory = cat }
                                     .padding(horizontal = 10.dp, vertical = 6.dp)
                             ) {
-                                Text(cat.label, fontSize = 11.sp, color = if (selected) AccentGreen else TextSecondary)
+                                Text(cat.label, fontSize = 11.sp, color = if (selected) AppTheme.current.accent else AppTheme.current.textSecondary)
                             }
                         }
                     }
                     Spacer(Modifier.height(12.dp))
-                    Text("Daily limit", fontSize = 11.sp, color = TextSecondary)
+                    Text("Daily limit", fontSize = 11.sp, color = AppTheme.current.textSecondary)
                     Spacer(Modifier.height(6.dp))
                     TimeDialPicker(
                         totalMinutes = targetMinutesTotal,
@@ -565,7 +560,7 @@ fun AddGoalSheet(
             Spacer(Modifier.height(16.dp))
 
             // Checklist field (always visible, optional)
-            Text("Checklist (optional)", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
+            Text("Checklist (optional)", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = AppTheme.current.textPrimary)
             Spacer(Modifier.height(8.dp))
             Column {
                 checklistItems.forEachIndexed { i, item ->
@@ -573,11 +568,11 @@ fun AddGoalSheet(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("•", color = AccentGreen, modifier = Modifier.padding(end = 8.dp))
-                        Text(item, fontSize = 13.sp, color = TextPrimary, modifier = Modifier.weight(1f))
+                        Text("•", color = AppTheme.current.accent, modifier = Modifier.padding(end = 8.dp))
+                        Text(item, fontSize = 13.sp, color = AppTheme.current.textPrimary, modifier = Modifier.weight(1f))
                         Icon(
                             Icons.Outlined.Close, contentDescription = "Remove",
-                            tint = TextSecondary, modifier = Modifier.size(16.dp)
+                            tint = AppTheme.current.textSecondary, modifier = Modifier.size(16.dp)
                                 .clickable { checklistItems.removeAt(i) }
                         )
                     }
@@ -585,11 +580,11 @@ fun AddGoalSheet(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
                     TextField(
                         value = newChecklistText, onValueChange = { newChecklistText = it },
-                        placeholder = { Text("Add a step", fontSize = 13.sp, color = TextSecondary) },
+                        placeholder = { Text("Add a step", fontSize = 13.sp, color = AppTheme.current.textSecondary) },
                         modifier = Modifier.weight(1f),
-                        textStyle = TextStyle(fontSize = 13.sp, color = TextPrimary),
+                        textStyle = TextStyle(fontSize = 13.sp, color = AppTheme.current.textPrimary),
                         colors = TextFieldDefaults.colors(
-                            focusedContainerColor = SurfaceColor, unfocusedContainerColor = SurfaceColor,
+                            focusedContainerColor = AppTheme.current.surface, unfocusedContainerColor = AppTheme.current.surface,
                             focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
                         ),
                         shape = RoundedCornerShape(12.dp),
@@ -597,7 +592,7 @@ fun AddGoalSheet(
                     Spacer(Modifier.width(8.dp))
                     Box(
                         modifier = Modifier.size(36.dp).clip(CircleShape)
-                            .background(AccentGreen)
+                            .background(AppTheme.current.accent)
                             .clickable {
                                 if (newChecklistText.isNotBlank()) {
                                     checklistItems.add(newChecklistText.trim())
@@ -606,7 +601,7 @@ fun AddGoalSheet(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Outlined.Add, contentDescription = "Add step", tint = BgColor, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Outlined.Add, contentDescription = "Add step", tint = AppTheme.current.bg, modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -616,7 +611,7 @@ fun AddGoalSheet(
             // Deadline
             Row(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                    .background(SurfaceColor)
+                    .background(AppTheme.current.surface)
                     .clickable {
                         val cal = Calendar.getInstance()
                         DatePickerDialog(
@@ -632,9 +627,9 @@ fun AddGoalSheet(
                 Text(
                     text = deadlineMs?.let { "Due " + SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).format(Date(it)) }
                         ?: "Set a deadline (optional)",
-                    fontSize = 13.sp, color = if (deadlineMs != null) TextPrimary else TextSecondary
+                    fontSize = 13.sp, color = if (deadlineMs != null) AppTheme.current.textPrimary else AppTheme.current.textSecondary
                 )
-                Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
+                Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = AppTheme.current.textSecondary, modifier = Modifier.size(18.dp))
             }
 
             Spacer(Modifier.height(24.dp))
@@ -642,7 +637,7 @@ fun AddGoalSheet(
             // Create / Save button
             Box(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-                    .background(if (title.isNotBlank()) AccentGreen else Color(0xFF2A2A30))
+                    .background(if (title.isNotBlank()) AppTheme.current.accent else Color(0xFF2A2A30))
                     .clickable {
                         if (title.isNotBlank()) {
                             // Preserve isDone state for checklist items that already existed
@@ -689,7 +684,7 @@ fun AddGoalSheet(
                 Text(
                     if (existingGoal != null) "Save Changes" else "Create Goal",
                     fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-                    color = if (title.isNotBlank()) BgColor else TextSecondary
+                    color = if (title.isNotBlank()) AppTheme.current.bg else AppTheme.current.textSecondary
                 )
             }
         }
@@ -741,14 +736,14 @@ private fun SchedulePickerDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(20.dp),
-            color = BgColor,
+            color = AppTheme.current.bg,
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
-                Text("Schedule reminder", fontFamily = GildaDisplay, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text("Schedule reminder", fontFamily = GildaDisplay, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary)
                 Spacer(Modifier.height(16.dp))
 
-                Text("Time", fontSize = 12.sp, color = TextSecondary)
+                Text("Time", fontSize = 12.sp, color = AppTheme.current.textSecondary)
                 Spacer(Modifier.height(6.dp))
                 TimeDialPicker(
                     totalMinutes = totalMinutes,
@@ -757,18 +752,18 @@ private fun SchedulePickerDialog(
                 )
 
                 Spacer(Modifier.height(16.dp))
-                Text("Repeat on", fontSize = 12.sp, color = TextSecondary)
+                Text("Repeat on", fontSize = 12.sp, color = AppTheme.current.textSecondary)
                 Spacer(Modifier.height(8.dp))
 
                 Box(
                     modifier = Modifier.fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(if (selectedDays.isEmpty()) AccentGreen.copy(alpha = 0.2f) else SurfaceColor)
-                        .border(1.dp, if (selectedDays.isEmpty()) AccentGreen else TextSecondary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                        .background(if (selectedDays.isEmpty()) AppTheme.current.accent.copy(alpha = 0.2f) else AppTheme.current.surface)
+                        .border(1.dp, if (selectedDays.isEmpty()) AppTheme.current.accent else AppTheme.current.textSecondary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
                         .clickable { selectedDays.clear() }
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    Text("Every day", fontSize = 12.sp, color = if (selectedDays.isEmpty()) AccentGreen else TextSecondary)
+                    Text("Every day", fontSize = 12.sp, color = if (selectedDays.isEmpty()) AppTheme.current.accent else AppTheme.current.textSecondary)
                 }
 
                 Spacer(Modifier.height(8.dp))
@@ -780,8 +775,8 @@ private fun SchedulePickerDialog(
                             modifier = Modifier
                                 .clip(CircleShape)
                                 .size(36.dp)
-                                .background(if (selected) AccentGreen.copy(alpha = 0.2f) else SurfaceColor)
-                                .border(1.dp, if (selected) AccentGreen else TextSecondary.copy(alpha = 0.3f), CircleShape)
+                                .background(if (selected) AppTheme.current.accent.copy(alpha = 0.2f) else AppTheme.current.surface)
+                                .border(1.dp, if (selected) AppTheme.current.accent else AppTheme.current.textSecondary.copy(alpha = 0.3f), CircleShape)
                                 .clickable {
                                     if (selected) selectedDays.remove(day) else selectedDays.add(day)
                                 },
@@ -789,7 +784,7 @@ private fun SchedulePickerDialog(
                         ) {
                             Text(
                                 dayOfWeekShortName(day).take(1), fontSize = 11.sp,
-                                color = if (selected) AccentGreen else TextSecondary,
+                                color = if (selected) AppTheme.current.accent else AppTheme.current.textSecondary,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -800,14 +795,14 @@ private fun SchedulePickerDialog(
 
                 Box(
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-                        .background(AccentGreen)
+                        .background(AppTheme.current.accent)
                         .clickable {
                             onConfirm(totalMinutes / 60, totalMinutes % 60, selectedDays.toSet())
                         }
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Done", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = BgColor)
+                    Text("Done", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.current.bg)
                 }
             }
         }
@@ -821,12 +816,12 @@ private fun ReminderModeChip(label: String, selected: Boolean, onClick: () -> Un
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
-            .background(if (selected) AccentGreen.copy(alpha = 0.2f) else SurfaceColor)
-            .border(1.dp, if (selected) AccentGreen else TextSecondary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+            .background(if (selected) AppTheme.current.accent.copy(alpha = 0.2f) else AppTheme.current.surface)
+            .border(1.dp, if (selected) AppTheme.current.accent else AppTheme.current.textSecondary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
             .clickable { onClick() }
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
-        Text(label, fontSize = 11.sp, color = if (selected) AccentGreen else TextSecondary)
+        Text(label, fontSize = 11.sp, color = if (selected) AppTheme.current.accent else AppTheme.current.textSecondary)
     }
 }
 
@@ -837,12 +832,12 @@ private fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontSize = 13.sp, color = TextPrimary, modifier = Modifier.weight(1f))
+        Text(label, fontSize = 13.sp, color = AppTheme.current.textPrimary, modifier = Modifier.weight(1f))
         Switch(
             checked = checked, onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedTrackColor = AccentGreen, checkedThumbColor = Color.White,
-                uncheckedTrackColor = TrackColor, uncheckedThumbColor = TextSecondary,
+                checkedTrackColor = AppTheme.current.accent, checkedThumbColor = Color.White,
+                uncheckedTrackColor = TrackColor, uncheckedThumbColor = AppTheme.current.textSecondary,
             )
         )
     }

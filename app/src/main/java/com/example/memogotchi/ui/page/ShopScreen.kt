@@ -24,17 +24,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.AppTheme
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
 import org.json.JSONArray
 
-
-private val BgColor       = Color(0xFF16171C)
-private val SurfaceColor  = Color(0xFF1F2125)
-private val AccentGreen   = Color(0xFF77C59D)
-private val TextPrimary   = Color(0xFFFFFFFF)
-private val TextSecondary = Color(0xFF888888)
-private val LockedColor   = Color(0xFF2A2B30)
 
 enum class ShopCategory(val label: String) {
     PET("Pet"),
@@ -96,7 +90,7 @@ fun ShopScreen(onBack: () -> Unit = {}) {
         unlockedIds = unlockedIds + item.id
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BgColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(AppTheme.current.bg)) {
 
         // ── Header ────────────────────────────────────────────────────────
         Row(
@@ -105,25 +99,25 @@ fun ShopScreen(onBack: () -> Unit = {}) {
         ) {
             Icon(
                 Icons.Outlined.ArrowBack, contentDescription = "Back",
-                tint = TextPrimary,
+                tint = AppTheme.current.textPrimary,
                 modifier = Modifier.size(24.dp).clickable { onBack() }.padding(start = 8.dp)
             )
             Spacer(Modifier.width(8.dp))
             Text(
                 "Shop", fontFamily = GildaDisplay, fontSize = 20.sp,
-                fontWeight = FontWeight.Bold, color = TextPrimary,
+                fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary,
                 modifier = Modifier.weight(1f)
             )
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .border(1.dp, AccentGreen, RoundedCornerShape(20.dp))
-                    .background(SurfaceColor)
+                    .border(1.dp, AppTheme.current.accent, RoundedCornerShape(20.dp))
+                    .background(AppTheme.current.surface)
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
                     "$totalXp XP", fontFamily = Comfortaa, fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold, color = AccentGreen
+                    fontWeight = FontWeight.SemiBold, color = AppTheme.current.accent
                 )
             }
             Spacer(Modifier.width(8.dp))
@@ -134,7 +128,7 @@ fun ShopScreen(onBack: () -> Unit = {}) {
             modifier = Modifier
                 .padding(horizontal = 20.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(SurfaceColor)
+                .background(AppTheme.current.surface)
                 .padding(4.dp),
         ) {
             ShopCategory.entries.forEach { cat ->
@@ -154,12 +148,12 @@ fun ShopScreen(onBack: () -> Unit = {}) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         "No items yet",
-                        fontFamily = GildaDisplay, fontSize = 15.sp, color = TextSecondary
+                        fontFamily = GildaDisplay, fontSize = 15.sp, color = AppTheme.current.textSecondary
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         "Check back later for ${selectedCategory.label.lowercase()} items",
-                        fontFamily = Comfortaa, fontSize = 12.sp, color = TextSecondary
+                        fontFamily = Comfortaa, fontSize = 12.sp, color = AppTheme.current.textSecondary
                     )
                 }
             }
@@ -190,14 +184,14 @@ private fun RowScope.ShopTabBtn(label: String, selected: Boolean, onClick: () ->
         modifier = Modifier
             .weight(1f)
             .clip(RoundedCornerShape(10.dp))
-            .background(if (selected) AccentGreen else Color.Transparent)
+            .background(if (selected) AppTheme.current.accent else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp, horizontal = 4.dp)
     ) {
         Text(
             label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
             fontFamily = Comfortaa,
-            color = if (selected) Color.White else TextSecondary,
+            color = if (selected) Color.White else AppTheme.current.textSecondary,
             maxLines = 1
         )
     }
@@ -209,9 +203,9 @@ private fun ShopItemCard(
     onClick: () -> Unit,
 ) {
     val borderColor = when {
-        item.isUnlocked -> AccentGreen.copy(alpha = 0.5f)
-        canAfford -> TextSecondary.copy(alpha = 0.4f)
-        else -> TextSecondary.copy(alpha = 0.2f)
+        item.isUnlocked -> AppTheme.current.accent.copy(alpha = 0.5f)
+        canAfford -> AppTheme.current.textSecondary.copy(alpha = 0.4f)
+        else -> AppTheme.current.textSecondary.copy(alpha = 0.2f)
     }
 
     Column(
@@ -219,7 +213,7 @@ private fun ShopItemCard(
             .aspectRatio(0.8f)
             .clip(RoundedCornerShape(14.dp))
             .border(1.dp, borderColor, RoundedCornerShape(14.dp))
-            .background(if (item.isUnlocked) SurfaceColor else LockedColor)
+            .background(if (item.isUnlocked) AppTheme.current.surface else AppTheme.current.surface.copy(alpha = 0.80f))
             .clickable(enabled = !item.isUnlocked && canAfford, onClick = onClick)
             .alpha(if (!item.isUnlocked && !canAfford) 0.5f else 1f)
             .padding(10.dp),
@@ -232,13 +226,13 @@ private fun ShopItemCard(
                 .weight(1f)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(BgColor),
+                .background(AppTheme.current.bg),
             contentAlignment = Alignment.Center
         ) {
             if (!item.isUnlocked && !canAfford) {
                 Icon(
                     Icons.Outlined.Lock, contentDescription = "Locked",
-                    tint = TextSecondary, modifier = Modifier.size(18.dp)
+                    tint = AppTheme.current.textSecondary, modifier = Modifier.size(18.dp)
                 )
             }
         }
@@ -247,7 +241,7 @@ private fun ShopItemCard(
 
         Text(
             item.name, fontSize = 11.sp, fontFamily = Comfortaa,
-            fontWeight = FontWeight.Medium, color = TextPrimary,
+            fontWeight = FontWeight.Medium, color = AppTheme.current.textPrimary,
             maxLines = 1
         )
 
@@ -257,15 +251,15 @@ private fun ShopItemCard(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(AccentGreen.copy(alpha = 0.15f))
+                    .background(AppTheme.current.accent.copy(alpha = 0.15f))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                Text("Owned", fontSize = 9.sp, color = AccentGreen, fontWeight = FontWeight.SemiBold)
+                Text("Owned", fontSize = 9.sp, color = AppTheme.current.accent, fontWeight = FontWeight.SemiBold)
             }
         } else {
             Text(
                 "${item.cost} XP", fontSize = 10.sp, fontFamily = Comfortaa,
-                color = if (canAfford) AccentGreen else TextSecondary,
+                color = if (canAfford) AppTheme.current.accent else AppTheme.current.textSecondary,
                 fontWeight = FontWeight.SemiBold
             )
         }

@@ -20,8 +20,14 @@ object AppSettings {
     var dailyLimitMinutes by mutableStateOf(150) // default 2h 30m
     var healthAlertsEnabled by mutableStateOf(true)
     var textSize by mutableStateOf(TextSizeOption.NORMAL)
+    var bgIndex by mutableStateOf(0)
+    var surfaceIndex by mutableStateOf(0)
+    var accentIndex by mutableStateOf(0)
+    var textPrimaryIndex by mutableStateOf(0)
+    var textSecondaryIndex by mutableStateOf(0)
 
     private var initialized = false
+
 
     fun init(context: Context) {
         if (initialized) return
@@ -32,6 +38,16 @@ object AppSettings {
             TextSizeOption.valueOf(prefs.getString(KEY_TEXT_SIZE, TextSizeOption.NORMAL.name)!!)
         }.getOrDefault(TextSizeOption.NORMAL)
         initialized = true
+
+        bgIndex = prefs.getInt("bg_index", 0)
+        surfaceIndex = prefs.getInt("surface_index", 0)
+        accentIndex = prefs.getInt("accent_index", 0)
+        textPrimaryIndex = prefs.getInt("text_primary_index", 0)
+        textSecondaryIndex = prefs.getInt("text_secondary_index", 0)
+    }
+
+    fun setColorIndex(context: Context, key:String, index:Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(key, index).apply()
     }
 
     fun setDailyLimitMinutes(context: Context, minutes: Int) {
@@ -50,5 +66,19 @@ object AppSettings {
         textSize = size
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit().putString(KEY_TEXT_SIZE, size.name).apply()
+    }
+
+    fun currentAppColors(): com.example.memogotchi.ui.theme.AppColors {
+        val p = com.example.memogotchi.ui.theme.ColorPresets
+        val accentColor = p.accent[accentIndex]
+        return com.example.memogotchi.ui.theme.AppColors(
+            bg = p.bg[bgIndex],
+            surface = p.surface[surfaceIndex],
+            accent = accentColor,
+            accentLight = accentColor,
+            accentDark = accentColor,
+            textPrimary = p.textPrimary[textPrimaryIndex],
+            textSecondary = p.textSecondary[textSecondaryIndex],
+        )
     }
 }

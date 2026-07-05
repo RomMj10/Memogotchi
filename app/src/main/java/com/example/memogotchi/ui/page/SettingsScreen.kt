@@ -2,9 +2,11 @@ package com.example.memogotchi.ui.page
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,22 +34,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.memogotchi.R
+import com.example.memogotchi.ui.theme.ColorPresets
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
+import com.example.memogotchi.ui.theme.LocalAppColors
 
-//Palette
-private val BgColor       = Color(0xFF16171C)
-private val SurfaceColor  = Color(0xFF1F2125)
+private val Ncolors = LocalAppColors
 private val DividerColor  = Color(0xFF2C2E34)
-private val AccentGreen   = Color(0xFF77C59D)
-private val TextPrimary   = Color(0xFFFFFFFF)
-private val TextSecondary = Color(0xFF888888)
+
 
 
 @Composable
 fun SettingsScreen(today: DayData? = null,
                    currentPetName: String = "",
                    onPetRenamed: (String) -> Unit = {}) {
+    val colors = LocalAppColors.current
     val context = LocalContext.current
 
     var strictMode by remember { mutableStateOf(false) }
@@ -74,7 +75,7 @@ fun SettingsScreen(today: DayData? = null,
 
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(BgColor).padding(top = 48.dp),
+        modifier = Modifier.fillMaxSize().background(colors.bg).padding(top = 48.dp),
         contentPadding = PaddingValues(vertical = 24.dp)
     ) {
         item {
@@ -83,7 +84,7 @@ fun SettingsScreen(today: DayData? = null,
                 fontSize   = 24.sp,
                 fontFamily = GildaDisplay,
                 fontWeight = FontWeight.Bold,
-                color      = TextPrimary,
+                color      = colors.textPrimary,
                 letterSpacing = 3.sp,
                 modifier   = Modifier.fillMaxWidth().padding(bottom = 20.dp, start = 24.dp),
                 textAlign  = TextAlign.Start,
@@ -147,6 +148,27 @@ fun SettingsScreen(today: DayData? = null,
                             })
                     }
                 )
+                RowDivider()
+                ColorSlotPicker("Background", ColorPresets.bg, AppSettings.bgIndex) {
+                    AppSettings.bgIndex = it
+                    AppSettings.setColorIndex(context, "bg_index", it)
+                }
+                ColorSlotPicker("Surface", ColorPresets.surface, AppSettings.surfaceIndex) {
+                    AppSettings.surfaceIndex = it
+                    AppSettings.setColorIndex(context, "surface_index", it)
+                }
+                ColorSlotPicker("Accent", ColorPresets.accent, AppSettings.accentIndex) {
+                    AppSettings.accentIndex = it
+                    AppSettings.setColorIndex(context, "accent_index", it)
+                }
+                ColorSlotPicker("Text Primary", ColorPresets.textPrimary, AppSettings.textPrimaryIndex) {
+                    AppSettings.textPrimaryIndex = it
+                    AppSettings.setColorIndex(context, "text_primary_index", it)
+                }
+                ColorSlotPicker("Text Secondary", ColorPresets.textSecondary, AppSettings.textSecondaryIndex) {
+                    AppSettings.textSecondaryIndex = it
+                    AppSettings.setColorIndex(context, "text_secondary_index", it)
+                }
             }
         }
 
@@ -242,12 +264,13 @@ fun DailyLimitDialog(
 ) {
     var sliderValue by remember { mutableStateOf(currentMinutes.toFloat()) }
     val snappedMinutes = (sliderValue / 15).toInt() * 15
+    val colors = LocalAppColors.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = SurfaceColor,
+        containerColor = colors.surface,
         title = {
-            Text("Daily Limit", color = TextPrimary, fontFamily = GildaDisplay, fontWeight = FontWeight.Bold)
+            Text("Daily Limit", color = colors.textPrimary, fontFamily = GildaDisplay, fontWeight = FontWeight.Bold)
                 },
         text = {
             Column {
@@ -256,7 +279,7 @@ fun DailyLimitDialog(
                     fontFamily = Comfortaa,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = AccentGreen,
+                    color = colors.accent,
                 )
                 Spacer(Modifier.height(12.dp))
                 Slider(
@@ -265,22 +288,22 @@ fun DailyLimitDialog(
                     valueRange = 30f..480f,
                     steps = ((480 - 30) / 15) - 1,
                     colors = SliderDefaults.colors(
-                        thumbColor = AccentGreen,
-                        activeTrackColor = AccentGreen,
+                        thumbColor = colors.accent,
+                        activeTrackColor = colors.accent,
                         inactiveTrackColor = Color(0xFF2C2E34),
                     )
                 )
-                Text("30 min - 8 hrs, in 15-min steps", fontFamily = Comfortaa, fontSize = 11.sp, color = TextSecondary)
+                Text("30 min - 8 hrs, in 15-min steps", fontFamily = Comfortaa, fontSize = 11.sp, color = colors.textSecondary)
             }
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(snappedMinutes) }) {
-                Text("Save",fontFamily = Comfortaa, color = AccentGreen, fontWeight = FontWeight.Bold)
+                Text("Save",fontFamily = Comfortaa, color = colors.accent, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel",fontFamily = Comfortaa, color = TextSecondary)
+                Text("Cancel",fontFamily = Comfortaa, color = colors.textSecondary)
             }
         }
     )
@@ -288,20 +311,21 @@ fun DailyLimitDialog(
 //text size selector
 @Composable
 fun TextSizeSelector(currentSize: TextSizeOption, onSelect: (TextSizeOption) -> Unit) {
+    val colors = LocalAppColors.current
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         TextSizeOption.entries.forEach{ option ->
             val selected = option == currentSize
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if(selected) AccentGreen else Color(0xFF2C2E34))
+                    .background(if(selected) colors.accent else Color(0xFF2C2E34))
                     .clickable { onSelect(option) }
                     .padding(horizontal = 12.dp, vertical = 4.dp),
             ) {
                 Text(
                     text = option.label,
                     fontSize = 11.sp,
-                    color = if (selected) Color.White else TextSecondary,
+                    color = if (selected) Color.White else colors.textSecondary,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -315,13 +339,14 @@ fun RenamePetDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
 ) {
+    val colors = LocalAppColors.current
     var name by remember { mutableStateOf(currentName)}
     var error by remember { mutableStateOf<String?>(null)}
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = SurfaceColor,
+        containerColor = colors.surface,
         title = {
-            Text("Rename Pet", color = TextPrimary, fontFamily = GildaDisplay, fontWeight = FontWeight.Bold)
+            Text("Rename Pet", color = colors.textPrimary, fontFamily = GildaDisplay, fontWeight = FontWeight.Bold)
         },
         text = {
             Column {
@@ -331,14 +356,14 @@ fun RenamePetDialog(
                         if (it.length <= 24) name = it
                         error = null
                     },
-                    placeholder = { Text("Tap to rename a pet", color = TextSecondary) },
+                    placeholder = { Text("Tap to rename a pet", color = colors.textSecondary) },
                     singleLine = true,
-                    textStyle = TextStyle(fontSize = 15.sp, color = TextPrimary, fontFamily = Comfortaa),
+                    textStyle = TextStyle(fontSize = 15.sp, color = colors.textPrimary, fontFamily = Comfortaa),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = BgColor,
-                        unfocusedContainerColor = BgColor,
+                        focusedContainerColor = colors.bg,
+                        unfocusedContainerColor = colors.bg,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                     )
@@ -358,12 +383,12 @@ fun RenamePetDialog(
                     onConfirm(trimmed)
                 }
             }) {
-                Text("Rename", fontFamily = Comfortaa, color = AccentGreen, fontWeight = FontWeight.Bold)
+                Text("Rename", fontFamily = Comfortaa, color = colors.accent, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", fontFamily = Comfortaa, color = TextSecondary)
+                Text("Cancel", fontFamily = Comfortaa, color = colors.textSecondary)
             }
         }
     )
@@ -373,12 +398,13 @@ fun RenamePetDialog(
 
 @Composable
 fun SectionLabel(text: String) {
+    val colors = LocalAppColors.current
     Text(
         text       = text,
         fontFamily = GildaDisplay,
         fontSize   = 11.sp,
         fontWeight = FontWeight.SemiBold,
-        color      = TextSecondary,
+        color      = colors.textSecondary,
         letterSpacing = 1.8.sp,
         modifier   = Modifier.padding(start = 20.dp, top = 32.dp, bottom = 10.dp)
     )
@@ -388,9 +414,10 @@ fun SectionLabel(text: String) {
 
 @Composable
 fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
+    val colors = LocalAppColors.current
     Surface(
         shape    = RoundedCornerShape(16.dp),
-        color    = SurfaceColor,
+        color    = colors.surface,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
@@ -417,7 +444,7 @@ fun SettingsRow(
     icon: Int,
     title: String,
     subtitle: String?,
-    titleColor: Color = TextPrimary,
+    titleColor: Color = Ncolors.current.textPrimary,
     showChevron: Boolean = false,
     columnStyle: Boolean = false,
     onClick: (() -> Unit)? = null,
@@ -452,14 +479,14 @@ fun SettingsRow(
                             subtitle,
                             fontSize = 11.sp,
                             fontFamily = Comfortaa,
-                            color = TextSecondary
+                            color = Ncolors.current.textSecondary
                         )
                     }
                 }
 
                 when {
                     trailing != null -> trailing()
-                    showChevron -> Text("›", fontSize = 20.sp, color = TextSecondary)
+                    showChevron -> Text("›", fontSize = 20.sp, color = Ncolors.current.textSecondary)
                 }
             }
             columnStyle == true -> {
@@ -473,7 +500,7 @@ fun SettingsRow(
                     )
                     when {
                         trailing != null -> trailing()
-                        showChevron -> Text("›", fontSize = 20.sp, color = TextSecondary)
+                        showChevron -> Text("›", fontSize = 20.sp, color = Ncolors.current.textSecondary)
                     }
                 }
             }
@@ -485,16 +512,34 @@ fun SettingsRow(
 
 @Composable
 fun SettingsSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val colors = LocalAppColors.current
     Switch(
         checked         = checked,
         onCheckedChange = onCheckedChange,
         colors = SwitchDefaults.colors(
             checkedThumbColor   = Color.White,
-            checkedTrackColor   = AccentGreen,
+            checkedTrackColor   = colors.accent,
             uncheckedThumbColor = Color.White,
             uncheckedTrackColor = Color(0xFF44464C),
             uncheckedBorderColor = Color.Transparent,
             checkedBorderColor   = Color.Transparent,
         )
     )
+}
+
+@Composable
+fun ColorSlotPicker(label: String, options: List<Color>, selected: Int, onSelect: (Int) -> Unit) {
+    val colors = LocalAppColors.current
+    Column(Modifier.padding(vertical = 8.dp, horizontal = 12.dp)) {
+        Text(label, fontSize = 11.sp, color = Color(0xFF888888))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 6.dp)) {
+            options.forEachIndexed { i, c ->
+                Box(
+                    Modifier.size(32.dp).clip(CircleShape).background(c)
+                        .border(if (i == selected) 2.dp else 0.dp, Color.White, CircleShape)
+                        .clickable { onSelect(i) }
+                )
+            }
+        }
+    }
 }

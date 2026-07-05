@@ -22,17 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.AppTheme
 import com.example.memogotchi.ui.theme.GildaDisplay
-
-// ── Tokens reused from MainActivity's established palette ───────────────
-// NOTE: these mirror the private vals in MainActivity.kt. If you centralize
-// your theme tokens later, replace these with shared references instead of
-// duplicating the hex values.
-private val BgColor       = Color(0xFF16171C)
-private val SurfaceColor  = Color(0xFF1F2125)
-private val AccentGreen   = Color(0xFF77C59D)
-private val TextSecondary = Color(0xFF888888)
-private val TextPrimary   = Color(0xFFF2F2F2)
 
 enum class FocusGuardAction {
     BLOCK_APP,
@@ -68,7 +59,7 @@ fun FocusGuardFabMenu(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BgColor.copy(alpha = 0.55f))
+                .background(AppTheme.current.bg.copy(alpha = 0.55f))
                 .clickable(onClick = onDismiss),
             contentAlignment = Alignment.Center
         ) {
@@ -83,7 +74,7 @@ fun FocusGuardFabMenu(
                     fontFamily = GildaDisplay,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary,
+                    color = AppTheme.current.textPrimary,
                     modifier = Modifier.padding(bottom = 28.dp)
                 )
 
@@ -117,7 +108,7 @@ private fun FocusGuardActionItem(
 ) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = SurfaceColor,
+        color = AppTheme.current.surface,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
@@ -131,7 +122,7 @@ private fun FocusGuardActionItem(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = AccentGreen,
+                tint = AppTheme.current.accent,
                 modifier = Modifier.size(22.dp)
             )
             Spacer(Modifier.width(14.dp))
@@ -139,7 +130,7 @@ private fun FocusGuardActionItem(
                 text = label,
                 fontFamily = GildaDisplay,
                 fontSize = 15.sp,
-                color = TextPrimary
+                color = AppTheme.current.textPrimary
             )
         }
     }

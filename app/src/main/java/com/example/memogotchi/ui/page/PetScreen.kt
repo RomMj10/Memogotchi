@@ -52,19 +52,12 @@ import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
 import com.example.memogotchi.ui.theme.Pink40
 import androidx.compose.material.icons.outlined.Psychology
+import com.example.memogotchi.ui.theme.LocalAppColors
 import kotlinx.coroutines.delay
 import java.util.Calendar
 
 // ── Palette ───────────────────────────────────────────────────────────────────
-private val BgColor = Color(0xFF16171C)   // warm off-white
-private val SurfaceColor = Color(0xFF1F2125)
-private val AccentDark = Color(0xFFAEB9B3)
-private val Accent = Color(0xFF77C59D)
-private val AccentGreen = Color(0xFF77C59D)
-private val TextLight = Color(0xFF708A7A)
-private val TextSecondary = Color(0xFF888888)
-private val PetBorderClr = Color(0xFF77C59D)
-private val TimerColor = Color(0xFFE6FCFF)
+private val AppTheme = LocalAppColors
 
 // ════════════════════════════════════════════════════════════════════════════
 //  ROOT
@@ -187,7 +180,7 @@ fun PetScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgColor)
+            .background(AppTheme.current.bg)
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
@@ -209,7 +202,7 @@ fun PetScreen(
                 fontSize = 13.sp,
                 fontFamily = GildaDisplay,
                 fontWeight = FontWeight.Bold,
-                color = TextLight
+                color = AppTheme.current.textPrimary
             )
             // ── Pet + speech bubble layered ───────────────────────────────
             Box(
@@ -325,14 +318,14 @@ fun TopBar(
                 .align(Alignment.CenterStart)
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(SurfaceColor)
+                .background(AppTheme.current.surface)
                 .clickable { onOpenPersonality() },
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = Icons.Outlined.Psychology,
                 contentDescription = "Memo's personality",
-                tint = if (personalityUnlocked) AccentGreen else Color.Gray.copy(alpha = 0.5f),
+                tint = if (personalityUnlocked) AppTheme.current.accent else Color.Gray.copy(alpha = 0.5f),
                 modifier = Modifier.size(20.dp),
             )
             if (personalityUnlocked && personalityDirty) {
@@ -341,7 +334,7 @@ fun TopBar(
                         .align(Alignment.TopEnd)
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(AccentGreen)
+                        .background(AppTheme.current.accent)
                 )
 
             }
@@ -352,7 +345,7 @@ fun TopBar(
             modifier = Modifier
                 .align(Alignment.Center)
                 .clip(RoundedCornerShape(50.dp))
-                .border(1.5.dp, AccentDark, RoundedCornerShape(50.dp)),
+                .border(1.5.dp, AppTheme.current.accentDark, RoundedCornerShape(50.dp)),
             contentAlignment = Alignment.Center
         ) {
             TimerModeSelector(currentMode = timerMode, onSelect = onModeChange, enabled = !locked)
@@ -410,7 +403,7 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            PetBorderClr.copy(alpha = 0.12f),
+                            AppTheme.current.accentLight.copy(alpha = 0.12f),
                             Color.Transparent
                         )
                     )
@@ -449,7 +442,7 @@ fun SpeechBubble(text: String, modifier: Modifier = Modifier) {
             fontSize = 12.sp,
             fontFamily = Comfortaa,
             fontWeight = FontWeight.Medium,
-            color = BgColor,
+            color = AppTheme.current.bg,
             modifier = Modifier.padding(12.dp)
         )
     }
@@ -464,7 +457,7 @@ fun TimerModeSelector(
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(SurfaceColor)
+            .background(AppTheme.current.surface)
             .padding(4.dp),
     ) {
         TimerMode.entries.forEach { mode ->
@@ -473,7 +466,7 @@ fun TimerModeSelector(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50.dp))
-                    .background(if (selected) Accent else Color.Transparent)
+                    .background(if (selected) AppTheme.current.accent else Color.Transparent)
                     .clickable(enabled = !selected && enabled) { onSelect(mode) }
                     .padding(horizontal = 10.dp, vertical = 10.dp),
                 contentAlignment = Alignment.Center,
@@ -482,7 +475,7 @@ fun TimerModeSelector(
                     text = label,
                     fontFamily = GildaDisplay,
                     fontSize = 16.sp,
-                    color = if (selected) BgColor else AccentDark.copy(alpha = if (enabled) 1f else 0.4f),
+                    color = if (selected) AppTheme.current.bg else AppTheme.current.accentDark.copy(alpha = if (enabled) 1f else 0.4f),
                 )
             }
         }
@@ -528,7 +521,7 @@ fun TimerDisplay(
                 fontSize = 56.sp,
                 fontFamily = GildaDisplay,
                 fontWeight = FontWeight.Black,
-                color = TimerColor,
+                color = AppTheme.current.textPrimary,
                 letterSpacing = (-2).sp,
                 lineHeight = 56.sp,
                 textAlign = TextAlign.Center,
@@ -549,14 +542,14 @@ fun TimerDisplay(
                         .padding(start = 8.dp)
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(SurfaceColor)
+                        .background(AppTheme.current.surface)
                         .clickable { onReset() },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Refresh,
                         contentDescription = "Reset timer",
-                        tint = TextLight,
+                        tint = AppTheme.current.textSecondary,
                         modifier = Modifier.size(24.dp),
                     )
                 }
@@ -571,7 +564,7 @@ fun TimerDisplay(
             fontFamily = GildaDisplay,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            color = TextLight,
+            color = AppTheme.current.accentDark,
             letterSpacing = 3.sp,
             textAlign = TextAlign.Center,
         )
@@ -583,7 +576,7 @@ fun TimerDisplay(
                 .fillMaxWidth(0.6f)
                 .height(3.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .background(SurfaceColor)
+                .background(AppTheme.current.surface)
         ) {
             Box(
                 modifier = Modifier
@@ -592,7 +585,7 @@ fun TimerDisplay(
                     .clip(RoundedCornerShape(2.dp))
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Accent, Color(0xFF263630))
+                            listOf(AppTheme.current.accent, Color(0xFF263630))
                         )
                     )
             )
@@ -635,8 +628,8 @@ fun ScreenTimeSummaryRow(
     ) {
         SummaryCard(
             modifier = Modifier.weight(1f),
-            containerColor = AccentGreen,
-            labelColor = BgColor.copy(alpha = 0.7f),
+            containerColor = AppTheme.current.accent,
+            labelColor = AppTheme.current.bg.copy(alpha = 0.7f),
             label = "SCREEN TIME",
             onClick = onOpenScreenTime
         ) {
@@ -646,13 +639,13 @@ fun ScreenTimeSummaryRow(
                     fontFamily = GildaDisplay,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = BgColor,
+                    color = AppTheme.current.bg,
                 )
                 if (trendUp != null) {
                     Spacer(Modifier.width(5.dp))
                     TrendTriangle(
                         pointingUp = trendUp,
-                        color = BgColor,
+                        color = AppTheme.current.bg,
                         modifier = Modifier.size(9.dp),
                     )
                 }
@@ -661,8 +654,8 @@ fun ScreenTimeSummaryRow(
 
         SummaryCard(
             modifier = Modifier.weight(1f),
-            containerColor = SurfaceColor,
-            labelColor = TextLight,
+            containerColor = AppTheme.current.surface,
+            labelColor = AppTheme.current.textPrimary,
             label = "MOST USED",
         ) {
             if (topApp != null) {
@@ -681,22 +674,22 @@ fun ScreenTimeSummaryRow(
                     text = formatMs(topApp.totalTimeMs),
                     fontFamily = Comfortaa,
                     fontSize = 9.sp,
-                    color = TextSecondary,
+                    color = AppTheme.current.textSecondary,
                 )
             } else {
                 Text(
                     text = "No data yet",
                     fontFamily = Comfortaa,
                     fontSize = 11.sp,
-                    color = TextSecondary,
+                    color = AppTheme.current.textSecondary,
                 )
             }
         }
 
         SummaryCard(
             modifier = Modifier.weight(1f),
-            containerColor = SurfaceColor,
-            labelColor = TextLight,
+            containerColor = AppTheme.current.surface,
+            labelColor = AppTheme.current.textPrimary,
             label = "SCHEDULED BLOCK",
             onClick = onScheduledBlockClick, // TODO(user): wire to open ScheduleScreen
         ) {
@@ -723,14 +716,14 @@ fun ScreenTimeSummaryRow(
                     text = "${scheduledBlockedApps.size} app${if (scheduledBlockedApps.size == 1) "" else "s"}",
                     fontFamily = Comfortaa,
                     fontSize = 9.sp,
-                    color = TextSecondary,
+                    color = AppTheme.current.textSecondary,
                 )
             } else {
                 Text(
                     text = "None set",
                     fontFamily = Comfortaa,
                     fontSize = 11.sp,
-                    color = TextSecondary,
+                    color = AppTheme.current.textSecondary,
                 )
             }
         }
@@ -840,7 +833,7 @@ fun StatItem(label: String, value: String, accent: Boolean) {
             fontFamily = GildaDisplay,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = if (accent) Accent else AccentDark,
+            color = if (accent) AppTheme.current.accent else AppTheme.current.accentDark,
         )
         Spacer(Modifier.height(2.dp))
         Text(
@@ -848,7 +841,7 @@ fun StatItem(label: String, value: String, accent: Boolean) {
             fontFamily = Comfortaa,
             fontSize = 9.sp,
             fontWeight = FontWeight.Medium,
-            color = TextLight,
+            color = AppTheme.current.textPrimary,
             letterSpacing = 1.5.sp,
         )
     }

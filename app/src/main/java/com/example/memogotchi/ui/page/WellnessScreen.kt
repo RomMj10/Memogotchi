@@ -41,16 +41,11 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import com.example.memogotchi.AppTheme
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
 
-// ── Colors ────────────────────────────────────────────────────────────────────
-private val BgColor = Color(0xFF16171C)
-private val SurfaceColor = Color(0xFF1F2125)
-private val AccentGreen = Color(0xFF77C59D)
-private val TextPrimary = Color(0xFFE8E6F0)
-private val TextSecondary = Color(0xFF888888)
 
 // ── Data models ───────────────────────────────────────────────────────────────
 data class BatteryState(
@@ -245,7 +240,7 @@ fun WellnessScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgColor)
+            .background(AppTheme.current.bg)
     ) {
         WellnessMainContent(
             states = states,
@@ -435,7 +430,7 @@ private fun WellnessMainContent(
         Spacer(Modifier.height(24.dp))
         Text(
             "Wellness", fontFamily = GildaDisplay, fontSize = 28.sp,
-            fontWeight = FontWeight.SemiBold, color = TextPrimary
+            fontWeight = FontWeight.SemiBold, color = AppTheme.current.textPrimary
         )
         Spacer(Modifier.height(16.dp))
 
@@ -455,7 +450,7 @@ private fun WellnessMainContent(
 
         Text(
             "Diary", fontFamily = GildaDisplay, fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold, color = TextPrimary
+            fontWeight = FontWeight.SemiBold, color = AppTheme.current.textPrimary
         )
         Spacer(Modifier.height(10.dp))
 
@@ -477,7 +472,7 @@ private fun WellnessMainContent(
 private fun OverallBatteryCard(batteryPct: Int?, loggedCount: Int) {
     val bgFillColor = if (batteryPct != null)
         lerp(Color(0xFF3D1A1A), Color(0xFF1A3D2E), batteryPct / 100f)
-    else SurfaceColor
+    else AppTheme.current.surface
 
     val infiniteTransition = rememberInfiniteTransition(label = "battery_gradient")
     val shinePosition by infiniteTransition.animateFloat(
@@ -494,7 +489,7 @@ private fun OverallBatteryCard(batteryPct: Int?, loggedCount: Int) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(SurfaceColor)
+            .background(AppTheme.current.surface)
     ) {
         if (batteryPct != null) {
             Box(modifier = Modifier.matchParentSize()) {
@@ -556,27 +551,27 @@ private fun OverallBatteryCard(batteryPct: Int?, loggedCount: Int) {
                 Text(
                     "Overall battery",
                     fontSize = 20.sp,
-                    color = TextPrimary,
+                    color = AppTheme.current.textPrimary,
                     fontFamily = GildaDisplay
                 )
                 Spacer(Modifier.height(1.dp))
                 Text(
                     text = if (loggedCount < 4) "$loggedCount / 4 logged" else "All batteries logged",
-                    fontSize = 12.sp, color = TextSecondary
+                    fontSize = 12.sp, color = AppTheme.current.textSecondary
                 )
             }
             Box(
                 modifier = Modifier
                     .size(58.dp)
                     .clip(CircleShape)
-                    .background(BgColor),
+                    .background(AppTheme.current.bg),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = if (batteryPct != null) "$batteryPct%" else "—",
                     fontSize = if (batteryPct != null) 18.sp else 22.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (batteryPct != null) AccentGreen else TextSecondary
+                    color = if (batteryPct != null) AppTheme.current.accent else AppTheme.current.textSecondary
                 )
             }
         }
@@ -600,7 +595,7 @@ private fun BatteryStatesCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(SurfaceColor)
+            .background(AppTheme.current.surface)
             .padding(16.dp)
     ) {
         Column {
@@ -612,7 +607,7 @@ private fun BatteryStatesCard(
                     val pct = state.value ?: 0f
                     val iconColor = if (state.value != null)
                         lerp(state.colorLow, state.colorHigh, pct / 100f)
-                    else TextSecondary
+                    else AppTheme.current.textSecondary
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
@@ -638,7 +633,7 @@ private fun BatteryStatesCard(
                         Spacer(Modifier.height(4.dp))
                         Text(
                             state.label, fontSize = 12.sp,
-                            color = if (isExpanded) state.colorHigh else TextSecondary
+                            color = if (isExpanded) state.colorHigh else AppTheme.current.textSecondary
                         )
                         if (state.value != null) {
                             Text(
@@ -662,7 +657,7 @@ private fun BatteryStatesCard(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(if (isExpanded) AccentGreen else SurfaceColor)
+                        .background(if (isExpanded) AppTheme.current.accent else AppTheme.current.surface)
                         .clickable {
                             if (isExpanded) {
                                 handleBatterySubmit(
@@ -684,7 +679,7 @@ private fun BatteryStatesCard(
                     Icon(
                         imageVector = if (isExpanded) Icons.Outlined.Check else Icons.Outlined.Add,
                         contentDescription = if (isExpanded) "Submit" else "Log",
-                        tint = if (isExpanded) Color.White else AccentGreen,
+                        tint = if (isExpanded) Color.White else AppTheme.current.accent,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -719,7 +714,7 @@ private fun ExpandedSliders(
                         "${sliderValues[i].roundToInt()}%",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
-                        color = TextPrimary
+                        color = AppTheme.current.textPrimary
                     )
                     Spacer(Modifier.height(8.dp))
                     VerticalSlider(
@@ -728,7 +723,7 @@ private fun ExpandedSliders(
                         trackHeightPx = trackHeightPx, onValueChange = { sliderValues[i] = it }
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text(state.label, fontSize = 10.sp, color = TextSecondary)
+                    Text(state.label, fontSize = 10.sp, color = AppTheme.current.textSecondary)
                 }
             }
         }
@@ -752,7 +747,7 @@ private fun DiaryList(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(SurfaceColor)
+                .background(AppTheme.current.surface)
                 .padding(28.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -760,15 +755,15 @@ private fun DiaryList(
                 Icon(
                     Icons.Outlined.Book,
                     contentDescription = null,
-                    tint = TextSecondary,
+                    tint = AppTheme.current.textSecondary,
                     modifier = Modifier.size(32.dp)
                 )
                 Spacer(Modifier.height(8.dp))
-                Text("No entries yet", fontSize = 13.sp, color = TextSecondary)
+                Text("No entries yet", fontSize = 13.sp, color = AppTheme.current.textSecondary)
                 Text(
                     "Tap the pen icon to write your first entry",
                     fontSize = 11.sp,
-                    color = TextSecondary
+                    color = AppTheme.current.textSecondary
                 )
             }
         }
@@ -852,7 +847,7 @@ private fun DiaryEntryCard(
             )
             .clip(RoundedCornerShape(16.dp))
             .border(1.5.dp, borderColor.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
-            .background(SurfaceColor)
+            .background(AppTheme.current.surface)
             .clickable(onClick = onClick)
             .padding(16.dp)
     ) {
@@ -874,10 +869,10 @@ private fun DiaryEntryCard(
                     color = borderColor,
                     fontFamily = GildaDisplay,
                 )
-                Text(text = "  ·  $displayDate", fontSize = 12.sp, color = TextSecondary)
+                Text(text = "  ·  $displayDate", fontSize = 12.sp, color = AppTheme.current.textSecondary)
                 if (entry.isStateLog) {
                     Spacer(Modifier.weight(1f))
-                    Text("Battery log", fontSize = 10.sp, color = TextSecondary)
+                    Text("Battery log", fontSize = 10.sp, color = AppTheme.current.textSecondary)
                 }
 
 
@@ -930,7 +925,7 @@ private fun DiaryEntryCard(
                         text = entry.text,
                         modifier = Modifier.padding(start = 12.dp),
                         fontSize = 13.sp,
-                        color = TextPrimary
+                        color = AppTheme.current.textPrimary
                     )
                 }
 
@@ -1024,15 +1019,15 @@ private fun BoxScope.WellnessFab(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(SurfaceColor)
-                    .border(1.dp, TextSecondary.copy(alpha = 0.3f), CircleShape)
+                    .background(AppTheme.current.surface)
+                    .border(1.dp, AppTheme.current.textSecondary.copy(alpha = 0.3f), CircleShape)
                     .clickable { onVoiceClick() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Outlined.Mic,
                     contentDescription = "Voice",
-                    tint = TextSecondary,
+                    tint = AppTheme.current.textSecondary,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -1045,14 +1040,14 @@ private fun BoxScope.WellnessFab(
                 modifier = Modifier
                     .size(60.dp)
                     .clip(CircleShape)
-                    .background(AccentGreen)
+                    .background(AppTheme.current.accent)
                     .clickable { onFabExpandedChange(!fabExpanded) },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Edit,
                     contentDescription = "Write entry",
-                    tint = BgColor,
+                    tint = AppTheme.current.bg,
                     modifier = Modifier
                         .size(26.dp)
                         .rotate(rotation)
@@ -1063,15 +1058,15 @@ private fun BoxScope.WellnessFab(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(SurfaceColor)
-                    .border(1.dp, TextSecondary.copy(alpha = 0.3f), CircleShape)
+                    .background(AppTheme.current.surface)
+                    .border(1.dp, AppTheme.current.textSecondary.copy(alpha = 0.3f), CircleShape)
                     .clickable { onPhotoClick() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Outlined.PhotoCamera,
                     contentDescription = "Photo",
-                    tint = TextSecondary,
+                    tint = AppTheme.current.textSecondary,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -1127,20 +1122,20 @@ private fun ArcFabItem(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(SurfaceColor)
-                .border(1.dp, AccentGreen.copy(alpha = 0.4f), CircleShape)
+                .background(AppTheme.current.surface)
+                .border(1.dp, AppTheme.current.accent.copy(alpha = 0.4f), CircleShape)
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 icon,
                 contentDescription = label,
-                tint = AccentGreen,
+                tint = AppTheme.current.accent,
                 modifier = Modifier.size(20.dp)
             )
         }
         Spacer(Modifier.height(4.dp))
-        Text(label, fontSize = 9.sp, color = TextSecondary)
+        Text(label, fontSize = 9.sp, color = AppTheme.current.textSecondary)
     }
 }
 
@@ -1188,7 +1183,7 @@ fun DiaryEntryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgColor)
+            .background(AppTheme.current.bg)
             .verticalScroll(rememberScrollState())
     ) {
         DiaryEntryTopBar(
@@ -1280,7 +1275,7 @@ fun DiaryEntryScreen(
                 .padding(horizontal = 20.dp)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(SurfaceColor)
+                .background(AppTheme.current.surface)
                 .padding(16.dp)
         ) {
             Column {
@@ -1288,7 +1283,7 @@ fun DiaryEntryScreen(
                     "What's this about?",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = TextPrimary
+                    color = AppTheme.current.textPrimary
                 )
                 Spacer(Modifier.height(12.dp))
                 GroupedTagPicker(
@@ -1298,8 +1293,8 @@ fun DiaryEntryScreen(
                             cat
                         )
                     },
-                    accentColor = AccentGreen,
-                    textSecondaryColor = TextSecondary,
+                    accentColor = AppTheme.current.accent,
+                    textSecondaryColor = AppTheme.current.textSecondary,
                 )
             }
         }
@@ -1311,7 +1306,7 @@ fun DiaryEntryScreen(
                 .padding(horizontal = 20.dp)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(SurfaceColor)
+                .background(AppTheme.current.surface)
                 .padding(16.dp)
         ) {
             Column {
@@ -1319,7 +1314,7 @@ fun DiaryEntryScreen(
                     "Write your entry",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = TextPrimary
+                    color = AppTheme.current.textPrimary
                 )
                 Spacer(Modifier.height(10.dp))
                 TextField(
@@ -1332,12 +1327,12 @@ fun DiaryEntryScreen(
                         Text(
                             "What's on your mind?",
                             fontSize = 14.sp,
-                            color = TextSecondary
+                            color = AppTheme.current.textSecondary
                         )
                     },
                     textStyle = TextStyle(
                         fontSize = 14.sp,
-                        color = TextPrimary,
+                        color = AppTheme.current.textPrimary,
                         lineHeight = 22.sp
                     ),
                     colors = TextFieldDefaults.colors(
@@ -1358,7 +1353,7 @@ fun DiaryEntryScreen(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
                 .background(
-                    if (entryText.isNotBlank() || photoUri != null || audioUri != null) AccentGreen else Color(
+                    if (entryText.isNotBlank() || photoUri != null || audioUri != null) AppTheme.current.accent else Color(
                         0xFF2A2A30
                     )
                 )
@@ -1379,7 +1374,7 @@ fun DiaryEntryScreen(
             Text(
                 if (existingEntry != null) "Update entry" else "Save entry",
                 fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-                color = if (entryText.isNotBlank() || photoUri != null || audioUri != null) BgColor else TextSecondary
+                color = if (entryText.isNotBlank() || photoUri != null || audioUri != null) AppTheme.current.bg else AppTheme.current.textSecondary
             )
         }
 
@@ -1443,14 +1438,14 @@ private fun DiaryEntryTopBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(SurfaceColor)
+            .background(AppTheme.current.surface)
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
             Icon(
                 Icons.Outlined.ArrowBack,
                 contentDescription = "Back",
-                tint = TextPrimary,
+                tint = AppTheme.current.textPrimary,
                 modifier = Modifier.size(22.dp)
             )
         }
@@ -1498,13 +1493,13 @@ private fun DiaryEntryTopBar(
             ) {
                 Text(
                     "${dayOfWeekForLabel(currentDateLabel)}, $currentDateLabel",
-                    fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary
+                    fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.current.textPrimary
                 )
                 Spacer(Modifier.width(4.dp))
                 Icon(
                     Icons.Outlined.Edit,
                     contentDescription = "Change date",
-                    tint = TextSecondary,
+                    tint = AppTheme.current.textSecondary,
                     modifier = Modifier.size(13.dp)
                 )
             }
@@ -1513,14 +1508,14 @@ private fun DiaryEntryTopBar(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .clip(RoundedCornerShape(10.dp))
-                .background(if (entryText.isNotBlank()) AccentGreen else Color(0xFF2A2A30))
+                .background(if (entryText.isNotBlank()) AppTheme.current.accent else Color(0xFF2A2A30))
                 .clickable(onClick = onSubmit)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Text(
                 if (isUpdate) "Update" else "Submit",
                 fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                color = if (entryText.isNotBlank()) BgColor else TextSecondary
+                color = if (entryText.isNotBlank()) AppTheme.current.bg else AppTheme.current.textSecondary
             )
         }
     }
@@ -1538,7 +1533,7 @@ private fun DiaryFeelingPicker(
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(SurfaceColor)
+            .background(AppTheme.current.surface)
             .padding(16.dp)
     ) {
         Column {
@@ -1551,9 +1546,9 @@ private fun DiaryFeelingPicker(
                     "How are you feeling?",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = TextPrimary
+                    color = AppTheme.current.textPrimary
                 )
-                Text("Optional", fontSize = 11.sp, color = TextSecondary)
+                Text("Optional", fontSize = 11.sp, color = AppTheme.current.textSecondary)
             }
             Spacer(Modifier.height(12.dp))
             Row(
@@ -1577,7 +1572,7 @@ private fun DiaryFeelingPicker(
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(Modifier.height(4.dp))
-                        Text(state.label, fontSize = 10.sp, color = TextSecondary)
+                        Text(state.label, fontSize = 10.sp, color = AppTheme.current.textSecondary)
                         Text("${pct.roundToInt()}%", fontSize = 9.sp, color = iconColor)
                     }
                 }
@@ -1611,7 +1606,7 @@ private fun DiaryFeelingPicker(
                                     "${localSliders[i].roundToInt()}%",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = TextPrimary
+                                    color = AppTheme.current.textPrimary
                                 )
                                 Spacer(Modifier.height(8.dp))
                                 VerticalSlider(
@@ -1624,7 +1619,7 @@ private fun DiaryFeelingPicker(
                                     onValueChange = { localSliders[i] = it }
                                 )
                                 Spacer(Modifier.height(8.dp))
-                                Text(state.label, fontSize = 10.sp, color = TextSecondary)
+                                Text(state.label, fontSize = 10.sp, color = AppTheme.current.textPrimary)
                             }
                         }
                     }

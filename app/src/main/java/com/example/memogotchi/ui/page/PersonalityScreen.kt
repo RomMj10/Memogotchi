@@ -21,20 +21,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.memogotchi.AppTheme
 import kotlinx.coroutines.launch
 import com.example.memogotchi.ui.theme.GildaDisplay
 
-// COLORS
-private val BgColor        = Color(0xFF16171C)
-private val SurfaceColor   = Color(0xFF1F2125)
-private val AccentGreen    = Color(0xFF77C59D)
-private val AccentOrange   = Color(0xFFE8925A)
-private val AccentBlue     = Color(0xFF6B9FD4)
-private val AccentPurple   = Color(0xFFB07FD4)
-private val TextPrimary    = Color(0xFFFFFFFF)
-private val TextSecondary  = Color(0xFF888888)
-private val TrackColor     = Color(0xFF2C2E34)
-private val LockedColor    = Color(0xFF2A2B30)
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -75,17 +65,17 @@ fun PersonalityScreen(onBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgColor)
+            .background(AppTheme.current.bg)
             .padding(20.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 Icons.Outlined.ArrowBack, contentDescription = "Back",
-                tint = TextPrimary,
+                tint = AppTheme.current.textPrimary,
                 modifier = Modifier.size(24.dp).clickable { onBack() }
             )
             Spacer(Modifier.width(12.dp))
-            Text("Memo's Personality", fontFamily = GildaDisplay, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Text("Memo's Personality", fontFamily = GildaDisplay, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary)
         }
 
         Spacer(Modifier.height(32.dp))
@@ -97,34 +87,34 @@ fun PersonalityScreen(onBack: () -> Unit) {
             ) {
                 Text(
                     "Memo is still getting to know you.",
-                    fontSize = 14.sp, color = TextSecondary
+                    fontSize = 14.sp, color = AppTheme.current.textSecondary
                 )
             }
             return@Column
         }
 
         if (loading) {
-            Text("Memo is thinking...", fontSize = 13.sp, color = TextSecondary)
+            Text("Memo is thinking...", fontSize = 13.sp, color = AppTheme.current.textSecondary)
             return@Column
         }
 
         if (errorMessage != null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 60.dp)) {
-                Text(errorMessage!!, fontSize = 13.sp, color = TextSecondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Text(errorMessage!!, fontSize = 13.sp, color = AppTheme.current.textSecondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                 Spacer(Modifier.height(12.dp))
-                Text("Tap to retry", fontSize = 12.sp, color = AccentGreen, modifier = Modifier.clickable { refresh() })
+                Text("Tap to retry", fontSize = 12.sp, color = AppTheme.current.accent, modifier = Modifier.clickable { refresh() })
             }
             return@Column
         }
 
         if (profile == null) {
-            Text("Memo is thinking...", fontSize = 13.sp, color = TextSecondary)
+            Text("Memo is thinking...", fontSize = 13.sp, color = AppTheme.current.textSecondary)
             return@Column
         }
 
         val p = profile!!
 
-        Text(p.tagline, fontSize = 15.sp, color = TextPrimary, fontWeight = FontWeight.Medium)
+        Text(p.tagline, fontSize = 15.sp, color = AppTheme.current.textPrimary, fontWeight = FontWeight.Medium)
 
         Spacer(Modifier.height(16.dp))
 
@@ -133,10 +123,10 @@ fun PersonalityScreen(onBack: () -> Unit) {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
-                        .background(AccentGreen.copy(alpha = 0.15f))
+                        .background(AppTheme.current.accent.copy(alpha = 0.15f))
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text(trait, fontSize = 12.sp, color = AccentGreen)
+                    Text(trait, fontSize = 12.sp, color = AppTheme.current.accent)
                 }
             }
         }
@@ -144,7 +134,7 @@ fun PersonalityScreen(onBack: () -> Unit) {
         Spacer(Modifier.height(20.dp))
 
         p.paragraphs.forEach { para ->
-            Text(para, fontSize = 13.sp, color = TextSecondary, lineHeight = 19.sp)
+            Text(para, fontSize = 13.sp, color = AppTheme.current.textSecondary, lineHeight = 19.sp)
             Spacer(Modifier.height(10.dp))
         }
 
@@ -154,17 +144,17 @@ fun PersonalityScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .clip(RoundedCornerShape(20.dp))
-                .background(SurfaceColor)
+                .background(AppTheme.current.surface)
                 .clickable { refresh() }
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Outlined.Refresh, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+            Icon(Icons.Outlined.Refresh, contentDescription = null, tint = AppTheme.current.textSecondary, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Text("See if Memo has changed", fontSize = 12.sp, color = TextSecondary)
+            Text("See if Memo has changed", fontSize = 12.sp, color = AppTheme.current.textSecondary)
             if (dirty) {
                 Spacer(Modifier.width(6.dp))
-                Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(AccentGreen))
+                Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(AppTheme.current.accent))
             }
         }
     }
