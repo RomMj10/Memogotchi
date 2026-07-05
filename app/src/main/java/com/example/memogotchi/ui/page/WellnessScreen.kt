@@ -471,7 +471,7 @@ private fun WellnessMainContent(
 @Composable
 private fun OverallBatteryCard(batteryPct: Int?, loggedCount: Int) {
     val bgFillColor = if (batteryPct != null)
-        lerp(Color(0xFF3D1A1A), Color(0xFF1A3D2E), batteryPct / 100f)
+        lerp(Color(0xFF913F3F), Color(0xFF409A74), batteryPct / 100f)
     else AppTheme.current.surface
 
     val infiniteTransition = rememberInfiniteTransition(label = "battery_gradient")
@@ -551,7 +551,7 @@ private fun OverallBatteryCard(batteryPct: Int?, loggedCount: Int) {
                 Text(
                     "Overall battery",
                     fontSize = 20.sp,
-                    color = AppTheme.current.textPrimary,
+                    color = Color(0xFFFFFFFF),
                     fontFamily = GildaDisplay
                 )
                 Spacer(Modifier.height(1.dp))
