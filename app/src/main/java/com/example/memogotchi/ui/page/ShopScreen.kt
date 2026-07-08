@@ -56,11 +56,25 @@ data class ShopItem(
 )
 val shopCatalog: List<ShopItem> = listOf(
     ShopItem(
+        id = "room_livingroom",
+        name = "Living Room",
+        cost = 40,
+        category = ShopCategory.ROOM,
+        assetRes = R.raw.room_livingroom
+    ),
+    ShopItem(
         id = "room_library",
         name = "Library",
         cost = 80,
         category = ShopCategory.ROOM,
         assetRes = R.raw.room_library
+    ),
+    ShopItem(
+        id = "room_office",
+        name = "Office",
+        cost = 100,
+        category = ShopCategory.ROOM,
+        assetRes = R.raw.room_office
     )
 )
 
