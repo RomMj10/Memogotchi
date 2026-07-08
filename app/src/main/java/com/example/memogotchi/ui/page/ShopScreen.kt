@@ -1,6 +1,9 @@
 package com.example.memogotchi.ui.page
 
 import android.content.Context
+import androidx.annotation.DrawableRes
+import androidx.annotation.RawRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,17 +17,25 @@ import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.memogotchi.AppTheme
+import com.example.memogotchi.R
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
 import org.json.JSONArray
@@ -40,10 +51,18 @@ data class ShopItem(
     val name: String,
     val cost: Int,
     val category: ShopCategory,
-    val assetRef: String,
+    @DrawableRes @RawRes val assetRes: Int,
     val isUnlocked: Boolean = false,
 )
-val shopCatalog: List<ShopItem> = emptyList()
+val shopCatalog: List<ShopItem> = listOf(
+    ShopItem(
+        id = "room_library",
+        name = "Library",
+        cost = 80,
+        category = ShopCategory.ROOM,
+        assetRes = R.raw.room_library
+    )
+)
 
 object ShopStore {
     private const val PREFS = "memogotchi_shop"
@@ -75,6 +94,7 @@ fun ShopScreen(onBack: () -> Unit = {}) {
     var selectedCategory by remember { mutableStateOf(ShopCategory.PET) }
     var totalXp by remember { mutableStateOf(XpStore.loadXp(context)) }
     var unlockedIds by remember { mutableStateOf(ShopStore.loadUnlockedIds(context)) }
+    var previewItem by remember { mutableStateOf<ShopItem?>(null) }
 
     val itemsForTab = remember(selectedCategory, unlockedIds) {
         shopCatalog
@@ -82,7 +102,7 @@ fun ShopScreen(onBack: () -> Unit = {}) {
             .map { it.copy(isUnlocked = it.isUnlocked || it.id in unlockedIds) }
     }
 
-    fun tryPurchase(item: ShopItem) {
+    fun purchase(item: ShopItem) {
         if (item.isUnlocked || item.id in unlockedIds) return
         if (totalXp < item.cost) return
         totalXp = XpStore.addXp(context, -item.cost)
@@ -168,15 +188,24 @@ fun ShopScreen(onBack: () -> Unit = {}) {
                 items(itemsForTab, key = { it.id }) { item ->
                     ShopItemCard(
                         item = item,
-                        canAfford = totalXp >= item.cost,
-                        onClick = { tryPurchase(item) }
+                        onClick = { previewItem = item }
                     )
                 }
             }
         }
     }
+    previewItem?.let {item ->
+        ShopItemPreviewDialog(
+            item = item,
+            totalXp = totalXp,
+            onDismiss = { previewItem = null },
+            onBuy = {
+                purchase(item)
+                previewItem = null
+            }
+        )
+    }
 }
-
 @Composable
 private fun RowScope.ShopTabBtn(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
@@ -196,15 +225,15 @@ private fun RowScope.ShopTabBtn(label: String, selected: Boolean, onClick: () ->
         )
     }
 }
+private val grayscaleColorFilter = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+
 @Composable
 private fun ShopItemCard(
     item: ShopItem,
-    canAfford: Boolean,
     onClick: () -> Unit,
 ) {
     val borderColor = when {
         item.isUnlocked -> AppTheme.current.accent.copy(alpha = 0.5f)
-        canAfford -> AppTheme.current.textSecondary.copy(alpha = 0.4f)
         else -> AppTheme.current.textSecondary.copy(alpha = 0.2f)
     }
 
@@ -214,13 +243,11 @@ private fun ShopItemCard(
             .clip(RoundedCornerShape(14.dp))
             .border(1.dp, borderColor, RoundedCornerShape(14.dp))
             .background(if (item.isUnlocked) AppTheme.current.surface else AppTheme.current.surface.copy(alpha = 0.80f))
-            .clickable(enabled = !item.isUnlocked && canAfford, onClick = onClick)
-            .alpha(if (!item.isUnlocked && !canAfford) 0.5f else 1f)
+            .clickable(onClick = onClick)
             .padding(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Asset placeholder — real rendering hooks into item.assetRef later
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -229,7 +256,16 @@ private fun ShopItemCard(
                 .background(AppTheme.current.bg),
             contentAlignment = Alignment.Center
         ) {
-            if (!item.isUnlocked && !canAfford) {
+            Image(
+                painter = painterResource(item.assetRes),
+                contentDescription = item.name,
+                contentScale = ContentScale.Fit,
+                colorFilter = if (item.isUnlocked) null else grayscaleColorFilter,
+                modifier = Modifier.fillMaxSize()
+                    .padding(6.dp)
+                    .alpha(if (item.isUnlocked) 1f else 0.45f)
+            )
+            if (!item.isUnlocked) {
                 Icon(
                     Icons.Outlined.Lock, contentDescription = "Locked",
                     tint = AppTheme.current.textSecondary, modifier = Modifier.size(18.dp)
@@ -259,9 +295,101 @@ private fun ShopItemCard(
         } else {
             Text(
                 "${item.cost} XP", fontSize = 10.sp, fontFamily = Comfortaa,
-                color = if (canAfford) AppTheme.current.accent else AppTheme.current.textSecondary,
+                color = AppTheme.current.textSecondary,
                 fontWeight = FontWeight.SemiBold
             )
+        }
+    }
+}
+
+@Composable
+private fun ShopItemPreviewDialog(
+    item: ShopItem,
+    totalXp: Int,
+    onDismiss: () -> Unit,
+    onBuy: () -> Unit,
+) {
+    val canAfford = totalXp >= item.cost
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .clip(RoundedCornerShape(20.dp))
+                .background(AppTheme.current.surface)
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(160.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(AppTheme.current.bg),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(item.assetRes),
+                    contentDescription = item.name,
+                    contentScale = ContentScale.Fit,
+                    colorFilter = if (item.isUnlocked) null else grayscaleColorFilter,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .alpha(if (item.isUnlocked) 1f else 0.45f)
+                )
+                if (!item.isUnlocked) {
+                    Icon(
+                        Icons.Outlined.Lock, contentDescription = "Locked",
+                        tint = AppTheme.current.textPrimary.copy(alpha = 0.85f),
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                item.name, fontFamily = GildaDisplay, fontSize = 18.sp,
+                fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.height(6.dp))
+
+            when {
+                item.isUnlocked -> Text(
+                    "Owned", fontSize = 13.sp, color = AppTheme.current.accent,
+                    fontWeight = FontWeight.SemiBold
+                )
+                else -> Text(
+                    "${item.cost} XP", fontSize = 13.sp, fontFamily = Comfortaa,
+                    color = if (canAfford) AppTheme.current.accent else AppTheme.current.textSecondary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            if (!item.isUnlocked) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (canAfford) AppTheme.current.accent else AppTheme.current.textSecondary.copy(alpha = 0.5f))
+                        .clickable(enabled = canAfford, onClick = onBuy)
+                        .padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        if (canAfford) "Buy for ${item.cost} XP" else "Not enough XP",
+                        fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                        color = if (canAfford) AppTheme.current.bg else AppTheme.current.textSecondary
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
+            TextButton(onClick = onDismiss) {
+                Text("Close", color = AppTheme.current.textSecondary, fontSize = 13.sp)
+            }
         }
     }
 }
