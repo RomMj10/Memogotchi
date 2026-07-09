@@ -116,6 +116,7 @@ val shopCatalog: List<ShopItem> = listOf(
 object ShopStore {
     private const val PREFS = "memogotchi_shop"
     private const val KEY_UNLOCKED_IDS = "unlocked_item_ids"
+    private const val KEY_EQUIPPED_PREFIX = "equipped_"
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -135,6 +136,19 @@ object ShopStore {
     }
 
     fun isUnlocked(ctx: Context, itemId: String): Boolean = itemId in loadUnlockedIds(ctx)
+
+    fun equippedItemId(ctx: Context, category: ShopCategory): String? =
+        prefs(ctx).getString(KEY_EQUIPPED_PREFIX + category.name, null)
+
+    fun setEquippedItemId(ctx: Context, category: ShopCategory, itemId: String?) {
+        prefs(ctx).edit().apply {
+            if (itemId == null) remove(KEY_EQUIPPED_PREFIX + category.name)
+            else putString(KEY_EQUIPPED_PREFIX + category.name, itemId)
+        }.apply()
+    }
+
+    fun loadAllEquipped(ctx: Context): Map<ShopCategory, String> =
+        ShopCategory.entries.mapNotNull { cat -> equippedItemId(ctx, cat)?.let { cat to it } }.toMap()
 }
 
 @Composable

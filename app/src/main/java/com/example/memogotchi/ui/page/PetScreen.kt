@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.outlined.AccountBox
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.BatteryStd
 import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.Checkroom
 import androidx.compose.material.icons.outlined.InsertChart
 import androidx.compose.material.icons.outlined.Park
 import androidx.compose.material.icons.outlined.Psychology
@@ -52,6 +54,10 @@ import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
 import com.example.memogotchi.ui.theme.Pink40
 import androidx.compose.material.icons.outlined.Psychology
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.zIndex
 import com.example.memogotchi.ui.theme.LocalAppColors
 import kotlinx.coroutines.delay
 import java.util.Calendar
@@ -114,6 +120,14 @@ fun PetScreen(
 ) {
     var hexMenuOpen by remember { mutableStateOf(false) }
     var showTaskPanel by remember { mutableStateOf(false) }
+    var showWardrobe by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    var equippedRoomId by remember { mutableStateOf(ShopStore.equippedItemId(context,
+        ShopCategory.ROOM
+    ))}
+    val equippedRoomItem = remember(equippedRoomId) {
+        shopCatalog.firstOrNull{it.id == equippedRoomId}
+    }
 
 
     val hexItems =
@@ -139,7 +153,10 @@ fun PetScreen(
                     hexMenuOpen = false
                     onOpenPersonality()
                 },
-                HexMenuItem(Icons.Outlined.Redeem, "Rewards", enabled = false)
+                HexMenuItem(Icons.Outlined.Checkroom, "Wardrobe") {
+                    hexMenuOpen = false
+                    showWardrobe = true
+                }
             )
         }
 
@@ -188,7 +205,16 @@ fun PetScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
 
+
             // ── Top bar ───────────────────────────────────────────────────
+            Text(
+                text = petName,
+                fontSize = 24.sp,
+                fontFamily = GildaDisplay,
+                fontWeight = FontWeight.Bold,
+                color = AppTheme.current.textPrimary,
+                modifier = Modifier.zIndex(9.0f).offset(y = 24.dp)
+            )
             TopBar(
                 onClose = onClose,
                 onSettings = onSettings,
@@ -197,13 +223,8 @@ fun PetScreen(
                 locked = activeTaskTitle != null,
                 onOpenPersonality = onOpenPersonality
             )
-            Text(
-                text = petName,
-                fontSize = 13.sp,
-                fontFamily = GildaDisplay,
-                fontWeight = FontWeight.Bold,
-                color = AppTheme.current.textPrimary
-            )
+
+
             // ── Pet + speech bubble layered ───────────────────────────────
             Box(
                 modifier = Modifier
@@ -211,6 +232,18 @@ fun PetScreen(
                     .height(240.dp),
                 contentAlignment = Alignment.Center,
             ) {
+                equippedRoomItem?.let {room ->
+                    Image(
+                        painter = painterResource(room.assetRes),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxWidth()
+                            .height(290.dp)
+                            .offset(y = -90.dp)
+                            .scale(1.7f)
+                            .zIndex(-999.9f)
+                    )
+                }
                 // Pet overflows upward beyond the Box bounds
                 PetCard(
                     petState = petState,
@@ -242,6 +275,7 @@ fun PetScreen(
                         .matchParentSize()
                         .align(Alignment.TopCenter)
                         .offset(y = (-10).dp)
+                        .zIndex(199.9f)
                 )
             }
 
@@ -288,6 +322,12 @@ fun PetScreen(
             )
         }
     }
+    if (showWardrobe) {
+        WardrobeMenu(
+            onDismiss = { showWardrobe = false},
+            onEquippedChanged = {equippedRoomId = ShopStore.equippedItemId(context, ShopCategory.ROOM)}
+        )
+    }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -310,7 +350,8 @@ fun TopBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 80.dp),
+            .padding(horizontal = 20.dp, vertical = 80.dp)
+            .zIndex(99.9f),
     ) {
         // Personality icon — top-left
         Box(
@@ -415,7 +456,7 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
             progress = { progress },
             modifier = Modifier
                 .size(lottieRenderSize)
-                .scale(1.8f)
+                .scale(1.6f)
 
         )
     }
