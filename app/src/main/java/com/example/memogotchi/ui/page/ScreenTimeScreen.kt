@@ -314,7 +314,7 @@ fun PetPlaceholder(petState: PetState, modifier: Modifier = Modifier) {
 
     val rawRes = when (petState.mood) {
         PetMood.IDLE   -> R.raw.pet_idle
-        PetMood.HAPPY   -> R.raw.pet_happy
+        PetMood.HAPPY   -> R.raw.pet_idle//R.raw.pet_happy
         PetMood.CONCERNED   -> R.raw.pet_concerned
         PetMood.TIRED   -> R.raw.pet_concerned
         PetMood.ALARMED   -> R.raw.pet_concerned

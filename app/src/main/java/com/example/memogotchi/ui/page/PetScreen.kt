@@ -19,15 +19,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountBox
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.BatteryStd
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Checkroom
 import androidx.compose.material.icons.outlined.InsertChart
-import androidx.compose.material.icons.outlined.Park
 import androidx.compose.material.icons.outlined.Psychology
-import androidx.compose.material.icons.outlined.Redeem
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -52,8 +49,6 @@ import com.airbnb.lottie.compose.*
 import com.example.memogotchi.R
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
-import com.example.memogotchi.ui.theme.Pink40
-import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -128,7 +123,12 @@ fun PetScreen(
     val equippedRoomItem = remember(equippedRoomId) {
         shopCatalog.firstOrNull{it.id == equippedRoomId}
     }
-
+    var equippedPetItemId by remember { mutableStateOf(ShopStore.equippedItemId(context,
+        ShopCategory.PET
+    ))}
+    val equippedPetItem = remember(equippedPetItemId) {
+        shopCatalog.firstOrNull{it.id == equippedPetItemId}
+    }
 
     val hexItems =
         remember(previewTasks, onOpenTasks, onOpenScreenTime, onOpenWellness, onOpenPersonality) {
@@ -247,6 +247,7 @@ fun PetScreen(
                 // Pet overflows upward beyond the Box bounds
                 PetCard(
                     petState = petState,
+                    accessory = equippedPetItem,
                     modifier = Modifier
                         .size(220.dp)
                         .align(Alignment.TopCenter)
@@ -325,7 +326,10 @@ fun PetScreen(
     if (showWardrobe) {
         WardrobeMenu(
             onDismiss = { showWardrobe = false},
-            onEquippedChanged = {equippedRoomId = ShopStore.equippedItemId(context, ShopCategory.ROOM)}
+            onEquippedChanged = {
+                equippedRoomId = ShopStore.equippedItemId(context, ShopCategory.ROOM)
+                equippedPetItemId = ShopStore.equippedItemId(context, ShopCategory.PET)
+            }
         )
     }
 }
@@ -399,11 +403,11 @@ fun TopBar(
 // ════════════════════════════════════════════════════════════════════════════
 
 @Composable
-fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
+fun PetCard(petState: PetState,accessory: ShopItem? = null, modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "float")
     val offsetY by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = -10f,
+        targetValue = -2f,
         animationSpec = infiniteRepeatable(
             animation = tween(2000, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
@@ -413,7 +417,7 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
 
     val rawRes = when (petState.mood) {
         PetMood.IDLE -> R.raw.pet_idle
-        PetMood.HAPPY -> R.raw.pet_happy
+        PetMood.HAPPY -> R.raw.pet_idle//pet_happy
         PetMood.CONCERNED -> R.raw.pet_concerned
         PetMood.TIRED -> R.raw.pet_concerned
         PetMood.ALARMED -> R.raw.pet_concerned
@@ -459,6 +463,16 @@ fun PetCard(petState: PetState, modifier: Modifier = Modifier) {
                 .scale(1.6f)
 
         )
+        accessory?.let { item ->
+            Image(
+                painter = painterResource(item.assetRes),
+                contentDescription = item.name,
+                modifier = Modifier
+                    .offset(y = -10.dp)
+                    .height(220.dp)
+                    .scale(1.0f)
+            )
+        }
     }
 }
 
