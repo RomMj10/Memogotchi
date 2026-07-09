@@ -56,6 +56,41 @@ data class ShopItem(
 )
 val shopCatalog: List<ShopItem> = listOf(
     ShopItem(
+        id = "pet_headphone_black",
+        name = "Headphone (Black)",
+        cost = 40,
+        category = ShopCategory.PET,
+        assetRes = R.raw.pet_headphone_black
+    ),
+    ShopItem(
+        id = "pet_scarf_red",
+        name = "Red Scarf",
+        cost = 80,
+        category = ShopCategory.PET,
+        assetRes = R.raw.pet_scarf_red
+    ),
+    ShopItem(
+        id = "pet_tophat",
+        name = "Tophat",
+        cost = 80,
+        category = ShopCategory.PET,
+        assetRes = R.raw.pet_tophat
+    ),
+    ShopItem(
+        id = "pet_traffic_cone",
+        name = "Traffic Cone",
+        cost = 80,
+        category = ShopCategory.PET,
+        assetRes = R.raw.pet_traffic_cone
+    ),
+    ShopItem(
+        id = "pet_umbrella_yellow",
+        name = "Yellow Umbrella Hat",
+        cost = 80,
+        category = ShopCategory.PET,
+        assetRes = R.raw.pet_umbrella_yellow
+    ),
+    ShopItem(
         id = "room_livingroom",
         name = "Living Room",
         cost = 40,
