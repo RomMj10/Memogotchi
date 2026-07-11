@@ -10,6 +10,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
@@ -21,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.memogotchi.R
+import com.example.memogotchi.ble.NearbyModeController
 import com.example.memogotchi.ui.theme.Comfortaa
 import com.example.memogotchi.ui.theme.GildaDisplay
 import com.example.memogotchi.ui.theme.LocalAppColors
@@ -53,19 +56,30 @@ fun NearbyOptInScreen(onBack: () -> Unit = {}) {
     var mode by remember { mutableStateOf(NearbyStore.loadMode(context)) }
     var showPermissionDeniedMessage by remember { mutableStateOf(false) }
 
+    // After a toggle/button press grants permission, this remembers which
+    // mode to actually apply (PASSIVE for the toggle, ACTIVE for "Find Now").
+    var pendingModeAfterPermission by remember { mutableStateOf(NearbyMode.PASSIVE) }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         val allGranted = results.values.all { it }
         if (allGranted) {
             showPermissionDeniedMessage = false
-            mode = NearbyMode.ACTIVE
-            NearbyStore.saveMode(context, NearbyMode.ACTIVE)
+            mode = pendingModeAfterPermission
+            NearbyStore.saveMode(context, pendingModeAfterPermission)
+            NearbyModeController.applyMode(context, pendingModeAfterPermission)
         } else {
             showPermissionDeniedMessage = true
             mode = NearbyMode.OFF
             NearbyStore.saveMode(context, NearbyMode.OFF)
+            NearbyModeController.applyMode(context, NearbyMode.OFF)
         }
+    }
+
+    fun requestModeChange(target: NearbyMode) {
+        pendingModeAfterPermission = target
+        permissionLauncher.launch(requiredNearbyPermissions())
     }
 
     LazyColumn(
@@ -105,22 +119,52 @@ fun NearbyOptInScreen(onBack: () -> Unit = {}) {
                     subtitle = when (mode) {
                         NearbyMode.OFF -> "Off"
                         NearbyMode.PASSIVE -> "On — checking periodically"
-                        NearbyMode.ACTIVE -> "On — actively scanning"
+                        NearbyMode.ACTIVE -> "On — actively scanning right now"
                     },
                     trailing = {
                         SettingsSwitch(
                             checked = mode != NearbyMode.OFF,
                             onCheckedChange = { turnedOn ->
                                 if (turnedOn) {
-                                    permissionLauncher.launch(requiredNearbyPermissions())
+                                    requestModeChange(NearbyMode.PASSIVE)
                                 } else {
                                     mode = NearbyMode.OFF
                                     NearbyStore.saveMode(context, NearbyMode.OFF)
+                                    NearbyModeController.applyMode(context, NearbyMode.OFF)
                                 }
                             }
                         )
                     }
                 )
+            }
+        }
+
+        if (mode != NearbyMode.OFF) {
+            item {
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
+                    Button(
+                        onClick = { requestModeChange(NearbyMode.ACTIVE) },
+                        enabled = mode != NearbyMode.ACTIVE,
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            if (mode == NearbyMode.ACTIVE) "Actively Scanning…" else "Find a Buddy Now",
+                            fontFamily = Comfortaa,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    if (mode == NearbyMode.ACTIVE) {
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(onClick = {
+                            mode = NearbyMode.PASSIVE
+                            NearbyStore.saveMode(context, NearbyMode.PASSIVE)
+                            NearbyModeController.applyMode(context, NearbyMode.PASSIVE)
+                        }) {
+                            Text("Stop Active Scan", color = colors.textSecondary, fontFamily = Comfortaa)
+                        }
+                    }
+                }
             }
         }
 
