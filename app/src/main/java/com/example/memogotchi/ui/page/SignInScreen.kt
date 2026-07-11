@@ -1,5 +1,6 @@
 package com.example.memogotchi.ui.page
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -29,7 +30,8 @@ fun SignInScreen(onSignedIn: (FirebaseUser) -> Unit) {
                     val user = authRepository.signInWithGoogle()
                     if (user != null) onSignedIn(user)
                 } catch (e: Exception) {
-                    errorMessage = "Sign-in failed: ${e.message}"
+                    Log.e("GoogleSignIn", "Sign-in failed", e)
+                    throw e
                 }
             }
         }) {

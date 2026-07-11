@@ -17,7 +17,7 @@ class AuthRepository(private val context: Context) {
             val credentialManager = CredentialManager.create(context)
 
             val googleIdOption = GetGoogleIdOption.Builder()
-                .setServerClientId("634492632297-oprfe4ud7jkb6bsb4e8f2klvj0hqmb8r.apps.googleusercontent.com")
+                .setServerClientId("634492632297-vidh980oh5rmlg1vv261f4n42u10fdhl.apps.googleusercontent.com")
                 .setFilterByAuthorizedAccounts(false)
                 .build()
 
