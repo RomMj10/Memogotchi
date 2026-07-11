@@ -27,6 +27,7 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "GEMINI_API_KEY", "\"${localProperties.getProperty('gemini_api_key', '')}\""
+        buildConfigField "String", "API_BASE_URL", "\"${localProperties.getProperty('api_base_url', '')}\""
     }
 
     buildTypes {
@@ -88,6 +89,15 @@ dependencies {
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-messaging-ktx")
+
+    //API layer
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.google.android.gms:play-services-tasks:18.2.0")
     
     implementation libs.androidx.core.ktx
     implementation libs.androidx.lifecycle.runtime.ktx

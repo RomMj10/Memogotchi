@@ -88,6 +88,14 @@ import androidx.compose.foundation.Canvas
 import com.example.memogotchi.ui.page.ShopScreen
 import com.example.memogotchi.ui.theme.LocalAppColors
 import kotlinx.coroutines.delay
+//signin
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.SetOptions
+import com.example.memogotchi.ui.page.SignInScreen
+import com.example.memogotchi.ui.page.NearbyOptInScreen
 
 val AppTheme = LocalAppColors
 
@@ -118,7 +126,19 @@ class MainActivity : ComponentActivity() {
             }
             MemogotchiTheme {
                 CompositionLocalProvider(LocalDensity provides scaledDensity, LocalAppColors provides appColors) {
-                    MainShell(windowSizeClass)
+                    var currentUser by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
+
+                    if (currentUser == null) {
+                        SignInScreen(onSignedIn = { user ->
+                            currentUser = user
+                            FirebaseMessaging.getInstance().token.addOnSuccessListener { fcmToken ->
+                                Firebase.firestore.collection("users").document(user.uid)
+                                    .set(mapOf("fcmToken" to fcmToken), SetOptions.merge())
+                            }
+                        })
+                    } else {
+                        MainShell(windowSizeClass)
+                    }
                 }
             }
         }
@@ -186,6 +206,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     var petName by remember { mutableStateOf(MemoStore.loadName(context)) }
     val startupComplete = !petName.isNullOrBlank() && hasPermission
     var totalXp by remember { mutableStateOf(XpStore.loadXp(context)) }
+    var showNearbyOptIn by remember { mutableStateOf(false) }
 
 
     // ── Wellness state hoisted here so it survives tab switches ──────────
@@ -398,7 +419,8 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 if (showSettings) {
                     SettingsScreen(
                         currentPetName = petName ?: "",
-                        onPetRenamed = { newName -> petName = newName }
+                        onPetRenamed = { newName -> petName = newName },
+                        onOpenGoalBuddy = { showNearbyOptIn = true }
                     )
                 } else if (showActivityTree) {
                     ActivityTreeScreen(
@@ -411,19 +433,21 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             showPersonality = false
                         }
                     )
-                } else if (showAppBlocker) {                                   // ← add
+                } else if (showAppBlocker) {
                     AppBlockerScreen(
                         onBack = { showAppBlocker = false }
                     )
-                } else if (showAppTimer) {                                     // ← add
+                } else if (showAppTimer) {
                     AppTimerScreen(
                         onBack = { showAppTimer = false }
                     )
-                } else if (showSchedule) {                                     // ← add
+                } else if (showSchedule) {
                     ScheduleScreen(
                         onBack = { showSchedule = false }
                     )
-                } else {
+                }  else if (showNearbyOptIn) {
+            NearbyOptInScreen(onBack = { showNearbyOptIn = false })
+        } else {
                     when (currentTab) {
                         NavTab.PET -> PetScreen(
                             today = weekData.lastOrNull(),
@@ -629,6 +653,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             showSettings = false
                             showActivityTree = false
                             showPersonality = false
+                            showNearbyOptIn = false
                             currentTab = NavTab.PET
                         }
                     )
@@ -639,6 +664,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             showSettings = false
                             showActivityTree = false
                             showPersonality = false
+                            showNearbyOptIn = false
                             currentTab = NavTab.WELLNESS
                         }
                     )
@@ -659,6 +685,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             showSettings = false
                             showActivityTree = false
                             showPersonality = false
+                            showNearbyOptIn = false
                             currentTab = NavTab.SHOP
                         }
                     )
@@ -669,6 +696,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             showSettings = false
                             showPersonality = false
                             showActivityTree = false
+                            showNearbyOptIn = false
                             currentTab = NavTab.TASKS
                         }
                     )

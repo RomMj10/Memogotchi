@@ -48,7 +48,9 @@ private val DividerColor  = Color(0xFF2C2E34)
 @Composable
 fun SettingsScreen(today: DayData? = null,
                    currentPetName: String = "",
-                   onPetRenamed: (String) -> Unit = {}) {
+                   onPetRenamed: (String) -> Unit = {},
+                   onOpenGoalBuddy: () -> Unit = {}) {
+
     val colors = LocalAppColors.current
     val context = LocalContext.current
 
@@ -113,6 +115,20 @@ fun SettingsScreen(today: DayData? = null,
                     }
                 )
                 RowDivider()
+            }
+        }
+
+        // ── Goal Buddy ───────────────────────────────────────────────────
+        item { SectionLabel("GOAL BUDDY") }
+        item {
+            SettingsGroup {
+                SettingsRow(
+                    icon        = R.drawable.memogotchi_vector,
+                    title       = "Connect with a Goal Buddy",
+                    subtitle    = "Sense nearby users and share goals together",
+                    showChevron = true,
+                    onClick     = onOpenGoalBuddy
+                )
             }
         }
 
