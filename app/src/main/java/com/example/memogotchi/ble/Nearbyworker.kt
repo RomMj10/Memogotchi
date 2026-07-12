@@ -6,11 +6,6 @@ import androidx.work.WorkerParameters
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 
-/**
- * Passive nearby mode: instead of scanning continuously (which drains
- * battery), this runs a short advertise+scan burst roughly every 15
- * minutes via WorkManager's periodic scheduling.
- */
 class NearbyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     companion object {
@@ -24,14 +19,14 @@ class NearbyWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         val advertiser = BleAdvertiser(applicationContext)
         val scanner = BleScanner(applicationContext, CoroutineScope(coroutineContext))
 
-        advertiser.start(token)
-        scanner.start()
-
-        delay(BURST_DURATION_MS)
-
-        scanner.stop()
-        advertiser.stop()
-
-        return Result.success()
+        return try {
+            advertiser.start(token, BleRadioMode.LOW_POWER)
+            scanner.start(BleRadioMode.LOW_POWER)
+            delay(BURST_DURATION_MS)
+            Result.success()
+        } finally {
+            scanner.stop()
+            advertiser.stop()
+        }
     }
 }

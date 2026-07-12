@@ -71,3 +71,10 @@ data class ApiErrorBody(
     val error: String,
     val message: String
 )
+
+data class CheckNearbyReadyRequest(val matchId: String)
+data class CheckNearbyReadyResponse(
+    val bothReady: Boolean,
+    val otherUserId: String? = null,
+    val reason: String? = null
+)

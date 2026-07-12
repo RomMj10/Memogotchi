@@ -49,7 +49,8 @@ private val DividerColor  = Color(0xFF2C2E34)
 fun SettingsScreen(today: DayData? = null,
                    currentPetName: String = "",
                    onPetRenamed: (String) -> Unit = {},
-                   onOpenGoalBuddy: () -> Unit = {}) {
+                   onOpenGoalBuddy: () -> Unit = {},
+                   onOpenBuddyList: () -> Unit = {}) {
 
     val colors = LocalAppColors.current
     val context = LocalContext.current
@@ -113,6 +114,14 @@ fun SettingsScreen(today: DayData? = null,
                     trailing = {
                         SettingsSwitch(checked = strictMode, onCheckedChange = { strictMode = it })
                     }
+                )
+                RowDivider()
+                SettingsRow(
+                    icon        = R.drawable.memogotchi_vector,
+                    title       = "My Goal Buddies",
+                    subtitle    = "View and manage your connections",
+                    showChevron = true,
+                    onClick     = onOpenBuddyList
                 )
                 RowDivider()
             }

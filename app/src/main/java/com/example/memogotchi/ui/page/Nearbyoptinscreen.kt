@@ -49,7 +49,11 @@ private fun requiredNearbyPermissions(): Array<String> {
 }
 
 @Composable
-fun NearbyOptInScreen(onBack: () -> Unit = {}) {
+fun NearbyOptInScreen(
+    onBack: () -> Unit = {},
+    onShowQrCode: () -> Unit = {},
+    onScanQrCode: () -> Unit = {}
+) {
     val colors = LocalAppColors.current
     val context = LocalContext.current
 
@@ -190,6 +194,35 @@ fun NearbyOptInScreen(onBack: () -> Unit = {}) {
                 }
             }
         }
+
+        item { SectionLabel("CONNECT DIRECTLY") }
+        item {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp)) {
+                Text(
+                    text = "Not finding anyone nearby? Connect instantly with a code instead.",
+                    fontSize = 12.sp,
+                    fontFamily = Comfortaa,
+                    color = colors.textSecondary,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                Button(
+                    onClick = onShowQrCode,
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Show My Code", fontFamily = Comfortaa, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = onScanQrCode,
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.bg, contentColor = colors.accent),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Scan a Code", fontFamily = Comfortaa, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
 
         item {
             TextButton(

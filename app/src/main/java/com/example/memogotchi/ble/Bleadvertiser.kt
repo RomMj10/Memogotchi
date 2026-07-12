@@ -9,6 +9,8 @@ import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
 import android.util.Log
 
+enum class BleRadioMode { LOW_POWER, LOW_LATENCY }
+
 /**
  * Caller is responsible for confirming BLUETOOTH_ADVERTISE (API 31+) or
  * having Bluetooth otherwise usable before calling start() — this class
@@ -31,7 +33,7 @@ class BleAdvertiser(private val context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    fun start(tokenHex: String) {
+    fun start(tokenHex: String, mode: BleRadioMode = BleRadioMode.LOW_LATENCY) {
         val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         val adapter = bluetoothManager?.adapter
         if (adapter == null || !adapter.isEnabled) {
@@ -50,9 +52,18 @@ class BleAdvertiser(private val context: Context) {
             Log.w(tag, "Unexpected token byte length: ${tokenBytes.size}, expected ${BleConstants.TOKEN_BYTE_LENGTH}")
         }
 
+        val advertiseMode = when (mode) {
+            BleRadioMode.LOW_LATENCY -> AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY
+            BleRadioMode.LOW_POWER -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER
+        }
+        val txPower = when (mode) {
+            BleRadioMode.LOW_LATENCY -> AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
+            BleRadioMode.LOW_POWER -> AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
+        }
+
         val settings = AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+            .setAdvertiseMode(advertiseMode)
+            .setTxPowerLevel(txPower)
             .setConnectable(false)
             .build()
 

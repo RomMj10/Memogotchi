@@ -15,11 +15,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- * Active nearby mode: runs BLE advertising + scanning continuously while
- * the user has explicitly asked to "find a buddy now." Requires a
- * persistent notification per Android's foreground service rules.
- */
 class NearbyForegroundService : Service() {
 
     companion object {
@@ -46,13 +41,15 @@ class NearbyForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground(NOTIFICATION_ID, buildNotification())
-        scanner.start()
+        scanner.start(BleRadioMode.LOW_LATENCY)
 
         serviceScope.launch {
+            var lastToken: String? = null
             while (true) {
                 val token = NearbyTokenManager.ensureFreshToken()
-                if (token != null) {
-                    advertiser.start(token)
+                if (token != null && token != lastToken) {
+                    advertiser.start(token, BleRadioMode.LOW_LATENCY)
+                    lastToken = token
                 }
                 delay(TOKEN_CHECK_INTERVAL_MS)
             }

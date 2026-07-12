@@ -43,4 +43,7 @@ interface GoalBuddyApiService {
 
     @POST("events/insight")
     suspend fun updateInsightShare(@Body body: UpdateInsightRequest): UpdateInsightResponse
+
+    @POST("nearby/checkReady")
+    suspend fun checkNearbyReady(@Body request: CheckNearbyReadyRequest): CheckNearbyReadyResponse
 }

@@ -96,16 +96,44 @@ import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.SetOptions
 import com.example.memogotchi.ui.page.SignInScreen
 import com.example.memogotchi.ui.page.NearbyOptInScreen
+import com.example.memogotchi.fcm.NearbyDeepLinkState
+import com.example.memogotchi.ui.page.StandbyScreen
+import com.example.memogotchi.ui.page.CircleMapScreen
+import com.example.memogotchi.ui.page.IncomingBuddyRequestOverlay
+//buddy
+import com.example.memogotchi.ui.page.BuddyListScreen
+import com.example.memogotchi.ui.page.BuddyDetailScreen
+import com.example.memogotchi.ui.page.CreateEventScreen
+import com.example.memogotchi.ui.page.IncomingEventInviteOverlay
+import com.example.memogotchi.ui.page.SharedGoalScreen
+import com.example.memogotchi.usage.UsageReportScheduler
+import com.example.memogotchi.ui.page.ShowQrCodeScreen
+import com.example.memogotchi.ui.page.ScanQrCodeScreen
 
 val AppTheme = LocalAppColors
 
 class MainActivity : ComponentActivity() {
+
+    private fun handleDeepLinkIntent(intent: Intent?) {
+        if (intent?.getStringExtra("deepLinkTarget") == "standby") {
+            val matchId = intent.getStringExtra("matchId")
+            NearbyDeepLinkState.set(matchId)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleDeepLinkIntent(intent)
+    }
+
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     @RequiresApi(Build.VERSION_CODES.Q)
     @androidx.annotation.RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        handleDeepLinkIntent(intent)
 
         AppSettings.init(this)
         createNotificationChannel(this)
@@ -124,20 +152,56 @@ class MainActivity : ComponentActivity() {
                     fontScale = baseDensity.fontScale * AppSettings.textSize.scale
                 )
             }
+
             MemogotchiTheme {
                 CompositionLocalProvider(LocalDensity provides scaledDensity, LocalAppColors provides appColors) {
                     var currentUser by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
+                    var activeOtherUserId by remember { mutableStateOf<String?>(null) }
+                    val pendingMatchId = NearbyDeepLinkState.pendingMatchId.value
 
-                    if (currentUser == null) {
-                        SignInScreen(onSignedIn = { user ->
-                            currentUser = user
-                            FirebaseMessaging.getInstance().token.addOnSuccessListener { fcmToken ->
+                    LaunchedEffect(currentUser) {
+                        if (currentUser != null) UsageReportScheduler.schedule(applicationContext)
+                    }
+
+                    when {
+                        currentUser == null -> {
+                            SignInScreen(onSignedIn = { user ->
+                                currentUser = user
                                 Firebase.firestore.collection("users").document(user.uid)
-                                    .set(mapOf("fcmToken" to fcmToken), SetOptions.merge())
-                            }
-                        })
-                    } else {
-                        MainShell(windowSizeClass)
+                                    .set(mapOf("displayName" to (user.displayName ?: "A memo")), SetOptions.merge())
+                                FirebaseMessaging.getInstance().token.addOnSuccessListener { fcmToken ->
+                                    Firebase.firestore.collection("users").document(user.uid)
+                                        .set(mapOf("fcmToken" to fcmToken), SetOptions.merge())
+                                }
+                                UsageReportScheduler.schedule(applicationContext)
+                            })
+                        }
+                        pendingMatchId != null -> {
+                            StandbyScreen(
+                                matchId = pendingMatchId,
+                                onBothReady = { otherUserId ->
+                                    activeOtherUserId = otherUserId
+                                    NearbyDeepLinkState.consume()
+                                },
+                                onCancel = { NearbyDeepLinkState.consume() }
+                            )
+                            IncomingBuddyRequestOverlay()
+                            IncomingEventInviteOverlay()
+                        }
+                        activeOtherUserId != null -> {
+                            CircleMapScreen(
+                                otherUserId = activeOtherUserId!!,
+                                onConnected = { activeOtherUserId = null },
+                                onBack = { activeOtherUserId = null }
+                            )
+                            IncomingBuddyRequestOverlay()
+                            IncomingEventInviteOverlay()
+                        }
+                        else -> {
+                            MainShell(windowSizeClass)
+                            IncomingBuddyRequestOverlay()
+                            IncomingEventInviteOverlay()
+                        }
                     }
                 }
             }
@@ -207,6 +271,12 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     val startupComplete = !petName.isNullOrBlank() && hasPermission
     var totalXp by remember { mutableStateOf(XpStore.loadXp(context)) }
     var showNearbyOptIn by remember { mutableStateOf(false) }
+    var showBuddyList by remember { mutableStateOf(false) }
+    var selectedBuddy by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var showCreateEvent by remember { mutableStateOf(false) }
+    var selectedEventId by remember { mutableStateOf<String?>(null) }
+    var showShowQrCode by remember { mutableStateOf(false) }
+    var showScanQrCode by remember { mutableStateOf(false) }
 
 
     // ── Wellness state hoisted here so it survives tab switches ──────────
@@ -420,7 +490,8 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                     SettingsScreen(
                         currentPetName = petName ?: "",
                         onPetRenamed = { newName -> petName = newName },
-                        onOpenGoalBuddy = { showNearbyOptIn = true }
+                        onOpenGoalBuddy = { showNearbyOptIn = true },
+                        onOpenBuddyList = { showBuddyList = true }
                     )
                 } else if (showActivityTree) {
                     ActivityTreeScreen(
@@ -446,7 +517,60 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                         onBack = { showSchedule = false }
                     )
                 }  else if (showNearbyOptIn) {
-            NearbyOptInScreen(onBack = { showNearbyOptIn = false })
+                    NearbyOptInScreen(
+                        onBack = { showNearbyOptIn = false },
+                        onShowQrCode = {
+                            showNearbyOptIn = false
+                            showShowQrCode = true
+                        },
+                        onScanQrCode = {
+                            showNearbyOptIn = false
+                            showScanQrCode = true
+                        }
+                    )
+                } else if (showShowQrCode) {
+                    ShowQrCodeScreen(
+                        onBack = {
+                            showShowQrCode = false
+                            showNearbyOptIn = true
+                        }
+                    )
+                } else if (showScanQrCode) {
+                    ScanQrCodeScreen(
+                        onBack = {
+                            showScanQrCode = false
+                            showNearbyOptIn = true
+                        },
+                        onMatched = { matchId ->
+                            showScanQrCode = false
+                            NearbyDeepLinkState.set(matchId)
+                        }
+                    )
+                } else if (showCreateEvent && selectedBuddy != null) {
+                    CreateEventScreen(
+                        buddyConnectionId = selectedBuddy!!.first,
+                        onCreated = { showCreateEvent = false },
+                        onBack = { showCreateEvent = false }
+                    )
+                } else if (selectedEventId != null) {
+                    SharedGoalScreen(
+                        eventId = selectedEventId!!,
+                        onBack = { selectedEventId = null }
+                    )
+                } else if (selectedBuddy != null) {
+                    BuddyDetailScreen(
+                        buddyId = selectedBuddy!!.first,
+                        otherUserId = selectedBuddy!!.second,
+                        onCreateEvent = { showCreateEvent = true },
+                        onOpenEvent = { eventId -> selectedEventId = eventId },
+                        onConnectionEnded = { selectedBuddy = null },
+                        onBack = { selectedBuddy = null }
+                    )
+                } else if (showBuddyList) {
+            BuddyListScreen(
+                onOpenBuddy = { buddyId, otherUserId -> selectedBuddy = buddyId to otherUserId },
+                onBack = { showBuddyList = false }
+            )
         } else {
                     when (currentTab) {
                         NavTab.PET -> PetScreen(
@@ -654,6 +778,11 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             showActivityTree = false
                             showPersonality = false
                             showNearbyOptIn = false
+                            showBuddyList = false
+                            selectedBuddy = null
+                            selectedEventId = null
+                            showShowQrCode = false
+                            showScanQrCode = false
                             currentTab = NavTab.PET
                         }
                     )
@@ -665,6 +794,11 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             showActivityTree = false
                             showPersonality = false
                             showNearbyOptIn = false
+                            showBuddyList = false
+                            selectedBuddy = null
+                            selectedEventId = null
+                            showShowQrCode = false
+                            showScanQrCode = false
                             currentTab = NavTab.WELLNESS
                         }
                     )
@@ -686,6 +820,11 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             showActivityTree = false
                             showPersonality = false
                             showNearbyOptIn = false
+                            showBuddyList = false
+                            selectedBuddy = null
+                            selectedEventId = null
+                            showShowQrCode = false
+                            showScanQrCode = false
                             currentTab = NavTab.SHOP
                         }
                     )
@@ -697,6 +836,11 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             showPersonality = false
                             showActivityTree = false
                             showNearbyOptIn = false
+                            showBuddyList = false
+                            selectedBuddy = null
+                            selectedEventId = null
+                            showShowQrCode = false
+                            showScanQrCode = false
                             currentTab = NavTab.TASKS
                         }
                     )

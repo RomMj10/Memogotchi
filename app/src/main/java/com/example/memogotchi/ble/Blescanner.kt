@@ -18,12 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * In-memory "last known RSSI per scanned token" store, exposed as a
- * StateFlow so Compose screens (e.g. Step 6's CircleMapScreen) can
- * observe it reactively via collectAsState() instead of polling.
- * BleScanner updates this on every scan result.
- */
 object NearbyRssiRepository {
     private val _rssiByToken = MutableStateFlow<Map<String, Int>>(emptyMap())
     val rssiByToken: StateFlow<Map<String, Int>> = _rssiByToken
@@ -35,15 +29,6 @@ object NearbyRssiRepository {
     fun getRssi(tokenHex: String): Int? = _rssiByToken.value[tokenHex]
 }
 
-/**
- * Caller is responsible for confirming BLUETOOTH_SCAN (API 31+) or
- * ACCESS_FINE_LOCATION (pre-API 31) before calling start().
- *
- * @param onMatched invoked with matchId whenever resolveNearbyToken returns
- *   a genuine match. Note the push notification is already sent server-side
- *   at that point — this callback is mainly for local logging/testing until
- *   Step 5/6 give it something more to do.
- */
 class BleScanner(
     private val context: Context,
     private val scope: CoroutineScope,
@@ -53,8 +38,6 @@ class BleScanner(
     private var scanner: BluetoothLeScanner? = null
     private var isScanning = false
 
-    // Prevents hammering the API with a resolve call for every single scan
-    // callback of the same token — BLE devices rebroadcast frequently.
     private val recentlyResolvedTokens = mutableSetOf<String>()
 
     private val callback = object : ScanCallback() {
@@ -89,8 +72,6 @@ class BleScanner(
             } catch (e: Exception) {
                 Log.e(tag, "resolveNearbyToken failed", e)
             } finally {
-                // Allow re-resolution after a short window in case this
-                // attempt failed transiently (e.g. a network blip).
                 delay(30_000L)
                 recentlyResolvedTokens.remove(tokenHex)
             }
@@ -98,7 +79,7 @@ class BleScanner(
     }
 
     @SuppressLint("MissingPermission")
-    fun start() {
+    fun start(mode: BleRadioMode = BleRadioMode.LOW_LATENCY) {
         val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         val adapter = bluetoothManager?.adapter
         if (adapter == null || !adapter.isEnabled) {
@@ -113,11 +94,19 @@ class BleScanner(
         }
 
         val filter = ScanFilter.Builder()
-            .setServiceUuid(BleConstants.SERVICE_PARCEL_UUID)
+            .setServiceData(
+                BleConstants.SERVICE_PARCEL_UUID,
+                ByteArray(BleConstants.TOKEN_BYTE_LENGTH),
+                ByteArray(BleConstants.TOKEN_BYTE_LENGTH)
+            )
             .build()
 
+        val scanMode = when (mode) {
+            BleRadioMode.LOW_LATENCY -> ScanSettings.SCAN_MODE_LOW_LATENCY
+            BleRadioMode.LOW_POWER -> ScanSettings.SCAN_MODE_BALANCED
+        }
         val settings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setScanMode(scanMode)
             .build()
 
         stop()
