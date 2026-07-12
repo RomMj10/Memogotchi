@@ -58,7 +58,10 @@ fun BuddyDetailScreen(
         val registration: ListenerRegistration = Firebase.firestore.collection("buddy_events")
             .whereEqualTo("buddyConnectionId", buddyId)
             .orderBy("createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, _ ->
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    android.util.Log.e("BuddyDetailScreen", "buddy_events listener failed", error)
+                }
                 events = snapshot?.documents?.mapNotNull { doc ->
                     val goalConfig = doc.get("goalConfig") as? Map<*, *> ?: return@mapNotNull null
                     BuddyEventSummary(
