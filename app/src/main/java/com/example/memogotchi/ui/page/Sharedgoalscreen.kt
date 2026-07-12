@@ -23,19 +23,14 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import androidx.compose.ui.platform.LocalContext
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.memogotchi.usage.UsageReportWorker
 
 private const val AMBER_THRESHOLD = 0.8f
 private const val RED_THRESHOLD = 1.0f
 
-/**
- * Reached from BuddyDetailScreen's event list (onOpenEvent(eventId)).
- *
- * Shows both memos side by side, a progress bar per participant driven by
- * insight_shares (which Firestore rules only return rows for where
- * consentActive == true — a non-consenting buddy simply produces no row here,
- * which this screen renders as an explicit "hasn't shared" state, not a blank
- * gap), and a consent toggle for the CURRENT user only.
- */
 @Composable
 fun SharedGoalScreen(
     eventId: String,
@@ -43,6 +38,7 @@ fun SharedGoalScreen(
 ) {
     val colors = LocalAppColors.current
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val myUid = remember { FirebaseAuth.getInstance().currentUser?.uid ?: "" }
 
     var goalConfig by remember { mutableStateOf<GoalConfig?>(null) }
@@ -55,22 +51,22 @@ fun SharedGoalScreen(
     var consentLoaded by remember { mutableStateOf(false) }
     var isTogglingConsent by remember { mutableStateOf(false) }
 
-    // userId -> (minutesUsed, updatedAtMillis). Only ever contains rows Firestore
-    // rules allowed through, i.e. rows with consentActive == true.
     var insightByUser by remember { mutableStateOf<Map<String, Pair<Double, Long>>>(emptyMap()) }
 
-    // Event doc: goalConfig + buddyConnectionId. Listened (not one-shot) so a
-    // goal edited/ended elsewhere is reflected here without a manual refresh.
+    // Event doc: goalConfig + buddyConnectionId.
     DisposableEffect(eventId) {
         val reg: ListenerRegistration = Firebase.firestore.collection("buddy_events")
             .document(eventId)
-            .addSnapshotListener { snap, _ ->
+            .addSnapshotListener { snap, error ->
+                if (error != null) {
+                    android.util.Log.e("SharedGoalScreen", "buddy_events listener failed", error)
+                }
                 if (snap != null && snap.exists()) {
                     val gc = snap.get("goalConfig") as? Map<*, *>
                     if (gc != null) {
                         goalConfig = GoalConfig(
                             targetApp = gc["targetApp"] as? String,
-                            limitMinutes = (gc["limitMinutes"] as? Long)?.toInt(),
+                            limitMinutes = (gc["limitMinutes"] as? Number)?.toInt(),
                             metricType = gc["metricType"] as? String ?: "screen_time_limit",
                             duration = gc["duration"] as? String ?: "today"
                         )
@@ -83,8 +79,7 @@ fun SharedGoalScreen(
         onDispose { reg.remove() }
     }
 
-    // Resolve "the other user" from the goal_buddies doc, same approach as
-    // Step 7/8's overlay and buddy list screens.
+    // Resolve "the other user" from the goal_buddies doc.
     LaunchedEffect(buddyConnectionId) {
         val bcId = buddyConnectionId ?: return@LaunchedEffect
         try {
@@ -101,7 +96,7 @@ fun SharedGoalScreen(
         }
     }
 
-    // My own consent state for this specific event (never a global flag).
+    // My own consent state for this specific event.
     DisposableEffect(eventId, myUid) {
         if (myUid.isEmpty()) return@DisposableEffect onDispose { }
         val reg = Firebase.firestore.collection("buddy_event_participants")
@@ -117,12 +112,17 @@ fun SharedGoalScreen(
         onDispose { reg.remove() }
     }
 
-    // Live progress. Keeps the most recently updated row per user in case
-    // insight_shares ever holds more than one doc per (event, user).
+    // Live progress. consentActive filter is required — matches the Firestore
+    // rule (resource.data.consentActive == true), and Firestore requires
+    // collection queries to be provably scoped to what the rule allows.
     DisposableEffect(eventId) {
         val reg = Firebase.firestore.collection("insight_shares")
             .whereEqualTo("eventId", eventId)
-            .addSnapshotListener { snap, _ ->
+            .whereEqualTo("consentActive", true)
+            .addSnapshotListener { snap, error ->
+                if (error != null) {
+                    android.util.Log.e("SharedGoalScreen", "insight_shares listener failed", error)
+                }
                 val latest = mutableMapOf<String, Pair<Double, Long>>()
                 snap?.documents?.forEach { doc ->
                     val userId = doc.getString("userId") ?: return@forEach
@@ -199,7 +199,6 @@ fun SharedGoalScreen(
             )
         }
 
-        // ── Side-by-side memos ──────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -262,7 +261,6 @@ fun SharedGoalScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        // ── Consent toggle (current user only, per-event) ───────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
