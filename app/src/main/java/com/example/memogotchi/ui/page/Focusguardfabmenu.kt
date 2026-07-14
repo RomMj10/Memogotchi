@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -53,8 +55,14 @@ fun FocusGuardFabMenu(
 ) {
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(tween(200)),
-        exit = fadeOut(tween(150))
+        enter = fadeIn(tween(200)) + slideInVertically(
+            initialOffsetY = { -30 },
+            animationSpec = tween(200)
+        ),
+        exit = fadeOut(tween(150)) + slideOutVertically(
+            targetOffsetY = { -30 },
+            animationSpec = tween(150)
+        )
     ) {
         Box(
             modifier = Modifier

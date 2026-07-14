@@ -222,19 +222,9 @@ fun PhoneLayout(weekData: List<DayData>, petState: PetState) {
 
     Column(modifier = Modifier.fillMaxSize()) {
 
-        // ── Pet area (top ~40% of screen) ────────────────────────────────────
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.63f),
-            contentAlignment = Alignment.Center
-        ) {
-            PetPlaceholder(
-                petState = petState,
-                modifier = Modifier.fillMaxSize()
-            )
+        Row(modifier = Modifier.padding(horizontal = 20.dp, vertical = 40.dp)) {
+            Text("ScreenTime", fontSize = 22.sp, fontFamily = GildaDisplay, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary)
         }
-
         // ── Tab switcher ─────────────────────────────────────────────────────
         Row(
             modifier = Modifier
@@ -280,13 +270,6 @@ fun TabletLayout(weekData: List<DayData>, petState: PetState) {
         Text("Memogotchi", fontSize = 22.sp, fontFamily = GildaDisplay, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ── Pet (smaller, centered) ───────────────────────────────────────────
-        Box(
-            modifier = Modifier.fillMaxWidth().height(180.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            PetPlaceholder(petState = petState, modifier = Modifier.fillMaxSize())
-        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -306,47 +289,6 @@ fun TabletLayout(weekData: List<DayData>, petState: PetState) {
                     compact     = false
                 )
             }
-        }
-    }
-}
-@Composable
-fun PetPlaceholder(petState: PetState, modifier: Modifier = Modifier) {
-
-    val rawRes = when (petState.mood) {
-        PetMood.IDLE   -> R.raw.pet_idle
-        PetMood.HAPPY   -> R.raw.pet_idle//R.raw.pet_happy
-        PetMood.CONCERNED   -> R.raw.pet_concerned
-        PetMood.TIRED   -> R.raw.pet_concerned
-        PetMood.ALARMED   -> R.raw.pet_concerned
-
-    }
-
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(rawRes)
-    )
-    val progress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever
-    )
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Spacer(modifier = Modifier.height(64.dp))
-
-            LottieAnimation(
-                composition = composition,
-                progress    = { progress },
-                modifier    = Modifier.height(400.dp).width(512.dp)
-            )
-            // ─────────────────────────────────────────────────────────────────
-
-            // Mood label (remove once real animation shows mood visually)
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text  = petState.mood.name.lowercase().replaceFirstChar { it.uppercase() },
-                fontSize = 16.sp,
-                fontFamily = Comfortaa,
-                color = AppTheme.current.textSecondary
-            )
         }
     }
 }

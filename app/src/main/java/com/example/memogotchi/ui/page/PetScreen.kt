@@ -242,6 +242,7 @@ fun PetScreen(
                             .offset(y = -90.dp)
                             .scale(1.7f)
                             .zIndex(-999.9f)
+                            .clip(RoundedCornerShape(256.dp)),
                     )
                 }
                 // Pet overflows upward beyond the Box bounds

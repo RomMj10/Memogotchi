@@ -180,11 +180,6 @@ fun ShopScreen(onBack: () -> Unit = {}) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                Icons.Outlined.ArrowBack, contentDescription = "Back",
-                tint = AppTheme.current.textPrimary,
-                modifier = Modifier.size(24.dp).clickable { onBack() }.padding(start = 8.dp)
-            )
             Spacer(Modifier.width(8.dp))
             Text(
                 "Shop", fontFamily = GildaDisplay, fontSize = 20.sp,

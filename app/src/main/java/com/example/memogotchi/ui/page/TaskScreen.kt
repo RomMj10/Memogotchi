@@ -371,7 +371,7 @@ fun HeaderCard(taskCount: Int, totalFocusLabel: String, batteryLevel: Int) {
             Text(
                 text = "Tasks",
                 fontFamily = GildaDisplay,
-                fontSize = 32.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 color = AppTheme.current.textPrimary,
             )

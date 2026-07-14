@@ -55,7 +55,6 @@ fun SettingsScreen(today: DayData? = null,
     val colors = LocalAppColors.current
     val context = LocalContext.current
 
-    var strictMode by remember { mutableStateOf(false) }
     var showRenamePetDialog by remember { mutableStateOf(false) }
 
     var monochromeUI by remember { mutableStateOf(false) }
@@ -95,7 +94,6 @@ fun SettingsScreen(today: DayData? = null,
             )
         }
 
-        //Focus Controls
         item { SectionLabel("FOCUS CONTROLS") }
         item {
             SettingsGroup {
@@ -105,15 +103,6 @@ fun SettingsScreen(today: DayData? = null,
                     subtitle    = limitSubtitle,
                     showChevron = true,
                     onClick     = { showDailyLimitDialog = true }
-                )
-                RowDivider()
-                SettingsRow(
-                    icon     = R.drawable.outline_timer_off_icon,
-                    title    = "Strict Mode",
-                    subtitle = "Disable app opening",
-                    trailing = {
-                        SettingsSwitch(checked = strictMode, onCheckedChange = { strictMode = it })
-                    }
                 )
                 RowDivider()
                 SettingsRow(
@@ -175,6 +164,7 @@ fun SettingsScreen(today: DayData? = null,
                     }
                 )
                 RowDivider()
+                Text("App Theme", fontSize = 14.sp, color = colors.textPrimary, fontFamily = Comfortaa, modifier = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 10.dp))
                 ColorSlotPicker("Background", ColorPresets.bg, AppSettings.bgIndex) {
                     AppSettings.bgIndex = it
                     AppSettings.setColorIndex(context, "bg_index", it)
@@ -233,7 +223,6 @@ fun SettingsScreen(today: DayData? = null,
         item { SectionLabel("DATA") }
         item {
             SettingsGroup {
-                RowDivider()
                 SettingsRow(
                     icon        = R.drawable.outline_file_export_icon,
                     title       = "Export Data",
@@ -556,10 +545,9 @@ fun SettingsSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
 
 @Composable
 fun ColorSlotPicker(label: String, options: List<Color>, selected: Int, onSelect: (Int) -> Unit) {
-    val colors = LocalAppColors.current
     Column(Modifier.padding(vertical = 8.dp, horizontal = 12.dp)) {
-        Text(label, fontSize = 11.sp, color = Color(0xFF888888))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 6.dp)) {
+        Text(label, fontSize = 11.sp, color = Color(0xFF888888), modifier = Modifier.padding(start = 20.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 6.dp, start = 20.dp)) {
             options.forEachIndexed { i, c ->
                 Box(
                     Modifier.size(32.dp).clip(CircleShape).background(c)

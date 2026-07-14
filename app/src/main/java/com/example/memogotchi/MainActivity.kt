@@ -490,8 +490,14 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                     SettingsScreen(
                         currentPetName = petName ?: "",
                         onPetRenamed = { newName -> petName = newName },
-                        onOpenGoalBuddy = { showNearbyOptIn = true },
-                        onOpenBuddyList = { showBuddyList = true }
+                        onOpenGoalBuddy = {
+                            showNearbyOptIn = true
+                            showSettings = false
+                                          },
+                        onOpenBuddyList = {
+                            showBuddyList = true
+                            showSettings = false
+                        }
                     )
                 } else if (showActivityTree) {
                     ActivityTreeScreen(
@@ -518,7 +524,10 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                     )
                 }  else if (showNearbyOptIn) {
                     NearbyOptInScreen(
-                        onBack = { showNearbyOptIn = false },
+                        onBack = {
+                            showNearbyOptIn = false
+                            showSettings = true
+                                 },
                         onShowQrCode = {
                             showNearbyOptIn = false
                             showShowQrCode = true
@@ -569,7 +578,10 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 } else if (showBuddyList) {
             BuddyListScreen(
                 onOpenBuddy = { buddyId, otherUserId -> selectedBuddy = buddyId to otherUserId },
-                onBack = { showBuddyList = false }
+                onBack = {
+                    showBuddyList = false
+                    showSettings = true
+                }
             )
         } else {
                     when (currentTab) {
@@ -683,7 +695,6 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                 }
             }
 
-
             // Gear icon on Pet tab
             if (currentTab == NavTab.PET && !showSettings && !showActivityTree && !showAppBlocker && !showAppTimer && !showSchedule && !showPersonality) {
                 IconButton(
@@ -691,7 +702,10 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(top = 12.dp, end = 12.dp)
-                        .offset(x = (-12).dp, y = 32.dp)
+                        .offset(x = (-12).dp, y = 32.dp),
+                    colors = IconButtonDefaults.iconButtonColors(containerColor = AppTheme.current.surface),
+                    shape = RoundedCornerShape(24.dp)
+
                 ) {
                     Icon(
                         Icons.Outlined.Settings, contentDescription = "Settings",

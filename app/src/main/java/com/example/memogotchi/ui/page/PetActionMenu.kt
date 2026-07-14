@@ -153,7 +153,7 @@ fun MiniTaskPanel(
                         fontFamily = GildaDisplay,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFE6FCFF)
+                        color = AppTheme.current.accent
                     )
                 }
 
