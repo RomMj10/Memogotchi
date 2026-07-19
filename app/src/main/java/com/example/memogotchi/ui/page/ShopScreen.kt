@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -15,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,8 +46,18 @@ import org.json.JSONArray
 enum class ShopCategory(val label: String) {
     PET("Pet"),
     ROOM("Room"),
-    OTHER("Other")
+    REWARDS("Rewards")
 }
+
+data class RewardOffer(
+    val id:String,
+    val title:String,
+    val subtitle:String,
+    val cost:Int,
+    val emoji:String,
+    val isFeatured: Boolean = false
+)
+
 data class ShopItem(
     val id: String,
     val name: String,
@@ -54,6 +66,17 @@ data class ShopItem(
     @DrawableRes @RawRes val assetRes: Int,
     val isUnlocked: Boolean = false,
 )
+
+// Customize the offer list here
+// the id is for unique identification in RewardsStore
+// you can change the emoji to actual images if you need to..
+val rewardOffers: List<RewardOffer> = listOf(
+    RewardOffer("reward_cash_5", "$5 Cash Reward", "Redeem points for cash", 500, "💵", isFeatured = true),// this will be featured at the top most view for rewards
+    RewardOffer("reward_sub_1mo", "1 Month Subscription", "Redeem for a 1 month subscription", 300, "⭐"),// for example: primevideo, spotify subscriptions
+    RewardOffer("reward_cash_2", "$2 Cash Reward", "Redeem points for cash", 200, "💵"),
+    RewardOffer("reward_giftcard", "$10 Gift Card", "Redeem for a gift card", 900, "🎁"),
+)
+
 val shopCatalog: List<ShopItem> = listOf(
     ShopItem(
         id = "pet_headphone_black",
@@ -151,6 +174,24 @@ object ShopStore {
         ShopCategory.entries.mapNotNull { cat -> equippedItemId(ctx, cat)?.let { cat to it } }.toMap()
 }
 
+object RewardsStore {
+    private const val PREFS = "memogotchi_rewards"
+    private const val KEY_REDEEMED = "redeemed_ids"
+    private fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    fun loadRedeemedIds(ctx: Context): Set<String> {
+        val str = prefs(ctx).getString(KEY_REDEEMED, null) ?: return emptySet()
+        return try { JSONArray(str).let { arr -> (0 until arr.length()).map { arr.getString(it) }.toSet() } }
+        catch (e: Exception) { emptySet() }
+    }
+
+    fun markRedeemed(ctx: Context, id: String) {
+        val updated = loadRedeemedIds(ctx) + id
+        val arr = JSONArray(); updated.forEach { arr.put(it) }
+        prefs(ctx).edit().putString(KEY_REDEEMED, arr.toString()).apply()
+    }
+}
+
 @Composable
 fun ShopScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
@@ -158,6 +199,10 @@ fun ShopScreen(onBack: () -> Unit = {}) {
     var totalXp by remember { mutableStateOf(XpStore.loadXp(context)) }
     var unlockedIds by remember { mutableStateOf(ShopStore.loadUnlockedIds(context)) }
     var previewItem by remember { mutableStateOf<ShopItem?>(null) }
+
+    var redeemedIds by remember { mutableStateOf(RewardsStore.loadRedeemedIds(context)) }
+    var previewReward by remember { mutableStateOf<RewardOffer?>(null) }
+    var confirmReward by remember { mutableStateOf<RewardOffer?>(null) }
 
     val itemsForTab = remember(selectedCategory, unlockedIds) {
         shopCatalog
@@ -175,7 +220,6 @@ fun ShopScreen(onBack: () -> Unit = {}) {
 
     Column(modifier = Modifier.fillMaxSize().background(AppTheme.current.bg)) {
 
-        // ── Header ────────────────────────────────────────────────────────
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -220,8 +264,13 @@ fun ShopScreen(onBack: () -> Unit = {}) {
 
         Spacer(Modifier.height(16.dp))
 
-        // ── Grid / empty state ───────────────────────────────────────────
-        if (itemsForTab.isEmpty()) {
+        if (selectedCategory == ShopCategory.REWARDS){
+            RewardsTabContent(
+                offers = rewardOffers,
+                redeemedIds = redeemedIds,
+                onOfferClick = { previewReward = it}
+            )
+        } else if (itemsForTab.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
@@ -261,6 +310,25 @@ fun ShopScreen(onBack: () -> Unit = {}) {
                 purchase(item)
                 previewItem = null
             }
+        )
+    }
+    previewReward?.let { offer ->
+        RewardDetailPanel(
+            offer = offer, totalXp = totalXp, redeemed = offer.id in redeemedIds,
+            onDismiss = { previewReward = null },
+            onRedeemRequest = { confirmReward = offer; previewReward = null }
+        )
+    }
+    confirmReward?.let { offer ->
+        RewardConfirmDialog(
+            offer = offer,
+            onConfirm = {
+                totalXp = XpStore.addXp(context, -offer.cost)
+                RewardsStore.markRedeemed(context, offer.id)
+                redeemedIds = redeemedIds + offer.id
+                confirmReward = null
+            },
+            onCancel = { confirmReward = null }
         )
     }
 }
@@ -450,4 +518,169 @@ private fun ShopItemPreviewDialog(
             }
         }
     }
+}
+
+@Composable
+private fun RewardsTabContent(
+    offers: List<RewardOffer>,
+    redeemedIds: Set<String>,
+    onOfferClick: (RewardOffer) -> Unit,
+) {
+    val featured = offers.firstOrNull {it.isFeatured }
+    val rest = offers.filterNot { it.isFeatured }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Text(
+            "Exchange points for cash or subscriptions.",
+            fontFamily = Comfortaa, fontSize = 11.sp, color = AppTheme.current.textSecondary,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+        )
+        LazyColumnRewards(featured, rest, redeemedIds, onOfferClick)
+    }
+}
+
+@Composable
+private fun LazyColumnRewards(
+    featured: RewardOffer?,
+    rest: List<RewardOffer>,
+    redeemedIds: Set<String>,
+    onOfferClick: (RewardOffer) -> Unit,
+) {
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        if (featured != null) {
+            item { FeaturedRewardCard(featured, featured.id in redeemedIds) { onOfferClick(featured) } }
+        }
+        item {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.heightIn(max = 600.dp)
+            ) {
+                items(rest, key = { it.id }) { offer ->
+                    RewardOfferCard(offer, offer.id in redeemedIds) { onOfferClick(offer) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeaturedRewardCard(offer: RewardOffer, redeemed: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(AppTheme.current.accent.copy(alpha = 0.18f))
+            .border(1.dp, AppTheme.current.accent, RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(32.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(offer.emoji, fontSize = 32.sp)
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(offer.title, fontFamily = GildaDisplay, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary)
+                Spacer(Modifier.width(6.dp))
+                Box(
+                    modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(AppTheme.current.accent)
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) { Text("FEATURED", fontSize = 8.sp, color = AppTheme.current.bg, fontWeight = FontWeight.Bold) }
+            }
+            Text(offer.subtitle, fontFamily = Comfortaa, fontSize = 11.sp, color = AppTheme.current.textSecondary)
+        }
+        Text(
+            if (redeemed) "Redeemed" else "${offer.cost} XP",
+            fontFamily = Comfortaa, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+            color = if (redeemed) AppTheme.current.textSecondary else AppTheme.current.accent
+        )
+    }
+}
+@Composable
+private fun RewardOfferCard(offer: RewardOffer, redeemed: Boolean, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .aspectRatio(0.9f)
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, AppTheme.current.textSecondary.copy(alpha = 0.2f), RoundedCornerShape(14.dp))
+            .background(AppTheme.current.surface)
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Text(offer.emoji, fontSize = 30.sp)
+        }
+        Text(offer.title, fontSize = 11.sp, fontFamily = Comfortaa, fontWeight = FontWeight.Medium, color = AppTheme.current.textPrimary, maxLines = 1)
+        Text(
+            if (redeemed) "Redeemed" else "${offer.cost} XP",
+            fontSize = 10.sp, fontFamily = Comfortaa,
+            color = if (redeemed) AppTheme.current.accent else AppTheme.current.textSecondary
+        )
+    }
+}
+
+@Composable
+fun RewardDetailPanel(
+    offer: RewardOffer,
+    totalXp: Int,
+    redeemed: Boolean,
+    onDismiss: () -> Unit,
+    onRedeemRequest: () -> Unit,
+) {
+    val canAfford = totalXp >= offer.cost
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(AppTheme.current.surface).padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(offer.emoji, fontSize = 48.sp)
+            Spacer(Modifier.height(12.dp))
+            Text(offer.title, fontFamily = GildaDisplay, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = AppTheme.current.textPrimary, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(6.dp))
+            Text(offer.subtitle, fontFamily = Comfortaa, fontSize = 12.sp, color = AppTheme.current.textSecondary, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(16.dp))
+            Text(
+                if (redeemed) "Redeemed" else "${offer.cost} XP",
+                fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                color = if (redeemed) AppTheme.current.textSecondary else if (canAfford) AppTheme.current.accent else AppTheme.current.textSecondary
+            )
+            Spacer(Modifier.height(16.dp))
+            if (!redeemed) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                        .background(if (canAfford) AppTheme.current.accent else AppTheme.current.textSecondary.copy(alpha = 0.5f))
+                        .clickable(enabled = canAfford, onClick = onRedeemRequest)
+                        .padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        if (canAfford) "Redeem" else "Not enough XP",
+                        fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                        color = if (canAfford) AppTheme.current.bg else AppTheme.current.textSecondary
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+            TextButton(onClick = onDismiss) { Text("Close", color = AppTheme.current.textSecondary, fontSize = 13.sp) }
+        }
+    }
+}
+
+@Composable
+fun RewardConfirmDialog(offer: RewardOffer, onConfirm: () -> Unit, onCancel: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        containerColor = AppTheme.current.surface,
+        title = { Text("Confirm redemption", color = AppTheme.current.textPrimary, fontFamily = GildaDisplay, fontWeight = FontWeight.Bold) },
+        text = { Text("Redeem ${offer.cost} XP for \"${offer.title}\"?", color = AppTheme.current.textSecondary, fontFamily = Comfortaa) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Confirm", color = AppTheme.current.accent, fontWeight = FontWeight.Bold) } },
+        dismissButton = { TextButton(onClick = onCancel) { Text("Cancel", color = AppTheme.current.textSecondary) } }
+    )
 }
