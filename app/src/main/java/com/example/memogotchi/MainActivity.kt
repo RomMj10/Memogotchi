@@ -396,7 +396,8 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
         }
     }
 
-    LaunchedEffect(timerRunning) {
+    LaunchedEffect(timerRunning, activeTaskTimer) {
+        if (activeTaskTimer == null) return@LaunchedEffect
         while (timerRunning) {
             activeTaskTimer?.let { active ->
                 if (elapsedSeconds >= active.targetSeconds) {
@@ -452,6 +453,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
         PomodoroStore.reset(context)
         elapsedSeconds = 0L
         timerRunning = false
+        showVerificationSheet = false
     }
 
 
@@ -618,8 +620,10 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                             },
                             onReset = {
                                 PomodoroStore.reset(context)
+                                TaskTimerStore.unmarkPendingVerification(context)
                                 elapsedSeconds = 0L
                                 timerRunning = false
+                                showVerificationSheet = false
                             },
                             previewTasks = remember(weekData) {
                                 val dateKey = java.text.SimpleDateFormat(

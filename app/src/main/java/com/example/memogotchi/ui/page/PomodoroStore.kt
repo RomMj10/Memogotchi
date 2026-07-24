@@ -16,14 +16,14 @@ object PomodoroStore {
     fun loadElapsedSeconds(context: Context): Long {
         val p = prefs(context)
         val accumulated = p.getLong(KEY_ACCUMULATED, 0L)
-        val running = p.getBoolean(KEY_RUNNING, true)
+        val running = p.getBoolean(KEY_RUNNING, false)
         return if (running) {
             val start = p.getLong(KEY_START, System.currentTimeMillis())
             accumulated + (System.currentTimeMillis() - start) / 1000
         } else accumulated
     }
 
-    fun isRunning(context: Context): Boolean = prefs(context).getBoolean(KEY_RUNNING, true)
+    fun isRunning(context: Context): Boolean = prefs(context).getBoolean(KEY_RUNNING, false)
 
     fun loadMode(context: Context): TimerMode =
         runCatching { TimerMode.valueOf(prefs(context).getString(KEY_MODE, TimerMode.STOPWATCH.name) !!)

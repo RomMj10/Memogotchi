@@ -28,6 +28,7 @@ object TaskTimerStore {
             .putString(KEY_TASK_TITLE, taskTitle)
             .putInt(KEY_TARGET, durationMinutes * 60)
             .putString(KEY_DATE, dateKey)
+            .putBoolean(KEY_PENDING_VERIFICATION, false)
             .apply()
 
         if (canPostNotifications(context)) {
@@ -75,6 +76,10 @@ object TaskTimerStore {
         prefs(context).edit().putBoolean(KEY_PENDING_VERIFICATION, true).apply()
     }
 
+    fun unmarkPendingVerification(context: Context) {
+        prefs(context).edit().putBoolean(KEY_PENDING_VERIFICATION, false).apply()
+    }
+
     fun confirmVerifiedAndClear(context: Context, method: VerificationMethod): ActiveTaskTimer? {
         val active = load(context) ?: return null
         TaskStore.updateTaskDone(context, active.dateKey, active.taskId, true)
@@ -91,7 +96,11 @@ object TaskTimerStore {
                 dateLabel = active.dateKey,
             )
         )
-        XpStore.addXp(context, xpForTask(active.targetSeconds / 60))
+        
+        val baseXp = xpForTask(active.targetSeconds / 60)
+        val bonusXp = if (method == VerificationMethod.PHOTO) 15 else 0
+        XpStore.addXp(context, baseXp + bonusXp)
+
         clear(context)
         return active
     }
