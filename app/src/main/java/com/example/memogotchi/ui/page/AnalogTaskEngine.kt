@@ -8,6 +8,8 @@ import android.os.BatteryManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 
+enum class VerificationMethod {PHOTO, PREDEFINED}
+
 // ════════════════════════════════════════════════════════════════════════════
 //  MODELS
 // ════════════════════════════════════════════════════════════════════════════
@@ -34,6 +36,7 @@ data class AnalogTask(
     val durationMinutes: Int,
     val triggerReason: String,
     var isDone: Boolean = false,
+    var verificationMethod: VerificationMethod? = null,
 )
 
 // ════════════════════════════════════════════════════════════════════════════

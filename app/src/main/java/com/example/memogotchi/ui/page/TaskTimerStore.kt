@@ -7,6 +7,7 @@ data class ActiveTaskTimer(
     val taskTitle: String,
     val targetSeconds: Int,
     val dateKey: String,
+    val pendingVerification: Boolean = false,
 )
 
 fun xpForTask(durationMinutes: Int): Int = (10 + durationMinutes * 2).coerceAtLeast(10)
@@ -17,6 +18,7 @@ object TaskTimerStore {
     private const val KEY_TASK_TITLE = "active_task_title"
     private const val KEY_TARGET = "active_target_seconds"
     private const val KEY_DATE = "active_date_key"
+    private const val KEY_PENDING_VERIFICATION = "pending_verification"
 
     private fun prefs(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -65,10 +67,15 @@ object TaskTimerStore {
             taskTitle = p.getString(KEY_TASK_TITLE, "") ?: "",
             targetSeconds = p.getInt(KEY_TARGET, 0),
             dateKey = p.getString(KEY_DATE, "") ?: "",
+            pendingVerification = p.getBoolean(KEY_PENDING_VERIFICATION, false),
         )
     }
 
-    fun completeActiveTaskAndClear(context: Context): ActiveTaskTimer? {
+    fun markPendingVerification(context: Context) {
+        prefs(context).edit().putBoolean(KEY_PENDING_VERIFICATION, true).apply()
+    }
+
+    fun confirmVerifiedAndClear(context: Context, method: VerificationMethod): ActiveTaskTimer? {
         val active = load(context) ?: return null
         TaskStore.updateTaskDone(context, active.dateKey, active.taskId, true)
         val cachedTask = TaskStore.loadTasksForDate(context, active.dateKey)?.find { it.id == active.taskId }

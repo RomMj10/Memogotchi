@@ -82,6 +82,8 @@ import com.example.memogotchi.focusguard.AppBlockerScreen
 import com.example.memogotchi.focusguard.AppTimerScreen
 import com.example.memogotchi.focusguard.ScheduleScreen
 import com.example.memogotchi.focusguard.FocusGuardStore
+import com.example.memogotchi.ui.page.VerificationMethod
+import com.example.memogotchi.ui.page.TaskVerificationSheet
 import com.example.memogotchi.ui.page.XpStore
 import androidx.compose.ui.graphics.Path
 import androidx.compose.foundation.Canvas
@@ -277,6 +279,7 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     var selectedEventId by remember { mutableStateOf<String?>(null) }
     var showShowQrCode by remember { mutableStateOf(false) }
     var showScanQrCode by remember { mutableStateOf(false) }
+    var showVerificationSheet by remember { mutableStateOf(false) }
 
 
     // ── Wellness state hoisted here so it survives tab switches ──────────
@@ -350,6 +353,12 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
     var activeTaskTimer by remember { mutableStateOf(TaskTimerStore.load(context)) }
     var scheduledBlockedApps by remember { mutableStateOf<List<AppUsageInfo>>(emptyList()) }
 
+    LaunchedEffect(activeTaskTimer) {
+        if (activeTaskTimer?.pendingVerification == true) {
+            showVerificationSheet = true
+        }
+    }
+
     var isFirstDialogue by remember { mutableStateOf(true) }
     val hourNow = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
     val today = weekData.lastOrNull()
@@ -391,14 +400,10 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
         while (timerRunning) {
             activeTaskTimer?.let { active ->
                 if (elapsedSeconds >= active.targetSeconds) {
-                    TaskTimerStore.completeActiveTaskAndClear(context)
-                    totalXp = XpStore.loadXp(context)
-                    taskAnnouncement = DialoguePool.randomLine(DialogueCategory.TASK_DONE)
-                        ?.fillTemplate("task" to active.taskTitle, "name" to (petName ?: ""))
-                    activeTaskTimer = null
-                    PomodoroStore.reset(context)
-                    elapsedSeconds = 0L
                     timerRunning = false
+                    TaskTimerStore.markPendingVerification(context)
+                    activeTaskTimer = TaskTimerStore.load(context)
+                    showVerificationSheet = true
                 }
             }
             if (!timerRunning) break
@@ -895,6 +900,23 @@ fun MainShell(windowSizeClass: WindowSizeClass) {
                     showFocusGuardMenu = false
                 }
             )
+
+            if (showVerificationSheet && activeTaskTimer != null) {
+                TaskVerificationSheet(
+                    activeTask = activeTaskTimer!!,
+                    onDismiss = { showVerificationSheet = false },
+                    onVerified = { method: VerificationMethod ->
+                        val completed = TaskTimerStore.confirmVerifiedAndClear(context, method)
+                        totalXp = XpStore.loadXp(context)
+                        taskAnnouncement = DialoguePool.randomLine(DialogueCategory.TASK_DONE)
+                            ?.fillTemplate("task" to (completed?.taskTitle ?: ""), "name" to (petName ?: ""))
+                        activeTaskTimer = null
+                        PomodoroStore.reset(context)
+                        elapsedSeconds = 0L
+                        showVerificationSheet = false
+                    }
+                )
+            }
 
         }
     }

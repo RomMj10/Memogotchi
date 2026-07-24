@@ -1,8 +1,10 @@
 package com.example.memogotchi.ui.page
 
+import android.graphics.BitmapFactory
 import android.util.Log
 import com.example.memogotchi.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -103,4 +105,12 @@ private fun parseGeminiTasks(json: String): List<AnalogTask> {
     } catch (e: Exception) {
         emptyList()
     }
+}
+
+suspend fun verifyTaskPhoto(imageBytes: ByteArray, task: AnalogTask): Boolean {
+    val model = GenerativeModel(modelName = "gemini-2.5-flash", apiKey = BuildConfig.GEMINI_API_KEY)
+    val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+    val prompt = "Does this photo plausibly show someone doing: \"${task.title}\" (${task.description})? Reply ONLY 'yes' or 'no'."
+    val response = model.generateContent(content { image(bitmap); text(prompt) })
+    return response.text?.trim()?.lowercase()?.startsWith("yes") == true
 }

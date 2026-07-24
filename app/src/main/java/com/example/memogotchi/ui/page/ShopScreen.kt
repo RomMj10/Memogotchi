@@ -71,10 +71,10 @@ data class ShopItem(
 // the id is for unique identification in RewardsStore
 // you can change the emoji to actual images if you need to..
 val rewardOffers: List<RewardOffer> = listOf(
-    RewardOffer("reward_cash_5", "$5 Cash Reward", "Redeem points for cash", 500, "💵", isFeatured = true),// this will be featured at the top most view for rewards
+    RewardOffer("reward_cash_5", "Cash Reward", "Redeem points for cash (10 php)", 500, "💵", isFeatured = true),// this will be featured at the top most view for rewards
     RewardOffer("reward_sub_1mo", "1 Month Subscription", "Redeem for a 1 month subscription", 300, "⭐"),// for example: primevideo, spotify subscriptions
-    RewardOffer("reward_cash_2", "$2 Cash Reward", "Redeem points for cash", 200, "💵"),
-    RewardOffer("reward_giftcard", "$10 Gift Card", "Redeem for a gift card", 900, "🎁"),
+    RewardOffer("reward_cash_2", "Cash Reward", "Redeem points for cash (4 php)", 200, "💵"),
+    RewardOffer("reward_giftcard", "Gift Card", "Redeem for a gift card", 900, "🎁"),
 )
 
 val shopCatalog: List<ShopItem> = listOf(

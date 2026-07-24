@@ -168,7 +168,7 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
                 } ?: emptyList()
 
                 val completedHistory = TaskStore.getCompletedHistory(context)
-                geminiStatus = "Status: Connecting"
+                geminiStatus = "Generating tasks..."
                 Log.d("TasksScreen", "geminiStatus: $geminiStatus")
 
                 var geminiTasks = emptyList<AnalogTask>()
@@ -176,13 +176,13 @@ fun TasksScreen(today: DayData? = null, weekData: List<DayData> = emptyList(),
                     geminiTasks =
                         generateTasksWithGemini(weekData, batteryLevel, cats, completedHistory)
                 } catch (e: Exception) {
-                    geminiStatus = "Status: Failed"
+                    geminiStatus = "Failed to generate tasks"
                     Log.e("TasksScreen", "geminiStatus: $geminiStatus")
                 }
 
                 if (geminiTasks.isNotEmpty()) {
                     tasks = geminiTasks
-                    geminiStatus = "Status: Success"
+                    geminiStatus = "Added generated tasks"
                     taskSource = "gemini"
                     TaskStore.saveTasksForDate(context, dateKey, geminiTasks, "gemini")
                     onTasksGenerated(ruleTasks)
