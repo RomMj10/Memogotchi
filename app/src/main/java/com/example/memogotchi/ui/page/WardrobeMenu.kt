@@ -75,7 +75,7 @@ fun WardrobeMenu(
                     .background(AppTheme.current.surface)
                     .padding(4.dp),
             ) {
-                ShopCategory.entries.forEach { cat ->
+                ShopCategory.entries.filter { it != ShopCategory.REWARDS }.forEach { cat ->
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
